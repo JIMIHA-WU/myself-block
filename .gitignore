@@ -1,0 +1,63 @@
+# ============================================
+# .gitignore —— 上传黑名单
+# 写在这里的文件/文件夹永远不会被 push 到 GitHub
+# 规则：一行一个模式；# 开头是注释；! 开头表示"例外，仍然上传"
+# ============================================
+
+# ---- 1. 密钥与敏感配置（最重要，绝对不能上传）----
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+secret.json
+credentials.json
+config.secret.*
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# ---- 2. 依赖目录（体积大，随时能用命令重装）----
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.egg-info/
+.pnp/
+
+# ---- 3. 本地数据库文件 ----
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+*.db-journal
+*.db-wal
+*.sql.gz
+*.mdb
+
+# ---- 4. 日志、缓存、临时文件 ----
+*.log
+logs/
+.cache/
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# ---- 5. 编辑器与系统杂项 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 6. 构建产物 ----
+dist/
+build/
+*.zip
