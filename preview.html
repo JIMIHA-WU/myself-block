@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ja的小屋 · 视图规划（3 个视图）</title>
+<style>
+  :root{
+    --bg:#14161B; --panel:#1B1F26; --glass:rgba(255,255,255,.09);
+    --line:rgba(255,255,255,.16); --line-soft:rgba(255,255,255,.10);
+    --t1:#FFFFFF; --t2:rgba(255,255,255,.78); --t3:rgba(255,255,255,.55); --note:rgba(255,255,255,.42);
+    --ph:rgba(255,255,255,.13);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px;background:#F1EFE8;color:#2C2C2A;
+       font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;line-height:1.6;}
+  h1{font-size:20px;font-weight:500;margin:0 0 6px;}
+  .intro{font-size:13px;color:#5F5E5A;margin:0 0 24px;max-width:760px;}
+  .view{margin:0 auto 32px;max-width:760px;}
+  .view > .label{font-size:13px;color:#444441;margin-bottom:8px;font-weight:500;}
+  .frame{border:1px solid #D3D1C7;border-radius:12px;overflow:hidden;background:var(--bg);}
+  .bar{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#E9E7E0;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#B4B2A9;display:inline-block;}
+  .url{font-size:11px;color:#888780;margin-left:8px;}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;
+       background:rgba(255,255,255,.07);border-bottom:1px solid var(--line-soft);}
+  .brand{color:var(--t1);font-size:13px;font-weight:500;}
+  .menu{color:rgba(255,255,255,.75);font-size:12px;}
+  .anno{font-size:11px;color:var(--note);}
+  .glass{background:var(--glass);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:16px;}
+  .card{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:10px;}
+  .ph{border-radius:10px;background:var(--ph);}
+  .fig{border-radius:10px;background:var(--ph);}
+  .t1{color:var(--t1);font-size:13px;font-weight:500;}
+  .t2{color:var(--t2);font-size:13px;}
+  .t3{color:var(--t3);font-size:11px;margin-top:5px;}
+  .row{display:flex;justify-content:space-between;align-items:center;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .footer{display:flex;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line-soft);}
+  .lightbox{background:rgba(8,9,12,.86);padding:22px 18px;}
+  .lbimg{height:190px;border-radius:8px;background:var(--ph);border:1px solid var(--line);}
+  .lbctl{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+  .circle{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.35);
+          display:inline-flex;align-items:center;justify-content:center;color:var(--t2);font-size:12px;}
+  .meta{font-size:11px;color:var(--note);}
+  .legend{max-width:760px;margin:0 auto;font-size:12px;color:#5F5E5A;}
+  .legend b{font-weight:500;}
+</style>
+</head>
+<body>
+
+<h1>Ja的小屋 · 视图规划（3 个视图）</h1>
+<p class="intro">
+  本文件是 PRD §4 的配套视图规划，供 Day 7 施工对照。三处必须说明：
+  ① 图中的半透明块代表毛玻璃（这里用半透明+细边框示意，实际会加模糊）；
+  ② 所有灰色块都是图片占位，等素材到位后替换；
+  ③ 示例文字仅用于展示版式，不是真实内容。
+</p>
+
+<!-- 视图一：首页 -->
+<section class="view">
+  <div class="label">视图一 · 首页（index.html）</div>
+  <div class="frame">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">jimiha-wu.github.io/myself-block</span></div>
+    <div class="nav"><span class="brand">Ja的小屋</span><span class="menu">首页　照片墙　记录　关于</span></div>
+
+    <div style="padding:20px 18px 24px;background:var(--panel);">
+      <div class="anno" style="margin-bottom:10px;">① 背景大图（模糊压暗）— 卡片压在它上面</div>
+      <div class="glass">
+        <div style="display:flex;gap:16px;">
+          <div class="ph" style="width:76px;height:76px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--t3);">头像</div>
+          <div style="flex:1;">
+            <div style="color:#fff;font-size:20px;font-weight:500;">Ja的小屋</div>
+            <div class="t2" style="margin-top:5px;">存放着时间</div>
+            <div class="t3">从这里了解我</div>
+            <div class="t2" style="font-size:12px;margin-top:8px;">电子信息方向在读，在学着把想法做成网页。</div>
+            <div style="display:flex;align-items:flex-end;gap:18px;margin-top:12px;">
+              <div><div style="color:#fff;font-size:17px;font-weight:500;">6</div><div class="t3" style="margin:0;">照片</div></div>
+              <div><div style="color:#fff;font-size:17px;font-weight:500;">3</div><div class="t3" style="margin:0;">笔记</div></div>
+              <div><div style="color:#fff;font-size:17px;font-weight:500;">12</div><div class="t3" style="margin:0;">建站天数</div></div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <span class="circle"></span><span class="circle"></span>
+                <span style="font-size:10px;color:var(--t3);">GitHub / 邮箱</span>
+              </div>
+            </div>
+            <div class="meta" style="margin-top:10px;">最后更新于 2026-09-23</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:16px 18px;">
+      <div class="row" style="margin-bottom:10px;">
+        <span class="anno">② 照片墙（错落两列 · 点击放大）</span>
+        <span class="anno">共 6 张</span>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+          <div class="ph" style="height:96px;"></div><div class="ph" style="height:62px;opacity:.7;"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+          <div class="ph" style="height:62px;opacity:.7;"></div><div class="ph" style="height:96px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:6px 18px 20px;">
+      <div class="anno" style="margin-bottom:10px;">③ 记录卡片流（笔记 + 感悟同一条流，时间倒序，两列）</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="fig" style="height:44px;margin-bottom:8px;"></div>
+          <div class="t1">信号与系统实验记录</div><div class="t3">2026-09-20 · 笔记</div>
+        </div>
+        <div class="card">
+          <div class="fig" style="height:44px;margin-bottom:8px;"></div>
+          <div class="t2" style="font-size:12px;">今天下了一整天雨，图书馆人很少。</div><div class="t3">2026-09-22 · 感悟</div>
+        </div>
+        <div class="card">
+          <div class="fig" style="height:44px;margin-bottom:8px;"></div>
+          <div class="t1">第一次用 Git 存代码</div><div class="t3">2026-09-21 · 笔记</div>
+        </div>
+        <div class="card">
+          <div class="t2" style="font-size:12px;">把跑了两小时的仿真跑通了，突然觉得挺值。</div><div class="t3">2026-09-23 · 感悟</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="anno">④ 页脚 · Ja的小屋</span>
+      <span class="anno">2026 建站 · 邮箱</span>
+    </div>
+  </div>
+</section>
+
+<!-- 视图二：笔记详情页 -->
+<section class="view">
+  <div class="label">视图二 · 笔记详情页（notes/YYYY-MM-DD-xxx.html，每篇一个文件）</div>
+  <div class="frame">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/notes/2026-09-20-xxx.html</span></div>
+    <div class="nav"><span class="brand">Ja的小屋</span><span class="menu">首页　照片墙　记录　关于</span></div>
+
+    <div style="padding:20px 18px 26px;">
+      <div class="anno" style="margin-bottom:12px;">① 返回首页（左上角，纯文字链接）</div>
+      <div class="glass" style="padding:20px;">
+        <div class="fig" style="height:150px;margin-bottom:16px;"></div>
+        <div class="anno" style="margin-bottom:6px;">② 封面图（16:9，可选；无则直接显示标题）</div>
+
+        <div style="color:#fff;font-size:19px;font-weight:500;margin-top:12px;">第一次用 Git 存代码</div>
+        <div class="t3" style="margin-top:6px;">2026-09-21 · 笔记</div>
+
+        <div style="height:1px;background:var(--line-soft);margin:16px 0;"></div>
+
+        <div class="t2" style="font-size:13px;">③ 正文：段落文字，行距放宽，段落之间留白。这里放你写的内容，一段一段往下排。</div>
+        <div class="t2" style="font-size:13px;margin-top:10px;">需要配图时插入图片，最多 3 张，统一 4:3 比例，图片上下各留一段空白。</div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <div class="fig" style="flex:1;height:82px;"></div>
+          <div class="fig" style="flex:1;height:82px;"></div>
+        </div>
+        <div class="anno" style="margin-top:8px;">④ 正文插图（4:3，最多 3 张）</div>
+
+        <div style="height:1px;background:var(--line-soft);margin:18px 0 14px;"></div>
+
+        <div class="row">
+          <span style="color:var(--t2);font-size:12px;">← 上一篇：暂无</span>
+          <span style="color:var(--t2);font-size:12px;">下一篇：… →</span>
+        </div>
+        <div class="anno" style="margin-top:8px;">⑤ 上一篇 / 下一篇（只在笔记之间跳；第一篇没有上一篇）</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="anno">页脚（与首页一致）· Ja的小屋</span>
+      <span class="anno">2026 建站 · 邮箱</span>
+    </div>
+  </div>
+</section>
+
+<!-- 视图三：照片灯箱 -->
+<section class="view">
+  <div class="label">视图三 · 照片灯箱（点击照片墙任意一张时浮出）</div>
+  <div class="frame">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">jimiha-wu.github.io/myself-block</span></div>
+    <div class="nav"><span class="brand">Ja的小屋</span><span class="menu">首页　照片墙　记录　关于</span></div>
+
+    <div style="padding:14px 18px;">
+      <div class="anno" style="margin-bottom:8px;">底层页面被压暗（其余内容仍在，不可点）</div>
+      <div class="ph" style="height:52px;opacity:.5;"></div>
+    </div>
+
+    <div class="lightbox">
+      <div class="row" style="margin-bottom:10px;">
+        <span class="anno">① 大图：宽度撑满内容区，保持原比例</span>
+        <span class="circle" style="border-color:rgba(255,255,255,.5);">✕</span>
+      </div>
+      <div class="lbimg"></div>
+      <div class="lbctl">
+        <span class="circle">‹</span>
+        <span class="anno">② 计数：第 3 张 / 共 6 张　③ 左右切换　④ 点图外区域或 ✕ 关闭</span>
+        <span class="circle">›</span>
+      </div>
+      <div class="anno" style="margin-top:10px;">⑤ JS 失效时的保底：点击照片直接在新标签页打开原图，灯箱不出现也不报错</div>
+    </div>
+  </div>
+</section>
+
+<p class="legend">
+  <b>与 PRD 的对应：</b>视图一 = §4.2 + §4.4 + §4.3；视图二 = §4.5 + §9.1；视图三 = §4.4 的"页面内灯箱"。
+  <b>本期不做的部分（§6）不在此文件内：</b>搜索框、音乐播放器、悬浮挂件、十项导航。
+</p>
+
+</body>
+</html>
