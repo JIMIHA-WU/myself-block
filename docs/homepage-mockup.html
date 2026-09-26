@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ja的小屋 · 首页视觉稿</title>
+<!--
+  ============================================================
+  说明（给 Jack 看的，不是网站代码）
+  ============================================================
+  1. 本文件是「首页视觉稿」，用途是让你提前看到网站长什么样，
+     不是真实页面代码。Day 7 实现时以本稿 + preview.html 为对照。
+  2. 所有图片位置都是占位块（渐变色块 + 悬停显示文件名标注），
+     素材到位后替换成 <img>。不引入任何外部图片，断网也能打开。
+  3. 所有文字（自我介绍、笔记标题、感悟正文、数字）都是占位示例，
+     不是真实内容，唯一真实的是邮箱。
+  4. 主色 #BA55D3 由 Jack 于 2026-09-26 指定。
+  5. 照片墙为「瀑布流分列 + 图间距为图宽 1/10（≈56px）」样式，
+     2026-09-26 径三轮迭代定稿（先密铺 → 再改瀑布流 → 最后加回间距）。
+  依据：PRD.md v1.6 §4.2 / §4.3 / §4.4 / §4.6 / §9.2
+  ============================================================
+-->
+<style>
+  /* ---------- 视觉规范（依据 PRD §4.6）---------- */
+  :root{
+    --brand:      #BA55D3;          /* 主色：由 Jack 指定 */
+    --brand-dim:  rgba(186,85,211,.18);
+    --brand-line: rgba(186,85,211,.45);
+    --bg:         #14161B;          /* 页面底色 */
+    --bg-2:       #1A1D24;          /* 次级底色 */
+    --glass:      rgba(255,255,255,.075);  /* 毛玻璃 */
+    --glass-2:    rgba(255,255,255,.11);
+    --line:       rgba(255,255,255,.10);
+    --txt:        #F2F3F5;          /* 主文字（浅色） */
+    --txt-2:      #B9BDC6;          /* 次级文字 */
+    --txt-3:      #7E838E;          /* 最小一级文字：全站基准 */
+    --r-card:     16px;
+    --r-sm:       10px;
+    --maxw:       1180px;
+    /* 照片墙间距 = 单张图宽的 1/10（2026-09-26 Jack 指定）
+       计算依据：容器 1180 − 内边距 64 = 1116，每列 558，558 ÷ 10 ≈ 56px
+       若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4 */
+    --photo-gap:  56px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:16px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+
+  /* 最小一级文字样式——全站基准（标签 / 日期 / 页脚 统一沿用） */
+  .t-min{font-size:12.5px;color:var(--txt-3);letter-spacing:.02em}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px}
+
+  /* ---------- 顶栏：吸顶 + 毛玻璃（PRD §4.2）---------- */
+  .topbar{
+    position:sticky;top:0;z-index:100;
+    background:rgba(20,22,27,.72);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+  nav{display:flex;gap:6px}
+  nav a{
+    padding:7px 14px;border-radius:999px;font-size:14px;color:var(--txt-2);
+    transition:.18s;
+  }
+  nav a:hover{color:var(--txt);background:var(--glass)}
+  nav a.active{color:#fff;background:var(--brand-dim);box-shadow:inset 0 0 0 1px var(--brand-line)}
+
+  /* ---------- 首屏：深色背景大图（模糊压暗）+ 信息卡（PRD §4.6 / §4.2）---------- */
+  .hero{
+    position:relative;
+    min-height:78vh;
+    display:flex;align-items:center;
+    overflow:hidden;
+    padding:72px 0;
+  }
+  /* 背景大图占位：真实项目里换成 <img src="assets/bg.webp"> 并做模糊压暗 */
+  .hero-bg{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(1200px 620px at 18% 8%,  rgba(186,85,211,.34), transparent 62%),
+      radial-gradient(900px 520px at 82% 92%,  rgba(90,120,200,.26), transparent 60%),
+      radial-gradient(700px 420px at 60% 40%,  rgba(255,255,255,.05), transparent 65%),
+      linear-gradient(160deg,#20222C 0%,#16181F 48%,#101218 100%);
+    filter:saturate(115%);
+  }
+  .hero-bg::after{               /* 模糊压暗层 */
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(12,13,17,.55) 0%,rgba(12,13,17,.78) 100%);
+    backdrop-filter:blur(2px);
+  }
+  .hero-bg .tag{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:13px;color:rgba(255,255,255,.14);letter-spacing:.32em;white-space:nowrap;
+  }
+  .hero .wrap{position:relative;z-index:2;width:100%}
+
+  /* 信息卡 —— 合并了「关于我 / 站内概览 / 联系方式」三块 */
+  .infocard{
+    background:var(--glass);
+    backdrop-filter:blur(16px) saturate(150%);
+    -webkit-backdrop-filter:blur(16px) saturate(150%);
+    border:1px solid var(--line);
+    border-radius:var(--r-card);
+    padding:28px;
+    max-width:640px;
+    box-shadow:0 24px 60px rgba(0,0,0,.42);
+    position:relative;
+  }
+  .infocard .row{display:flex;gap:22px;align-items:center}
+
+  /* 头像：方形圆角 */
+  .avatar{
+    width:96px;height:96px;flex:0 0 96px;border-radius:18px;
+    background:linear-gradient(145deg,rgba(186,85,211,.55),rgba(120,130,200,.35));
+    border:1px solid var(--brand-line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:rgba(255,255,255,.62);text-align:center;line-height:1.4;
+  }
+  .title{font-size:30px;font-weight:700;letter-spacing:.02em;line-height:1.25}
+  .slogan{margin-top:4px;font-size:15px;color:var(--brand);letter-spacing:.14em;font-weight:600}
+  .subtitle{margin-top:2px;font-size:13.5px;color:var(--txt-2);letter-spacing:.04em}
+  .intro{
+    margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
+    font-size:14px;color:var(--txt-2);line-height:1.8;
+  }
+  .intro em{font-style:normal;color:var(--txt-3);font-size:12.5px}
+
+  /* 信息卡底部：数字 + 两个圆形图标 */
+  .cardfoot{
+    margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .stats{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt-2)}
+  .stats b{color:var(--txt);font-weight:600}
+  .icons{display:flex;gap:10px}
+  .icon-round{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--glass-2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    transition:.18s;
+  }
+  .icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
+  .icon-round svg{width:17px;height:17px;fill:var(--txt-2)}
+  .icon-round:hover svg{fill:#fff}
+  .updated{position:absolute;right:18px;bottom:12px}
+
+  /* ---------- 区块通用 ---------- */
+  section{padding:72px 0}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:26px}
+  .sec-head h2{font-size:21px;font-weight:600;letter-spacing:.02em}
+  .sec-head .anchor{
+    width:6px;height:6px;border-radius:50%;background:var(--brand);margin-bottom:7px;
+    box-shadow:0 0 10px var(--brand);
+  }
+  .sec-head .count{margin-left:auto}
+
+  /* ---------- 照片墙：错落两列 · 瀑布流（PRD §4.4）----------
+     2026-09-26 按 Jack 意见修订，三轮（顺序即迭代过程）：
+       ① 图与图之间不留缝（密铺）—— 仅保留了一轮，随即被 ③ 取代；
+       ② 分列方式改为瀑布流——每张图放进「当前累计高度较短」的那一列，
+          因此会出现「左列一张小图，它下面接右列一张大图」这类交错；
+       ③ 图与图之间恢复间距，约为「图宽的 1/10」（当前 ≈56px）——
+          间距基准为单张图宽（半宽），非容器整宽。
+     「错落」= 图片尺寸与排列位置错落；间距是刻意的留白，不是排版空隙。 */
+  .photos{
+    display:flex;                /* 两列并排 */
+    gap:var(--photo-gap);        /* 列间距 = 图宽的 1/10 */
+    align-items:flex-start;
+    line-height:0;               /* 消除 inline 元素底部空隙 */
+  }
+  .photos .col{
+    flex:1 1 50%;
+    width:50%;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:var(--photo-gap);        /* 列内间距与列间距一致 */
+  }
+  /* JS 未执行时的兜底：退化为「单列」，不会散架 */
+  .photos.no-js{flex-direction:column}
+  .photos.no-js .col{width:100%;flex-basis:100%}
+
+  .photo{
+    border-radius:var(--r-sm);   /* 有间距后图与图不再相邻，圆角不会露出底色缺角 */
+    border:none;
+    overflow:hidden;
+    position:relative;
+    cursor:zoom-in;
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.30);
+    font-size:11.5px;letter-spacing:.06em;
+    width:100%;
+  }
+  /* 各图比例与配色由脚本内联设置（见页面底部 photos 数组）；
+     修改照片只需改那个数组，不必改 CSS。比例不统一 = 「错落」的来源。 */
+  /* 图与图之间已有间距，悬停可以恢复「位移 + 外描边」的反馈方式 */
+  .photo::after{
+    content:"";position:absolute;inset:0;
+    background:rgba(186,85,211,0);
+    transition:.22s;pointer-events:none;
+  }
+  .photo:hover::after{
+    background:rgba(186,85,211,.10);
+  }
+  .photo{transition:box-shadow .22s, transform .22s}
+  .photo:hover{
+    transform:translateY(-3px);
+    box-shadow:0 14px 34px rgba(0,0,0,.45), 0 0 0 2px var(--brand-line);
+  }
+  /* 图块内的文件名标注：悬停才出现，避免干扰整体观感 */
+  .photo .ph-label{
+    opacity:0;transition:.22s;position:relative;z-index:2;
+    background:rgba(14,15,19,.72);padding:3px 9px;border-radius:6px;
+  }
+  .photo:hover .ph-label{opacity:1}
+
+  /* ---------- 记录卡片流：2 列、时间倒序（PRD §4.3）---------- */
+  .cards{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    align-items:start;
+  }
+  .card{
+    background:var(--glass);
+    border:1px solid var(--line);
+    border-radius:var(--r-card);
+    overflow:hidden;
+    transition:.2s;
+  }
+  .card:hover{border-color:var(--brand-line);background:var(--glass-2);transform:translateY(-2px)}
+  .card.note{cursor:pointer}
+  .card.thought{cursor:default}
+
+  .cover{                 /* 封面：统一 16:9 */
+    aspect-ratio:16/9;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11.5px;color:rgba(255,255,255,.28);letter-spacing:.05em;
+    border-bottom:1px solid var(--line);
+  }
+  .c1 .cover{background:linear-gradient(135deg,#2E2440,#1A1D25)}
+  .c2 .cover{background:linear-gradient(145deg,#1F2C36,#161A22)}
+  .c3 .cover{background:linear-gradient(125deg,#33263A,#181B23)}
+  .c4 .cover{background:linear-gradient(200deg,#242A3C,#151820)}
+
+  .card-body{padding:16px 18px 18px}
+  .tagline{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .tag{
+    font-size:11.5px;padding:2.5px 9px;border-radius:999px;
+    background:var(--brand-dim);color:#DCB4E8;border:1px solid var(--brand-line);
+    letter-spacing:.04em;
+  }
+  .tag.plain{
+    background:rgba(255,255,255,.06);color:var(--txt-3);border-color:var(--line);
+  }
+  .card h3{font-size:16.5px;font-weight:600;line-height:1.5;letter-spacing:.01em}
+  .card .excerpt{margin-top:9px;font-size:13.5px;color:var(--txt-2);line-height:1.78}
+  .card .excerpt em{font-style:normal;color:var(--txt-3);font-size:12.5px}
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:34px 0 42px;
+    background:var(--bg-2);
+  }
+  footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+  /* ---------- 稿子专属：区域标注条（真实站点不含此元素）---------- */
+  .spec{
+    position:fixed;right:16px;bottom:16px;z-index:200;
+    background:rgba(24,20,32,.92);
+    border:1px solid var(--brand-line);
+    border-radius:12px;padding:12px 14px;max-width:250px;
+    font-size:12px;color:var(--txt-2);line-height:1.7;
+    box-shadow:0 14px 34px rgba(0,0,0,.5);
+  }
+  .spec b{color:var(--brand);font-weight:600}
+  .spec .k{display:inline-block;width:44px;color:var(--txt-3)}
+
+  /* ---------- 毛玻璃降级（PRD §9.4）---------- */
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .infocard,.topbar{background:rgba(30,32,40,.95)}
+  }
+
+  @media (max-width:900px){
+    .wrap{padding:0 18px}
+    .photos,.cards{grid-template-columns:1fr}
+    .infocard .row{flex-direction:column;align-items:flex-start}
+    .title{font-size:25px}
+    .spec{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="dot"></span>Ja的小屋</a>
+    <nav>
+      <a class="active" href="#top">首页</a>
+      <a href="#photos">照片墙</a>
+      <a href="#notes">记录</a>
+      <a href="#about">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 首屏：背景大图 + 信息卡 ============ -->
+<section class="hero" id="top">
+  <div class="hero-bg"><span class="tag">bg.webp　背景大图占位</span></div>
+
+  <div class="wrap">
+    <div class="infocard" id="about">
+      <div class="row">
+        <div class="avatar">avatar<br>webp</div>
+        <div>
+          <div class="title">Ja的小屋</div>
+          <div class="slogan">存放着时间</div>
+          <div class="subtitle">从这里了解我</div>
+        </div>
+      </div>
+
+      <!-- 「关于」锚点指向这里（PRD §4.2） -->
+      <div class="intro">
+        大二在读，方向是导航与电子信息，平时折腾代码和一些自己想做的小工具。<br>
+        这里放我拍的照片和随手记下的东西。<em>（自我介绍为占位示例，2–3 句）</em>
+      </div>
+
+      <div class="cardfoot">
+        <div class="stats">
+          <span><b>6</b> 张照片</span><span>·</span>
+          <span><b>3</b> 篇笔记</span><span>·</span>
+          <span><b>7</b> 天</span>
+        </div>
+        <div class="icons">
+          <!-- GitHub -->
+          <a class="icon-round" href="#" title="GitHub">
+            <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          </a>
+          <!-- 邮箱 -->
+          <a class="icon-round" href="mailto:1689871232@qq.com" title="邮箱">
+            <svg viewBox="0 0 16 16"><path d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2zM1.5 3.75v.55l6.5 3.9 6.5-3.9v-.55a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25zm13 2.5-6.29 3.774a.75.75 0 0 1-.42 0L1.5 6.25v6a.25.25 0 0 0 .25.25h12.5a.25.25 0 0 0 .25-.25v-6z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="updated t-min">最后更新于 2026-09-26</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 照片墙：错落两列 ============ -->
+<section id="photos">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="anchor"></span>
+      <h2>照片墙</h2>
+      <span class="count t-min">共 6 张　·　点击放大</span>
+    </div>
+
+    <!-- 两列为 JS 生成（瀑布流）；未执行时下方 noscript 兜底提示 -->
+    <div class="photos" id="photoWall"></div>
+    <noscript>
+      <p class="t-min" style="margin-top:12px">当前浏览器未执行脚本，照片墙以降级方式排列。</p>
+    </noscript>
+
+    <!-- 照片数据：Day 7 实现时由数据库 photos 表返回；此处为占位示例 -->
+    <script>
+      /* 瀑布流分列：按顺序取每张图，放进「当前累计高度较短」的那一列。
+         高度用 aspect-ratio 的比例值估算（列宽相同，比较比值即可）。
+         —— 效果：会出现「左列小图，其下接右列大图」的交错，两列底部接近齐平。 */
+      (function () {
+        var wall = document.getElementById('photoWall');
+        if (!wall) return;
+
+        var photos = [
+          { name: 'photo-01.webp', grad: '150deg,#2B2338,#1B1E27', ratio: 4 / 3  },
+          { name: 'photo-02.webp', grad: '210deg,#1E2A33,#171A21', ratio: 3 / 4  },
+          { name: 'photo-03.webp', grad: '120deg,#33253A,#191C24', ratio: 16 / 10 },
+          { name: 'photo-04.webp', grad: '200deg,#22283A,#161921', ratio: 1      },
+          { name: 'photo-05.webp', grad: '140deg,#2A2A38,#181B23', ratio: 4 / 3  },
+          { name: 'photo-06.webp', grad: '190deg,#252535,#171A21', ratio: 3 / 4  }
+        ];
+
+        var colA = document.createElement('div');
+        var colB = document.createElement('div');
+        colA.className = 'col';
+        colB.className = 'col';
+
+        var hA = 0, hB = 0;   // 两列累计高度（以比例值计，列宽相同故可比）
+
+        photos.forEach(function (p) {
+          var el = document.createElement('div');
+          el.className = 'photo';
+          el.style.background = 'linear-gradient(' + p.grad + ')';
+          el.style.aspectRatio = String(p.ratio);
+          el.innerHTML = '<span class="ph-label">' + p.name + '</span>';
+
+          // 谁矮放谁 —— 这就是「错落」的来源
+          if (hA <= hB) { colA.appendChild(el); hA += p.ratio; }
+          else          { colB.appendChild(el); hB += p.ratio; }
+        });
+
+        wall.appendChild(colA);
+        wall.appendChild(colB);
+      })();
+    </script>
+  </div>
+</section>
+
+<!-- ============ 记录卡片流：2 列 · 时间倒序 ============ -->
+<section id="notes">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="anchor"></span>
+      <h2>记录</h2>
+      <span class="count t-min">笔记 3 篇　·　感悟 1 条　·　按时间倒序</span>
+    </div>
+
+    <div class="cards">
+
+      <!-- 笔记卡：可点，进详情页 -->
+      <article class="card note c1">
+        <div class="cover">covers/2026-09-26-xxx.webp　·　16:9</div>
+        <div class="card-body">
+          <div class="tagline">
+            <span class="tag">笔记</span>
+            <span class="t-min">2026-09-26</span>
+          </div>
+          <h3>把卡片流的第一版做出来了</h3>
+          <div class="excerpt">两张卡一列，笔记和感悟混排，靠标签区分。做的时候才发现，光是把间距和圆角对齐就要反复改好几遍。<em>（标题与正文为占位示例）</em></div>
+        </div>
+      </article>
+
+      <!-- 感悟卡：不可点，无标题，直接显示全文 -->
+      <article class="card thought c2">
+        <div class="cover">covers/2026-09-25-xxx.webp　·　16:9</div>
+        <div class="card-body">
+          <div class="tagline">
+            <span class="tag plain">感悟</span>
+            <span class="t-min">2026-09-25</span>
+          </div>
+          <div class="excerpt">今天傍晚的云特别低。<br>下楼买水的时候站了一会儿，没拍好，但记下来了。<em>（感悟卡无标题、不可点击，正文控制在 150 字内）</em></div>
+        </div>
+      </article>
+
+      <article class="card note c3">
+        <div class="cover">covers/2026-09-23-xxx.webp　·　16:9</div>
+        <div class="card-body">
+          <div class="tagline">
+            <span class="tag">笔记</span>
+            <span class="t-min">2026-09-23</span>
+          </div>
+          <h3>做这个网站之前，我在想什么</h3>
+          <div class="excerpt">不是因为它解决了什么痛点，就是想要一个自己说了算的地方。<em>（标题与正文为占位示例）</em></div>
+        </div>
+      </article>
+
+      <article class="card note c4">
+        <div class="cover">covers/2026-09-20-xxx.webp　·　16:9</div>
+        <div class="card-body">
+          <div class="tagline">
+            <span class="tag">笔记</span>
+            <span class="t-min">2026-09-20</span>
+          </div>
+          <h3>第一次把这套流程完整走了一遍</h3>
+          <div class="excerpt">从写需求文档到提交代码，中间返工了两次。记一下当时卡住的地方。<em>（标题与正文为占位示例）</em></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min">Ja的小屋　·　2026　·　1689871232@qq.com</span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<!-- ============ 稿子专属标注（真实站点不含此元素）============ -->
+<aside class="spec">
+  <b>这是一张视觉稿</b><br>
+  <span class="k">主色</span>#BA55D3<br>
+  <span class="k">依据</span>PRD v1.6<br>
+  <span class="k">区块</span>4.2 / 4.6<br>
+  图块与文字均为占位示例，<br>素材到位后替换。
+</aside>
+
+</body>
+</html>
