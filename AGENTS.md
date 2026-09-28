@@ -60,4 +60,4 @@
 ## 九、我的个人规则（2026-09-26 追加）
 
 1. **不许独自修改 PRD**：哪怕你觉得当前的效果不对，也不要轻易修改我的 PRD；**我明确指出问题之后，你同样不能独自修改 PRD**。要改，先跟我说清楚改哪里、为什么改，等我点头。
-2. **homepage-mockup.html 当模板用**：这一次生成的 `homepage-mockup.html` 作为版式模板沿用到后续；**每一次「确认提交」之后，输出本次的 `homepage-mockup.html`**。**`preview.html` 不更新**。
+2. **homepage-mockup.html 当模板用**：这一次生成的 `homepage-mockup.html` 作为版式模板沿用到后续；**每一次「确认提交」之后，输出本次的 `homepage-mockup.html`**。

@@ -115,10 +115,15 @@ myself-block/
 ├─ db/                            数据库脚本
 │  ├─ schema.sql                  建表
 │  └─ seed.sql                    初始内容（由现有素材导入）
-└─ docs/                          文档归档（PRD / 本文件 / things 的副本或链接）
+└─ AGENTS.md  .gitignore  PRD.md  TECH_DESIGN.md  research.md  things.md  homepage-mockup.html
 ```
 
 **两处"只写一次"的地方**：`client/src/api/`（取数）与 `server/shared/`（鉴权与错误格式）。集中在一处的作用是——改造或换平台时只动这两处，不必逐页逐个函数修改。
+
+> **（2026-09-27 修订）** 原末尾为 `└─ docs/  文档归档（PRD / 本文件 / things 的副本或链接）`，本次删除该行，理由：
+> ① 实际结构中**不存在 `docs/` 目录**，全部文档都在根目录；
+> ② `PRD.md` §8 的目录树已按实际重写为"文档在根目录"，本文件须与之保持一致；
+> ③ `client/`、`server/`、`db/`、`public/assets/` 四个目录虽同样尚未创建，但它们是**阶段二（见 §11）必须产出的结构**，属规划中的目标；而 `docs/` 只是可选的整理动作，二者性质不同，故只删 `docs/`。
 
 ---
 
