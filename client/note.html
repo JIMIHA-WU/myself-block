@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>笔记 · Ja的小屋</title>
+<link rel="stylesheet" href="styles.css">
+<!--
+  ============================================================
+  笔记详情页（PRD §4.5 / §9.1）—— Day 7 第 4 步产物
+  ============================================================
+  它和首页共用同一套东西：
+    · styles.css  —— 所以配色、字号、圆角、标签样式全站一套（PRD §5.3）
+    · app.js      —— app.js 发现页面上有 #postRoot 就走「详情页」那一段
+    · api/data.js —— 内容仍从一个地方取
+
+  为什么是 note.html?id=xx，而不是 PRD §4.1 写的 /notes/:id：
+    阶段一是纯静态页，没有服务器做路由。做成「一篇一个文件」又被 PRD §4.1
+    明确否掉了（"由数据驱动，不再每篇一个文件"）。
+    所以用 ?id= 查询参数：还是一个文件、还是数据驱动。
+    阶段二换成 React 路由时，这里才真正变成 /notes/:id。
+
+  页面顺序依据 PRD §9.1：
+    返回首页链接 → 封面（可选，无则省略）→ 标题 + 日期 → 正文 → 上一篇/下一篇
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============
+     注意：这里的导航要带回 index.html，否则在详情页点导航没有落点（PRD §5.2 无死链） -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Ja的小屋</span></a>
+    <nav id="nav">
+      <a href="index.html#top">首页</a>
+      <a href="index.html#photos">照片墙</a>
+      <a href="index.html#notes">记录</a>
+      <a href="index.html#about">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 正文（全部由 app.js 按 ?id= 填进来）============ -->
+<main class="post-wrap">
+  <div class="wrap">
+    <article class="post" id="postRoot"></article>
+  </div>
+</main>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，这篇笔记无法显示。请开启 JavaScript 后刷新，或
+    <a href="index.html" style="color:#BA55D3">返回首页</a>。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面（同一个 app.js 同时管首页与详情页）-->
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ja的小屋 · 存放着时间</title>
+<link rel="stylesheet" href="styles.css">
+<!--
+  ============================================================
+  首页 —— 第 2 步：视觉规范 + 首屏已就位
+  ============================================================
+  区块与顺序依据 PRD.md §4.2：
+    顶栏 → 背景大图 + 信息卡 → 照片墙 → 记录卡片流 → 页脚
+
+  本文件只放「结构」，不放内容：
+    文案与数字都从 api/data.js 取，由 app.js 填进来。
+    好处是以后加一条笔记、换一张照片，只动 data.js 一个文件。
+
+  当前完成度：
+    ✅ 顶栏（吸顶 + 毛玻璃）    ✅ 首屏（背景大图 + 信息卡）
+    ✅ 照片墙（瀑布流 + 灯箱）  ✅ 记录卡片流    ✅ 页脚
+    笔记详情页 → 另一个文件 note.html
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 1. 顶栏（吸顶 · 毛玻璃）============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="dot"></span><span id="brandName">Ja的小屋</span></a>
+    <nav id="nav">
+      <a class="active" href="#top">首页</a>
+      <a href="#photos">照片墙</a>
+      <a href="#notes">记录</a>
+      <a href="#about">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 2. 首屏：背景大图 + 信息卡 ============ -->
+<section class="hero" id="top">
+  <div class="hero-bg"><span class="tag">bg.webp　背景大图占位</span></div>
+
+  <div class="wrap">
+    <!-- 「关于」锚点落在这里（PRD §4.2）；点导航「关于」时会短暂高亮 -->
+    <div class="infocard" id="about">
+      <div class="row">
+        <!-- 头像：真实头像到位后换成 <img> -->
+        <div class="avatar">头像<br>占位</div>
+        <div>
+          <div class="title" id="siteName">Ja的小屋</div>
+          <div class="slogan" id="siteSlogan">存放着时间</div>
+          <div class="subtitle" id="siteSubtitle">从这里了解我</div>
+        </div>
+      </div>
+
+      <!-- 自我介绍（2–3 句）：同时承担「关于我」那一块，内容来自 data.js -->
+      <div class="intro" id="siteIntro"></div>
+
+      <div class="cardfoot">
+        <div class="stats" id="stats">
+          <span><b>0</b> 张照片</span><span>·</span>
+          <span><b>0</b> 篇笔记</span><span>·</span>
+          <span><b>0</b> 天</span>
+        </div>
+        <div class="icons">
+          <!-- GitHub -->
+          <a class="icon-round" id="linkGithub" href="#" title="GitHub" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          </a>
+          <!-- 邮箱 -->
+          <a class="icon-round" id="linkMail" href="#" title="邮箱">
+            <svg viewBox="0 0 16 16"><path d="M1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25v-8.5C0 2.784.784 2 1.75 2zM1.5 3.75v.55l6.5 3.9 6.5-3.9v-.55a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25zm13 2.5-6.29 3.774a.75.75 0 0 1-.42 0L1.5 6.25v6a.25.25 0 0 0 .25.25h12.5a.25.25 0 0 0 .25-.25v-6z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="updated t-min" id="lastUpdated"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 照片墙：错落两列 · 瀑布流（PRD §4.4）============ -->
+<section id="photos">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="anchor"></span>
+      <h2>照片墙</h2>
+      <span class="count t-min" id="photoCount"></span>
+    </div>
+
+    <!-- 两列由 app.js 按「瀑布流」分列生成。
+         初始带 no-js：脚本没跑起来时这里会显示一句说明，而不是一块空白。 -->
+    <div class="photos no-js" id="photoWall"></div>
+
+    <noscript>
+      <p class="t-min" style="margin-top:12px">
+        当前浏览器没有执行脚本，照片墙无法显示。请开启 JavaScript 后刷新。
+      </p>
+    </noscript>
+  </div>
+</section>
+
+<!-- ============ 4. 记录卡片流：2 列 · 时间倒序（PRD §4.3）============ -->
+<section id="notes">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="anchor"></span>
+      <h2>记录</h2>
+      <span class="count t-min" id="recordCount"></span>
+    </div>
+
+    <p class="placeholder-note t-min">以下为占位示例内容 —— C2（3 篇笔记）/ C3（1 条感悟）素材到位后替换。</p>
+
+    <!-- 卡片由 app.js 按时间倒序生成：笔记卡可点进详情页，感悟卡不可点 -->
+    <div class="cards" id="cardFlow"></div>
+  </div>
+</section>
+
+<!-- ============ 照片灯箱（PRD §4.4：页面内放大 · 左右切换 · 点任意处关闭）============ -->
+<div class="lightbox" id="lightbox" hidden>
+  <img class="lb-img" id="lbImg" src="" alt="">
+  <div class="lb-cap t-min" id="lbCap"></div>
+  <button class="lb-btn lb-prev" id="lbPrev" type="button" title="上一张">‹</button>
+  <button class="lb-btn lb-next" id="lbNext" type="button" title="下一张">›</button>
+  <button class="lb-btn lb-close" id="lbClose" type="button" title="关闭">×</button>
+</div>
+
+<!-- ============ 5. 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，页面内容无法加载。请开启 JavaScript 后刷新。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面 -->
+<script src="app.js"></script>
+
+</body>
+</html>

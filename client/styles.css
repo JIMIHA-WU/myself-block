@@ -1,0 +1,401 @@
+/* ============================================================
+   styles.css —— 全站视觉规范（第 2 步落定）
+   ============================================================
+   视觉规范（配色 / 字号档位 / 间距档位 / 圆角 / 毛玻璃）整体照抄
+   homepage-mockup.html 的 <style> 段，不做自由发挥
+   —— 依据 AGENTS.md 第九条：那份稿子是版式模板，后续沿用。
+
+   本文件当前覆盖范围：基础规范 + 顶栏 + 首屏 + 照片墙 + 灯箱 +
+                       记录卡片流 + 笔记详情页 + 页脚。
+   （首页 index.html 与详情页 note.html 共用本文件 —— 这是满足
+     PRD §5.3「全站风格一致」的做法：同一套变量与同一套卡片样式。）
+
+   ---- 相对视觉稿的 4 处有意差异（均已确认原因，非遗漏）----
+   ① .hero-bg 留了一行注释掉的 url("../public/assets/bg.webp")：
+      视觉稿是纯渐变占位；真实背景图（C1 素材）到位后取消该行注释即可。
+   ② 新增 [id]{scroll-margin-top:80px}：
+      视觉稿没有，导致点「关于」时信息卡会被 64px 的吸顶栏挡住。
+      PRD §4.2 要求「关于」滚到自我介绍段并高亮，故必须补这一条。
+   ③ 删掉视觉稿专属的 .spec（右下角区域标注条）：真实站点不含该元素。
+   ④ .devnote（顶部施工进度条）已于第 5 步删除——它只在 Day 7 施工期存在。
+      第 4 步另外删掉了 .slot（虚线占位框）：照片墙与记录流都已换成真实内容，
+      该样式已无人引用，留着就是死代码。
+
+   依据：PRD.md §4.2 §4.6 §5.3 §5.4 §9.4 · homepage-mockup.html
+   ============================================================ */
+
+/* ---------- 视觉规范（依据 PRD §4.6）---------- */
+:root{
+  --brand:      #BA55D3;          /* 主色：由 Jack 指定（2026-09-26） */
+  --brand-dim:  rgba(186,85,211,.18);
+  --brand-line: rgba(186,85,211,.45);
+  --bg:         #14161B;          /* 页面底色 */
+  --bg-2:       #1A1D24;          /* 次级底色 */
+  --glass:      rgba(255,255,255,.075);  /* 毛玻璃 */
+  --glass-2:    rgba(255,255,255,.11);
+  --line:       rgba(255,255,255,.10);
+  --txt:        #F2F3F5;          /* 主文字（浅色） */
+  --txt-2:      #B9BDC6;          /* 次级文字 */
+  --txt-3:      #7E838E;          /* 最小一级文字：全站基准 */
+  --r-card:     16px;
+  --r-sm:       10px;
+  --maxw:       1180px;
+  /* 照片墙间距 = 单张图宽的 1/10（2026-09-26 Jack 指定）
+     计算依据：容器 1180 − 内边距 64 = 1116，每列 558，558 ÷ 10 ≈ 56px
+     若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4 */
+  --photo-gap:  56px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+
+/* 最小一级文字样式——全站基准（标签 / 日期 / 页脚 统一沿用，分隔符统一用 ·） */
+.t-min{font-size:12.5px;color:var(--txt-3);letter-spacing:.02em}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px}
+
+/* 点锚点时给吸顶栏（64px）留出余量，否则目标会被挡住 */
+[id]{scroll-margin-top:80px}
+
+/* ---------- 顶栏：吸顶 + 毛玻璃（PRD §4.2）---------- */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(20,22,27,.72);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+nav{display:flex;gap:6px}
+nav a{
+  padding:7px 14px;border-radius:999px;font-size:14px;color:var(--txt-2);
+  transition:.18s;
+}
+nav a:hover{color:var(--txt);background:var(--glass)}
+nav a.active{color:#fff;background:var(--brand-dim);box-shadow:inset 0 0 0 1px var(--brand-line)}
+
+/* ---------- 首屏：深色背景大图（模糊压暗）+ 信息卡（PRD §4.6 / §4.2）---------- */
+.hero{
+  position:relative;
+  min-height:78vh;
+  display:flex;align-items:center;
+  overflow:hidden;
+}
+/* 背景大图：真实图片（C1 素材）到位后取消下面 url() 那行的注释即可 */
+.hero-bg{
+  position:absolute;inset:0;
+  background-image:
+    /* url("../public/assets/bg.webp"), */
+    radial-gradient(1200px 620px at 18% 8%,  rgba(186,85,211,.34), transparent 62%),
+    radial-gradient(900px 520px at 82% 92%,  rgba(90,120,200,.26), transparent 60%),
+    radial-gradient(700px 420px at 60% 40%,  rgba(255,255,255,.05), transparent 65%),
+    linear-gradient(160deg,#20222C 0%,#16181F 48%,#101218 100%);
+  background-size:cover;
+  background-position:center;
+  filter:saturate(115%);
+}
+.hero-bg::after{               /* 模糊压暗层：让上面的浅色文字读得清 */
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(12,13,17,.55) 0%,rgba(12,13,17,.78) 100%);
+  backdrop-filter:blur(2px);
+}
+.hero-bg .tag{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:13px;color:rgba(255,255,255,.14);letter-spacing:.32em;white-space:nowrap;
+}
+.hero .wrap{position:relative;z-index:2;width:100%}
+
+/* 信息卡 —— 合并了「关于我 / 站内概览 / 联系方式」三块 */
+.infocard{
+  background:var(--glass);
+  backdrop-filter:blur(16px) saturate(150%);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  padding:28px;
+  max-width:640px;
+  box-shadow:0 24px 60px rgba(0,0,0,.42);
+  position:relative;
+  transition:box-shadow .35s;
+}
+/* 点导航「关于」时的短暂高亮（PRD §4.2：避免「点了没反应」） */
+.infocard.flash{
+  box-shadow:0 0 0 2px var(--brand-line), 0 24px 60px rgba(0,0,0,.42);
+}
+.infocard .row{display:flex;gap:22px;align-items:center}
+
+/* 头像：方形圆角。真实头像到位后把这一段换成 <img> */
+.avatar{
+  width:96px;height:96px;flex:0 0 96px;border-radius:18px;
+  background:linear-gradient(145deg,rgba(186,85,211,.55),rgba(120,130,200,.35));
+  border:1px solid var(--brand-line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(255,255,255,.62);text-align:center;line-height:1.4;
+}
+.title{font-size:30px;font-weight:700;letter-spacing:.02em;line-height:1.25}
+.slogan{margin-top:4px;font-size:15px;color:var(--brand);letter-spacing:.14em;font-weight:600}
+.subtitle{margin-top:2px;font-size:13.5px;color:var(--txt-2);letter-spacing:.04em}
+.intro{
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:14px;color:var(--txt-2);line-height:1.8;
+}
+
+/* 信息卡底部：三个数字 + 两个圆形图标 */
+.cardfoot{
+  margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.stats{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt-2)}
+.stats b{color:var(--txt);font-weight:600}
+.icons{display:flex;gap:10px}
+.icon-round{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--glass-2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  transition:.18s;
+}
+.icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
+.icon-round svg{width:17px;height:17px;fill:var(--txt-2)}
+.icon-round:hover svg{fill:#fff}
+.updated{position:absolute;right:18px;bottom:12px}
+
+/* ---------- 区块通用 ---------- */
+section{padding:72px 0}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:26px}
+.sec-head h2{font-size:21px;font-weight:600;letter-spacing:.02em}
+.sec-head .anchor{
+  width:6px;height:6px;border-radius:50%;background:var(--brand);margin-bottom:7px;
+  box-shadow:0 0 10px var(--brand);
+}
+.sec-head .count{margin-left:auto}
+
+/* ---------- 照片墙：错落两列 · 瀑布流（PRD §4.4）----------
+   2026-09-26 按 Jack 意见三轮迭代定稿（顺序即迭代过程）：
+     ① 图与图之间不留缝（密铺）—— 仅保留一轮，随即被 ③ 取代；
+     ② 分列方式改为瀑布流——每张图放进「当前累计高度较短」的那一列，
+        因此会出现「左列一张小图，它下面接右列一张大图」这类交错；
+     ③ 图与图之间恢复间距，约为「图宽的 1/10」（当前 ≈56px）——
+        间距基准为单张图宽（半宽），不是容器整宽。
+   「错落」= 图片尺寸与排列位置错落；间距是刻意的留白，不是排版空隙。
+   照片比例不写在这里：每张图的 aspect-ratio 由 app.js 按数据里的 w/h 内联设置。 */
+.photos{
+  display:flex;                /* 两列并排 */
+  gap:var(--photo-gap);        /* 列间距 = 图宽的 1/10 */
+  align-items:flex-start;
+  line-height:0;               /* 消除 inline 元素底部空隙 */
+}
+.photos .col{
+  flex:1 1 50%;
+  width:50%;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:var(--photo-gap);        /* 列内间距与列间距一致 */
+}
+/* 脚本没跑起来时：退化为单列，并给一句说明，而不是一块空白 */
+.photos.no-js{flex-direction:column}
+.photos.no-js .col{width:100%;flex-basis:100%}
+.photos.no-js:empty::before{
+  content:"照片墙需要 JavaScript 才能显示。";
+  font-size:13px;color:var(--txt-3);line-height:1.8;
+}
+
+/* 单张照片：外层是 <a>，JS 失效时点进去直接就是原图（PRD §4.4 末句） */
+.photo{
+  display:block;
+  position:relative;
+  width:100%;
+  border-radius:var(--r-sm);   /* 有间距后图与图不再相邻，圆角不会露出底色缺角 */
+  border:none;
+  overflow:hidden;
+  cursor:zoom-in;
+  background:var(--bg-2);      /* 图片没加载出来时的占位底色（PRD §9.3） */
+  transition:box-shadow .22s, transform .22s;
+  line-height:0;
+}
+.photo img{width:100%;height:100%;display:block;object-fit:cover}
+.photo::after{
+  content:"";position:absolute;inset:0;
+  background:rgba(186,85,211,0);
+  transition:.22s;pointer-events:none;
+}
+.photo:hover::after{background:rgba(186,85,211,.10)}
+.photo:hover{
+  transform:translateY(-3px);
+  box-shadow:0 14px 34px rgba(0,0,0,.45), 0 0 0 2px var(--brand-line);
+}
+
+/* ---------- 照片灯箱（PRD §4.4）---------- */
+.lightbox{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(8,9,12,.92);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;
+  padding:56px;
+  cursor:zoom-out;              /* 点任意处关闭，所以整层都是"关闭"手势 */
+}
+.lightbox[hidden]{display:none}
+.lb-img{
+  max-width:100%;max-height:76vh;
+  border-radius:var(--r-sm);
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+  background:var(--bg-2);
+}
+.lb-cap{color:var(--txt-2)}
+.lb-btn{
+  position:absolute;
+  width:46px;height:46px;border-radius:50%;
+  background:var(--glass-2);border:1px solid var(--line);
+  color:var(--txt);font-size:24px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:.18s;
+  font-family:inherit;
+}
+.lb-btn:hover{background:var(--brand-dim);border-color:var(--brand-line)}
+.lb-prev{left:22px;top:50%;transform:translateY(-50%)}
+.lb-next{right:22px;top:50%;transform:translateY(-50%)}
+.lb-close{right:22px;top:22px}
+body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
+
+/* ---------- 记录卡片流：2 列 · 时间倒序（PRD §4.3）---------- */
+.placeholder-note{
+  margin:-14px 0 20px;
+  color:var(--txt-3);
+}
+.cards{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  align-items:start;           /* 每张卡各按自己的内容高度，不互相拉平 */
+}
+.card{
+  display:block;               /* 笔记卡是 <a>，要它像块一样撑满 */
+  color:inherit;
+  background:var(--glass);
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  overflow:hidden;
+  transition:.2s;
+}
+.card:hover{border-color:var(--brand-line);background:var(--glass-2);transform:translateY(-2px)}
+.card.note{cursor:pointer}
+.card.thought{cursor:default}  /* 感悟卡不可点（PRD §4.3） */
+/* 感悟卡没有跳转，所以不给悬停位移，免得看起来像能点 */
+.card.thought:hover{transform:none;border-color:var(--line);background:var(--glass)}
+
+.cover{                        /* 封面：统一 16:9（PRD §4.6） */
+  aspect-ratio:16/9;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--line);
+  background:var(--bg-2);
+  overflow:hidden;
+}
+.cover img{width:100%;height:100%;object-fit:cover;display:block}
+
+.card-body{padding:16px 18px 18px}
+.tagline{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.tag{
+  font-size:11.5px;padding:2.5px 9px;border-radius:999px;
+  background:var(--brand-dim);color:#DCB4E8;border:1px solid var(--brand-line);
+  letter-spacing:.04em;
+}
+.tag.plain{
+  background:rgba(255,255,255,.06);color:var(--txt-3);border-color:var(--line);
+}
+.card h3{font-size:16.5px;font-weight:600;line-height:1.5;letter-spacing:.01em}
+/* 卡片上的正文摘要（2026-09-28 Jack 定：笔记卡必须有摘要） */
+.card .summary{margin-top:9px;font-size:13.5px;color:var(--txt-2);line-height:1.78}
+.card .summary p{margin:0}
+.card .summary p + p{margin-top:2px}
+
+/* ---------- 笔记详情页（PRD §4.5 / §9.1）----------
+   与首页共用同一套变量与卡片样式，满足 PRD §5.3「全站风格一致」 */
+.post-wrap{padding:44px 0 72px}
+.post{max-width:760px}
+.back{
+  display:inline-block;margin-bottom:22px;
+  font-size:13.5px;color:var(--txt-2);
+  padding:7px 15px;border-radius:999px;
+  background:var(--glass);border:1px solid var(--line);
+  transition:.18s;
+}
+.back:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+.post-cover{
+  width:100%;aspect-ratio:16/9;object-fit:cover;
+  border-radius:var(--r-card);border:1px solid var(--line);
+  margin-bottom:22px;background:var(--bg-2);
+}
+.post h1{font-size:27px;font-weight:700;line-height:1.35;letter-spacing:.01em}
+.post-meta{
+  display:flex;align-items:center;gap:10px;
+  margin-top:12px;padding-bottom:18px;border-bottom:1px solid var(--line);
+}
+.post-body{margin-top:22px;font-size:15.5px;color:var(--txt-2);line-height:1.95}
+.post-body p{margin-bottom:15px}
+/* 正文插图：统一 4:3（PRD §4.6） */
+.post-body img{
+  width:100%;aspect-ratio:4/3;object-fit:cover;
+  border-radius:var(--r-sm);margin:4px 0 20px;background:var(--bg-2);
+}
+.post-nav{
+  margin-top:38px;padding-top:20px;border-top:1px solid var(--line);
+  display:flex;gap:16px;justify-content:space-between;align-items:stretch;
+}
+.post-nav a{
+  font-size:13.5px;color:var(--txt-2);line-height:1.6;
+  padding:11px 16px;border-radius:var(--r-sm);max-width:48%;
+  background:var(--glass);border:1px solid var(--line);
+  transition:.18s;
+}
+.post-nav a:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+.post-nav .ph{visibility:hidden;max-width:48%;min-width:1px}  /* 缺一边时占位，保持右边对齐 */
+.post-empty{font-size:15px;color:var(--txt-2);line-height:1.9}
+
+/* ---------- 页脚 ---------- */
+footer{
+  border-top:1px solid var(--line);
+  padding:34px 0 42px;
+  background:var(--bg-2);
+}
+footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+/* ---------- 毛玻璃降级（PRD §9.4）---------- */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .infocard,.topbar{background:rgba(30,32,40,.95)}
+}
+
+/* ---------- 手机端：只保证不横向滚动（PRD §5.4）---------- */
+@media (max-width:900px){
+  .wrap{padding:0 18px}
+  .infocard .row{flex-direction:column;align-items:flex-start}
+  .title{font-size:25px}
+  .topbar .wrap{height:56px}
+  nav{gap:2px}
+  nav a{padding:6px 10px;font-size:13px}
+  /* 手机端照片墙与卡片流都变单列（PRD §7.4：只保证不横向滚动，观感问题不列入验收） */
+  .photos{flex-direction:column}
+  .photos .col{width:100%;flex-basis:100%}
+  .cards{grid-template-columns:1fr}
+  .post h1{font-size:22px}
+  .post-wrap{padding:28px 0 56px}
+  .post-nav a{max-width:100%}
+  .lightbox{padding:16px}
+  .lb-btn{width:38px;height:38px;font-size:20px}
+  .lb-prev{left:6px}
+  .lb-next{right:6px}
+  .lb-close{right:6px;top:6px}
+}

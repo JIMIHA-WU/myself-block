@@ -61,3 +61,26 @@ desktop.ini
 dist/
 build/
 *.zip
+
+# ---- 7. 图片原始素材（2026-09-28 新增）----
+# 站点只用 WebP（photo-NN.webp），不引用任何原始 JPG/PNG。
+# 原图是"素材源"不是"站点资源"，且体积大（本次 4 张合计约 8MB），
+# 一旦提交就永久留在 git 历史里删不干净（PRD §7.2）。
+# 另外按 PRD §7.1，原图仍保留元数据，不进公开仓库可减小风险面。
+# 需要重压时，原图仍在本地 public/assets/photos/ 下，可重跑转换。
+*.jpg
+*.jpeg
+*.JPG
+*.JPEG
+*.png
+*.PNG
+*.tif
+*.tiff
+*.heic
+*.HEIC
+*.bmp
+*.psd
+*.psb
+
+# 例外：如果将来确实需要提交某张图，用 ! 单独放行，例如：
+# !public/assets/photos/必要的那张.png
