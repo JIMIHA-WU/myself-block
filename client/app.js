@@ -405,6 +405,28 @@
 
   var postRoot = document.getElementById('postRoot');
 
+  /* ---------- 5.1 顶栏渐显（Prisma 式：导航先融进首屏，离开才浮出）----------
+     2026-09-29：首屏改满屏 hero 后，顶栏默认透明；滚动超过约 80% 屏高
+     （即离开首屏）才加 body.scrolled，由 CSS 浮出毛玻璃底与下边框。
+     防御：老浏览器 / 微信内置浏览器若没有滚动事件支持，就直接加上
+     scrolled，保证顶栏始终有一层底、文字不会读不清。 */
+  (function () {
+    if (!window.addEventListener) { document.body.classList.add('scrolled'); return; }
+
+    var last = -1;
+    function onScroll() {
+      var h = window.innerHeight || document.documentElement.clientHeight || 800;
+      var y = window.pageYOffset ||
+              (document.documentElement && document.documentElement.scrollTop) || 0;
+      var want = y > h * 0.8;
+      if (want === last) return;          /* 只在状态翻转时改 DOM，不每帧写 */
+      last = want;
+      document.body.classList.toggle('scrolled', want);
+    }
+    window.addEventListener('scroll', onScroll, false);
+    onScroll();
+  })();
+
   if (postRoot) {
     /* 从 ?id=xx 里取出要显示哪一篇（阶段一的静态做法，见上面说明） */
     var qs = {};
@@ -420,5 +442,112 @@
       });
 
     renderPost(postRoot, qs.id);
+  }
+
+  /* ============================================================
+     10. 入场动效（Prisma 皮肤 · 2026-09-29）
+     ============================================================
+     三种手法（样式都在 styles.css 末尾「Prisma 皮肤」块里）：
+       .wpu  站点名逐字浮起（外层 overflow 隐藏，字从下面升上来）
+       .scr  自我介绍由暗渐亮
+       .rise 照片 / 卡片进入视口时轻轻上浮
+
+     两个防御：
+       · 用户开了「减少动态效果」（prefers-reduced-motion）→ 整段跳过，
+         元素保持原样显示（CSS 里也有同款降级，双保险）。
+       · 老浏览器没有 IntersectionObserver → 不加任何入场类，直接全亮。
+
+     一个必须做的收尾：
+       .rise 的 transition 会压住 .photo / .card 自己的 hover 过渡，
+       所以入场动画播完后要把类名移除、延迟清掉，把 hover 还回去。 */
+
+  var reducedMotion = false;
+  try {
+    reducedMotion = !!(window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  } catch (err) { reducedMotion = false; }
+
+  if (!reducedMotion) {
+
+    /* requestAnimationFrame 兜底：老浏览器用 setTimeout 代替 */
+    var raf = (typeof window.requestAnimationFrame === 'function')
+      ? function (fn) { window.requestAnimationFrame(fn); }
+      : function (fn) { setTimeout(fn, 16); };
+
+    /* ---- 10.1 站点名逐字浮起（仅首页有 #siteName） ---- */
+    var nameEl = document.getElementById('siteName');
+    if (nameEl && nameEl.textContent) {
+      var chars = nameEl.textContent;
+      var wfrag = document.createDocumentFragment();
+      nameEl.textContent = '';
+      for (var ci = 0; ci < chars.length; ci++) {
+        var wrap = document.createElement('span');
+        wrap.className = 'wpu';
+        var sp = document.createElement('span');
+        sp.textContent = chars.charAt(ci);
+        sp.style.transitionDelay = (ci * 70) + 'ms';   /* 一字比一字晚 70ms */
+        wrap.appendChild(sp);
+        wfrag.appendChild(wrap);
+      }
+      nameEl.appendChild(wfrag);
+      /* 双 rAF：等浏览器先把「初始位置」画出来，再加 .on 触发动画 */
+      raf(function () {
+        raf(function () {
+          var ws = nameEl.querySelectorAll('.wpu');
+          for (var wi = 0; wi < ws.length; wi++) ws[wi].classList.add('on');
+        });
+      });
+    }
+
+    /* ---- 10.2 自我介绍渐亮 + 10.3 照片 / 卡片上浮 ---- */
+    var animEls = [];
+
+    var introEl = document.getElementById('siteIntro');
+    if (introEl) {
+      introEl.classList.add('scr');
+      animEls.push(introEl);
+    }
+
+    var riseItems = [];
+    var q1 = document.querySelectorAll('.card');
+    var q2 = document.querySelectorAll('.photo');
+    var q3 = document.querySelectorAll('.sec-head');   /* 区块头也一起浮起（深度版） */
+    for (var qi = 0; qi < q1.length; qi++) riseItems.push(q1[qi]);
+    for (var qj = 0; qj < q2.length; qj++) riseItems.push(q2[qj]);
+    for (var qk = 0; qk < q3.length; qk++) riseItems.push(q3[qk]);
+
+    for (var ri = 0; ri < riseItems.length; ri++) {
+      riseItems[ri].classList.add('rise');
+      /* 同一屏里的卡片错开 60ms，不会齐刷刷一起动 */
+      riseItems[ri].style.transitionDelay = ((ri % 6) * 60) + 'ms';
+      animEls.push(riseItems[ri]);
+    }
+
+    if ('IntersectionObserver' in window && animEls.length) {
+      var ioAnim = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          ioAnim.unobserve(e.target);
+          var el = e.target;
+          el.classList.add('in');
+          /* 播完动画就摘掉类名、清掉延迟，把 hover 过渡还给照片和卡片 */
+          var d = parseInt(el.style.transitionDelay, 10) || 0;
+          setTimeout(function () {
+            el.classList.remove('rise');
+            el.classList.remove('scr');
+            el.classList.remove('in');
+            el.style.transitionDelay = '';
+          }, 800 + d);
+        });
+      }, { threshold: 0.12 });
+      animEls.forEach(function (el) { ioAnim.observe(el); });
+    } else {
+      /* 没有 IO：不玩入场，直接全亮 */
+      animEls.forEach(function (el) {
+        el.classList.remove('rise');
+        el.classList.remove('scr');
+        el.style.transitionDelay = '';
+      });
+    }
   }
 })();

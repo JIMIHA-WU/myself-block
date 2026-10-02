@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ja的小屋 · 存放着时间</title>
+<!-- 字体：拉丁字符用 Instrument Serif（衬线斜体），中文用思源宋体；
+     加载失败会自动回退系统字体，不影响页面打开 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <!--
   ============================================================
@@ -38,24 +43,25 @@
   </div>
 </header>
 
-<!-- ============ 2. 首屏：背景大图 + 信息卡 ============ -->
+<!-- ============ 2. 首屏：满屏 hero（Prisma 式 · 2026-09-29 重构）============
+     2026-09-29 Jack 决策 B「首屏整屏重构」：取消毛玻璃信息卡盒子，
+     改动前形式为「深色大图 + 一张毛玻璃盒子装全部信息」。
+     现在：站点名以满屏字号直接压在暗场上，信息细排在下半部 —— 不靠盒子，
+     靠「大 · 空 · 暗」制造压迫感（Prisma 的核心手法）。
+     ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。
+     「关于」锚点仍在 #about：§4.2 要求点导航「关于」滚到这里并短暂高亮。 -->
 <section class="hero" id="top">
-  <div class="hero-bg"><span class="tag">bg.webp　背景大图占位</span></div>
+  <div class="hero-bg"></div>
 
-  <div class="wrap">
-    <!-- 「关于」锚点落在这里（PRD §4.2）；点导航「关于」时会短暂高亮 -->
-    <div class="infocard" id="about">
-      <div class="row">
-        <!-- 头像：真实头像到位后换成 <img> -->
-        <div class="avatar">头像<br>占位</div>
-        <div>
-          <div class="title" id="siteName">Ja的小屋</div>
-          <div class="slogan" id="siteSlogan">存放着时间</div>
-          <div class="subtitle" id="siteSubtitle">从这里了解我</div>
-        </div>
-      </div>
+  <div class="wrap hero-inner">
+    <div class="hero-title-wrap">
+      <h1 class="title" id="siteName">Ja的小屋</h1>
+    </div>
+    <div class="slogan" id="siteSlogan">存放着时间</div>
 
-      <!-- 自我介绍（2–3 句）：同时承担「关于我」那一块，内容来自 data.js -->
+    <!-- 「关于」锚点：信息细排区（点导航「关于」会滚到这里并短暂高亮） -->
+    <div class="hero-meta" id="about">
+      <div class="subtitle" id="siteSubtitle">从这里了解我</div>
       <div class="intro" id="siteIntro"></div>
 
       <div class="cardfoot">
@@ -79,13 +85,17 @@
       <div class="updated t-min" id="lastUpdated"></div>
     </div>
   </div>
+
+  <!-- 头像：真实头像到位后把这段替换成 <img src="../public/assets/avatar.webp">
+       目前只保留占位元素节点，不显示"头像占位"字样（满屏 hero 里放文字占位会破功） -->
+  <div class="avatar" hidden>头像</div>
 </section>
 
 <!-- ============ 3. 照片墙：错落两列 · 瀑布流（PRD §4.4）============ -->
 <section id="photos">
   <div class="wrap">
     <div class="sec-head">
-      <span class="anchor"></span>
+      <span class="sec-no">01</span>
       <h2>照片墙</h2>
       <span class="count t-min" id="photoCount"></span>
     </div>
@@ -106,7 +116,7 @@
 <section id="notes">
   <div class="wrap">
     <div class="sec-head">
-      <span class="anchor"></span>
+      <span class="sec-no">02</span>
       <h2>记录</h2>
       <span class="count t-min" id="recordCount"></span>
     </div>

@@ -1,42 +1,55 @@
 /* ============================================================
-   styles.css —— 全站视觉规范（第 2 步落定）
+   styles.css —— 全站视觉规范（Prisma 皮肤 · 深度版 · 2026-09-29）
    ============================================================
-   视觉规范（配色 / 字号档位 / 间距档位 / 圆角 / 毛玻璃）整体照抄
-   homepage-mockup.html 的 <style> 段，不做自由发挥
-   —— 依据 AGENTS.md 第九条：那份稿子是版式模板，后续沿用。
+   皮肤方向：Jack 指定的「Prisma - Creative Studio」风格 —— 奶油色系 +
+   近黑底 + 衬线斜体大字 + 编辑式编号与细线 + 噪点质感 + 滚动动效。
 
-   本文件当前覆盖范围：基础规范 + 顶栏 + 首屏 + 照片墙 + 灯箱 +
-                       记录卡片流 + 笔记详情页 + 页脚。
-   （首页 index.html 与详情页 note.html 共用本文件 —— 这是满足
-     PRD §5.3「全站风格一致」的做法：同一套变量与同一套卡片样式。）
+   深度版说明（2026-09-29 晚）：第一版只换了配色与字体，Jack 反馈
+   「感觉改动不大」。本版把 Prisma 的核心手法——排版本身即设计——做到位：
+     ① 主标题 48px → 最大 92px 衬线斜体（首屏的视觉冲击全在这）；
+     ② 区块标题 21px → 52px 衬线斜体，加 01/02 编号与通长细线；
+     ③ 笔记卡标题与详情页大标题改衬线，封面 hover 内缩放大。
+   PRD 硬约束全部保留：毛玻璃信息卡与内容清单（§4.2）、瀑布流两列 +
+   56px 间距 + 圆角无边框（§4.4）、卡片流 2 列与内容构成（§4.3）、
+   封面 16:9 / 插图 4:3（§4.6）、最小一级文字全站基准（§4.6）。
 
-   ---- 相对视觉稿的 4 处有意差异（均已确认原因，非遗漏）----
-   ① .hero-bg 留了一行注释掉的 url("../public/assets/bg.webp")：
-      视觉稿是纯渐变占位；真实背景图（C1 素材）到位后取消该行注释即可。
-   ② 新增 [id]{scroll-margin-top:80px}：
-      视觉稿没有，导致点「关于」时信息卡会被 64px 的吸顶栏挡住。
-      PRD §4.2 要求「关于」滚到自我介绍段并高亮，故必须补这一条。
-   ③ 删掉视觉稿专属的 .spec（右下角区域标注条）：真实站点不含该元素。
-   ④ .devnote（顶部施工进度条）已于第 5 步删除——它只在 Day 7 施工期存在。
-      第 4 步另外删掉了 .slot（虚线占位框）：照片墙与记录流都已换成真实内容，
-      该样式已无人引用，留着就是死代码。
+   主色变更：#BA55D3（2026-09-26 Jack 指定）→ #E1E0CC 奶油色
+   （2026-09-29 Jack 决策 D1 选 B）。TECH_DESIGN §13.2 要求
+   「组件只引用变量、不写死色值」，故换色 = 只换 :root 变量块。
 
-   依据：PRD.md §4.2 §4.6 §5.3 §5.4 §9.4 · homepage-mockup.html
+   覆盖范围：基础规范 + 顶栏 + 首屏 + 照片墙 + 灯箱 + 记录卡片流 +
+             笔记详情页 + 页脚 + Prisma 动效质感。
+   （首页 index.html 与详情页 note.html 共用本文件 —— PRD §5.3「全站风格一致」。）
+
+   ---- 有意差异与决策说明 ----
+   ① .hero-bg 已启用 url("../public/assets/bg.webp")（真实背景图，Rider01 生成，
+      2026-09-29 决策 D3 选 A）：照片在底层，奶油光斑叠在上层，::after 继续压暗。
+      同时补上了 PRD §4.6 空了两天的"背景大图"规划。
+   ② [id]{scroll-margin-top:80px}：点「关于」时不被 64px 吸顶栏挡住（PRD §4.2）。
+   ③ 字体：Instrument Serif（拉丁衬线斜体）+ Noto Serif SC（中文宋体），
+      经 Google Fonts 引入，断网自动回退系统字体（2026-09-29 Jack 点头）。
+      浏览器按字符自动选字体：拉丁 → Instrument Serif，中文 → Noto Serif SC。
+      Noto Serif SC 无斜体变体，中文斜体为浏览器合成，拉丁部分是真斜体。
+   ④ 无 Tailwind / React / Framer Motion：TECH_DESIGN §3.1 已否决 Tailwind，
+      §11 把 React 排在阶段二；全部动效原生手写（见文件末尾「Prisma 动效」）。
+   ⑤ .hero-bg .tag（"背景大图占位"文字）已删：真图到位，占位标注退役。
+
+   依据：PRD.md §4.2 §4.6 §5.3 §5.4 §9.4 · TECH_DESIGN.md §3.1 §11 §13.2
    ============================================================ */
 
 /* ---------- 视觉规范（依据 PRD §4.6）---------- */
 :root{
-  --brand:      #BA55D3;          /* 主色：由 Jack 指定（2026-09-26） */
-  --brand-dim:  rgba(186,85,211,.18);
-  --brand-line: rgba(186,85,211,.45);
-  --bg:         #14161B;          /* 页面底色 */
-  --bg-2:       #1A1D24;          /* 次级底色 */
-  --glass:      rgba(255,255,255,.075);  /* 毛玻璃 */
-  --glass-2:    rgba(255,255,255,.11);
-  --line:       rgba(255,255,255,.10);
-  --txt:        #F2F3F5;          /* 主文字（浅色） */
-  --txt-2:      #B9BDC6;          /* 次级文字 */
-  --txt-3:      #7E838E;          /* 最小一级文字：全站基准 */
+  --brand:      #E1E0CC;          /* 主色：奶油色（2026-09-29 Jack 定，取代 09-26 的 #BA55D3） */
+  --brand-dim:  rgba(225,224,204,.13);
+  --brand-line: rgba(225,224,204,.36);
+  --bg:         #0A0A0C;          /* 页面底色：近黑 */
+  --bg-2:       #111114;          /* 次级底色 */
+  --glass:      rgba(225,224,204,.06);  /* 毛玻璃（奶油系） */
+  --glass-2:    rgba(225,224,204,.10);
+  --line:       rgba(225,224,204,.12);
+  --txt:        #DEDBC8;          /* 主文字（Prisma Cream） */
+  --txt-2:      rgba(222,219,200,.70);  /* 次级文字 */
+  --txt-3:      rgba(222,219,200,.45);  /* 最小一级文字：全站基准 */
   --r-card:     16px;
   --r-sm:       10px;
   --maxw:       1180px;
@@ -44,6 +57,9 @@
      计算依据：容器 1180 − 内边距 64 = 1116，每列 558，558 ÷ 10 ≈ 56px
      若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4 */
   --photo-gap:  56px;
+  --ease-out:   cubic-bezier(.16,1,.3,1);  /* Prisma 动效曲线：快出慢收 */
+  --f-serif:    "Instrument Serif","Noto Serif SC",serif;  /* 标题：拉丁斜体 + 中文宋体 */
+  --f-serif-sc: "Noto Serif SC",serif;                     /* 纯中文衬线（正体用） */
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -67,97 +83,124 @@ a{color:inherit;text-decoration:none}
 /* 点锚点时给吸顶栏（64px）留出余量，否则目标会被挡住 */
 [id]{scroll-margin-top:80px}
 
-/* ---------- 顶栏：吸顶 + 毛玻璃（PRD §4.2）---------- */
+/* ---------- 顶栏：吸顶 + 毛玻璃（PRD §4.2）----------
+   2026-09-29：首屏改满屏 hero 后，顶栏默认透明，只有滚动离开首屏
+   （滚动到照片墙那一屏）才浮出毛玻璃底 —— Prisma 式「导航先融进画面」。 */
 .topbar{
   position:sticky;top:0;z-index:100;
-  background:rgba(20,22,27,.72);
+  background:transparent;
+  border-bottom:1px solid transparent;
+  transition:background .35s var(--ease-out),border-color .35s var(--ease-out),backdrop-filter .35s;
+}
+body.scrolled .topbar{
+  background:rgba(10,10,12,.78);
   backdrop-filter:blur(14px) saturate(140%);
   -webkit-backdrop-filter:blur(14px) saturate(140%);
-  border-bottom:1px solid var(--line);
+  border-bottom-color:var(--line);
 }
 .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.06em;font-size:15px}
 .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
-nav{display:flex;gap:6px}
+nav{display:flex;gap:10px}
 nav a{
-  padding:7px 14px;border-radius:999px;font-size:14px;color:var(--txt-2);
+  padding:7px 14px;border-radius:999px;font-size:13px;color:var(--txt-2);
+  letter-spacing:.14em;   /* Prisma 式宽字距小字导航 */
   transition:.18s;
 }
-nav a:hover{color:var(--txt);background:var(--glass)}
-nav a.active{color:#fff;background:var(--brand-dim);box-shadow:inset 0 0 0 1px var(--brand-line)}
+nav a:hover{color:var(--txt)}
+nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacing:.14em}
 
-/* ---------- 首屏：深色背景大图（模糊压暗）+ 信息卡（PRD §4.6 / §4.2）---------- */
+/* ---------- 首屏：满屏 hero（Prisma 式 · 2026-09-29 重构）----------
+   Jack 2026-09-29 决策 B「首屏整屏重构」：取消毛玻璃信息卡盒子。
+   现在这一屏的做法（Prisma 的核心语言）：
+     · 站点名以满屏字号直接压在暗场上，居中偏上，占满视野宽度；
+     · 不靠盒子、不靠照片讲氛围，靠「大 · 空 · 暗」制造压迫感；
+     · 全部辅助信息（定位语/副标题/自我介绍/数字/图标）细排在中下部，
+       字号刻意压小、字距刻意拉开，与大标题形成极端对比。
+   ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。 */
 .hero{
   position:relative;
-  min-height:78vh;
+  min-height:100vh;
   display:flex;align-items:center;
   overflow:hidden;
+  padding:96px 0 44px;      /* 顶部给悬浮导航留位，底部留出信息细排的呼吸 */
 }
-/* 背景大图：真实图片（C1 素材）到位后取消下面 url() 那行的注释即可 */
+/* 背景大图：真实照片（bg.webp，由 Rider01 生成）在底层，奶油光斑叠在上层 */
 .hero-bg{
   position:absolute;inset:0;
   background-image:
-    /* url("../public/assets/bg.webp"), */
-    radial-gradient(1200px 620px at 18% 8%,  rgba(186,85,211,.34), transparent 62%),
-    radial-gradient(900px 520px at 82% 92%,  rgba(90,120,200,.26), transparent 60%),
-    radial-gradient(700px 420px at 60% 40%,  rgba(255,255,255,.05), transparent 65%),
-    linear-gradient(160deg,#20222C 0%,#16181F 48%,#101218 100%);
+    radial-gradient(1200px 620px at 18% 8%,  rgba(225,224,204,.14), transparent 62%),
+    radial-gradient(900px 520px at 82% 92%,  rgba(150,140,120,.10), transparent 60%),
+    url("../public/assets/bg.webp");
   background-size:cover;
   background-position:center;
-  filter:saturate(115%);
+  filter:saturate(105%);
 }
-.hero-bg::after{               /* 模糊压暗层：让上面的浅色文字读得清 */
+/* 压暗层：满屏 hero 里大字要压住照片，所以比原版压得更深，
+   并且底部再叠一层向黑色的过渡，让信息细排区彻底沉进暗部 */
+.hero-bg::after{
   content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(12,13,17,.55) 0%,rgba(12,13,17,.78) 100%);
-  backdrop-filter:blur(2px);
-}
-.hero-bg .tag{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  font-size:13px;color:rgba(255,255,255,.14);letter-spacing:.32em;white-space:nowrap;
+  background:
+    linear-gradient(180deg,rgba(6,6,8,.62) 0%,rgba(6,6,8,.78) 46%,rgba(6,6,8,.94) 100%);
+  backdrop-filter:blur(3px);
 }
 .hero .wrap{position:relative;z-index:2;width:100%}
+.hero-inner{display:flex;flex-direction:column}
 
-/* 信息卡 —— 合并了「关于我 / 站内概览 / 联系方式」三块 */
-.infocard{
-  background:var(--glass);
-  backdrop-filter:blur(16px) saturate(150%);
-  -webkit-backdrop-filter:blur(16px) saturate(150%);
-  border:1px solid var(--line);
-  border-radius:var(--r-card);
-  padding:28px;
-  max-width:640px;
-  box-shadow:0 24px 60px rgba(0,0,0,.42);
-  position:relative;
-  transition:box-shadow .35s;
+/* 站点名：整屏舞台的主角。
+   2026-09-29 按 1280×720 基准实算（见 layout-check.py 的核算）：
+   两个约束要同时满足，所以用 min() 取小者 ——
+     ① 横向：容器内宽 1116px，「Ja的小屋」四字要铺满整行 → 单字约 200px；
+     ② 纵向：首屏 720px 里还要塞下定位语 + 细排信息（约 260px），
+        留给标题的约 720 − 96(上) − 44(下) − 260 ≈ 320px → 单行高不超过约 300px。
+   取 clamp(72px, min(19vw, 34vh), 200px)：
+     1280×720 → min(243, 245) → 200px 封顶，四字 800px 宽，一行放下，高位占用 200px；
+     1440×900 → 200px 封顶；
+     矮屏（如 1280×720 的实际可用高更小时）由 34vh 兜住，不会把信息挤出首屏。
+   拉丁走 Instrument Serif 真斜体，中文走 Noto Serif SC（浏览器合成斜体）。 */
+.hero-title-wrap{margin-bottom:6px}
+.title{
+  font-family:var(--f-serif);
+  font-style:italic;
+  font-size:clamp(72px,min(19vw,34vh),200px);
+  font-weight:700;letter-spacing:.01em;line-height:1.0;
+  text-shadow:0 8px 60px rgba(0,0,0,.5);
+  white-space:nowrap;            /* 四字不许断行——断行就没有"满屏"的压迫感了 */
 }
-/* 点导航「关于」时的短暂高亮（PRD §4.2：避免「点了没反应」） */
-.infocard.flash{
-  box-shadow:0 0 0 2px var(--brand-line), 0 24px 60px rgba(0,0,0,.42);
+/* 定位语：eyebrow 式小字 + 超宽字距，与大标题形成 Prisma 式极端对比 */
+.slogan{
+  font-family:var(--f-serif-sc);
+  font-size:13px;color:var(--brand);
+  letter-spacing:.5em;margin-right:-.5em;
+  font-weight:600;
 }
-.infocard .row{display:flex;gap:22px;align-items:center}
 
-/* 头像：方形圆角。真实头像到位后把这一段换成 <img> */
-.avatar{
-  width:96px;height:96px;flex:0 0 96px;border-radius:18px;
-  background:linear-gradient(145deg,rgba(186,85,211,.55),rgba(120,130,200,.35));
-  border:1px solid var(--brand-line);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:rgba(255,255,255,.62);text-align:center;line-height:1.4;
+/* 信息细排区：大标题下方，靠一根细线分隔（「关于」锚点落在这里） */
+.hero-meta{
+  margin-top:auto;                      /* 推到首屏底部 */
+  padding-top:30px;margin-bottom:0;
+  border-top:1px solid var(--line);
+  max-width:720px;
+  transition:opacity .3s;
 }
-.title{font-size:30px;font-weight:700;letter-spacing:.02em;line-height:1.25}
-.slogan{margin-top:4px;font-size:15px;color:var(--brand);letter-spacing:.14em;font-weight:600}
-.subtitle{margin-top:2px;font-size:13.5px;color:var(--txt-2);letter-spacing:.04em}
+/* 点导航「关于」时的短暂高亮（PRD §4.2：避免「点了没反应」）——
+   没有盒子了，改用文字整体提亮 + 细线着色来表示 */
+.hero-meta.flash{border-top-color:var(--brand-line)}
+.hero-meta.flash .subtitle,
+.hero-meta.flash .intro{color:var(--txt)}
+
+.subtitle{font-size:14px;color:var(--txt-2);letter-spacing:.06em}
 .intro{
-  margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
-  font-size:14px;color:var(--txt-2);line-height:1.8;
+  margin-top:14px;
+  font-size:14px;color:var(--txt-2);line-height:1.85;
 }
 
-/* 信息卡底部：三个数字 + 两个圆形图标 */
+/* 信息细排底部：三个数字 + 两个圆形图标 */
 .cardfoot{
-  margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+  margin-top:20px;padding-top:18px;border-top:1px solid var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:16px;
 }
-.stats{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt-2)}
+.stats{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt-2);letter-spacing:.06em}
 .stats b{color:var(--txt);font-weight:600}
 .icons{display:flex;gap:10px}
 .icon-round{
@@ -168,16 +211,35 @@ nav a.active{color:#fff;background:var(--brand-dim);box-shadow:inset 0 0 0 1px v
 }
 .icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
 .icon-round svg{width:17px;height:17px;fill:var(--txt-2)}
-.icon-round:hover svg{fill:#fff}
-.updated{position:absolute;right:18px;bottom:12px}
+.icon-round:hover svg{fill:var(--txt)}
+.updated{position:absolute;right:0;bottom:-26px}
+/* 头像：真实头像到位后把这段换成 <img>。当前为占位节点，hidden 不显示 */
+.avatar{
+  width:96px;height:96px;border-radius:18px;
+  background:linear-gradient(145deg,rgba(225,224,204,.28),rgba(150,142,120,.16));
+  border:1px solid var(--brand-line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(222,219,200,.62);text-align:center;line-height:1.4;
+}
+.avatar[hidden]{display:none}
 
-/* ---------- 区块通用 ---------- */
-section{padding:72px 0}
-.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:26px}
-.sec-head h2{font-size:21px;font-weight:600;letter-spacing:.02em}
-.sec-head .anchor{
-  width:6px;height:6px;border-radius:50%;background:var(--brand);margin-bottom:7px;
-  box-shadow:0 0 10px var(--brand);
+/* ---------- 区块通用 ----------
+   Prisma 编辑式头部：编号（01/02）+ 超大衬线斜体标题 + 通长细线 */
+section{padding:110px 0}
+.sec-head{
+  display:flex;align-items:baseline;gap:18px;
+  padding-bottom:22px;margin-bottom:44px;
+  border-bottom:1px solid var(--line);
+}
+.sec-no{
+  font-family:"Instrument Serif",serif;font-style:italic;
+  font-size:16px;color:var(--txt-3);letter-spacing:.12em;
+}
+.sec-head h2{
+  font-family:var(--f-serif);
+  font-style:italic;font-weight:700;
+  font-size:clamp(32px,4.2vw,52px);
+  line-height:1.1;letter-spacing:.01em;
 }
 .sec-head .count{margin-left:auto}
 
@@ -225,22 +287,23 @@ section{padding:72px 0}
   transition:box-shadow .22s, transform .22s;
   line-height:0;
 }
-.photo img{width:100%;height:100%;display:block;object-fit:cover}
+.photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s var(--ease-out)}
 .photo::after{
   content:"";position:absolute;inset:0;
-  background:rgba(186,85,211,0);
+  background:rgba(225,224,204,0);
   transition:.22s;pointer-events:none;
 }
-.photo:hover::after{background:rgba(186,85,211,.10)}
+.photo:hover::after{background:rgba(225,224,204,.08)}
 .photo:hover{
   transform:translateY(-3px);
-  box-shadow:0 14px 34px rgba(0,0,0,.45), 0 0 0 2px var(--brand-line);
+  box-shadow:0 14px 34px rgba(0,0,0,.5), 0 0 0 1px var(--brand-line);
 }
+.photo:hover img{transform:scale(1.04)}   /* Prisma 手法：图内缩放 */
 
 /* ---------- 照片灯箱（PRD §4.4）---------- */
 .lightbox{
   position:fixed;inset:0;z-index:300;
-  background:rgba(8,9,12,.92);
+  background:rgba(5,5,7,.92);
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -273,29 +336,29 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
 
 /* ---------- 记录卡片流：2 列 · 时间倒序（PRD §4.3）---------- */
 .placeholder-note{
-  margin:-14px 0 20px;
+  margin:-24px 0 28px;
   color:var(--txt-3);
 }
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:18px;
+  gap:22px;
   align-items:start;           /* 每张卡各按自己的内容高度，不互相拉平 */
 }
 .card{
   display:block;               /* 笔记卡是 <a>，要它像块一样撑满 */
   color:inherit;
-  background:var(--glass);
+  background:transparent;      /* Prisma 式隐形卡：平时只有细线，hover 才浮出 */
   border:1px solid var(--line);
   border-radius:var(--r-card);
   overflow:hidden;
-  transition:.2s;
+  transition:.25s var(--ease-out);
 }
-.card:hover{border-color:var(--brand-line);background:var(--glass-2);transform:translateY(-2px)}
+.card:hover{border-color:var(--brand-line);background:var(--glass);transform:translateY(-3px)}
 .card.note{cursor:pointer}
 .card.thought{cursor:default}  /* 感悟卡不可点（PRD §4.3） */
 /* 感悟卡没有跳转，所以不给悬停位移，免得看起来像能点 */
-.card.thought:hover{transform:none;border-color:var(--line);background:var(--glass)}
+.card.thought:hover{transform:none;border-color:var(--line);background:transparent}
 
 .cover{                        /* 封面：统一 16:9（PRD §4.6） */
   aspect-ratio:16/9;
@@ -304,19 +367,24 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   background:var(--bg-2);
   overflow:hidden;
 }
-.cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease-out)}
+.card.note:hover .cover img{transform:scale(1.04)}   /* 与照片墙同款图内缩放 */
 
-.card-body{padding:16px 18px 18px}
-.tagline{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.card-body{padding:18px 20px 20px}
+.tagline{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .tag{
   font-size:11.5px;padding:2.5px 9px;border-radius:999px;
-  background:var(--brand-dim);color:#DCB4E8;border:1px solid var(--brand-line);
-  letter-spacing:.04em;
+  background:var(--brand-dim);color:var(--brand);border:1px solid var(--brand-line);
+  letter-spacing:.08em;
 }
 .tag.plain{
-  background:rgba(255,255,255,.06);color:var(--txt-3);border-color:var(--line);
+  background:rgba(225,224,204,.06);color:var(--txt-3);border-color:var(--line);
 }
-.card h3{font-size:16.5px;font-weight:600;line-height:1.5;letter-spacing:.01em}
+/* 笔记卡标题：中文宋体，与卡内正文的黑体形成编辑式层次 */
+.card h3{
+  font-family:var(--f-serif-sc);
+  font-size:18px;font-weight:700;line-height:1.5;letter-spacing:.02em;
+}
 /* 卡片上的正文摘要（2026-09-28 Jack 定：笔记卡必须有摘要） */
 .card .summary{margin-top:9px;font-size:13.5px;color:var(--txt-2);line-height:1.78}
 .card .summary p{margin:0}
@@ -324,27 +392,32 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
 
 /* ---------- 笔记详情页（PRD §4.5 / §9.1）----------
    与首页共用同一套变量与卡片样式，满足 PRD §5.3「全站风格一致」 */
-.post-wrap{padding:44px 0 72px}
+.post-wrap{padding:56px 0 90px}
 .post{max-width:760px}
 .back{
-  display:inline-block;margin-bottom:22px;
-  font-size:13.5px;color:var(--txt-2);
+  display:inline-block;margin-bottom:26px;
+  font-size:13px;color:var(--txt-2);letter-spacing:.1em;
   padding:7px 15px;border-radius:999px;
-  background:var(--glass);border:1px solid var(--line);
+  background:transparent;border:1px solid var(--line);
   transition:.18s;
 }
 .back:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
 .post-cover{
   width:100%;aspect-ratio:16/9;object-fit:cover;
   border-radius:var(--r-card);border:1px solid var(--line);
-  margin-bottom:22px;background:var(--bg-2);
+  margin-bottom:26px;background:var(--bg-2);
 }
-.post h1{font-size:27px;font-weight:700;line-height:1.35;letter-spacing:.01em}
+/* 详情页大标题：中文宋体大字，编辑式 */
+.post h1{
+  font-family:var(--f-serif-sc);
+  font-size:clamp(30px,3.6vw,42px);
+  font-weight:700;line-height:1.3;letter-spacing:.01em;
+}
 .post-meta{
   display:flex;align-items:center;gap:10px;
-  margin-top:12px;padding-bottom:18px;border-bottom:1px solid var(--line);
+  margin-top:14px;padding-bottom:20px;border-bottom:1px solid var(--line);
 }
-.post-body{margin-top:22px;font-size:15.5px;color:var(--txt-2);line-height:1.95}
+.post-body{margin-top:24px;font-size:15.5px;color:var(--txt-2);line-height:1.95}
 .post-body p{margin-bottom:15px}
 /* 正文插图：统一 4:3（PRD §4.6） */
 .post-body img{
@@ -352,13 +425,13 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   border-radius:var(--r-sm);margin:4px 0 20px;background:var(--bg-2);
 }
 .post-nav{
-  margin-top:38px;padding-top:20px;border-top:1px solid var(--line);
+  margin-top:42px;padding-top:22px;border-top:1px solid var(--line);
   display:flex;gap:16px;justify-content:space-between;align-items:stretch;
 }
 .post-nav a{
   font-size:13.5px;color:var(--txt-2);line-height:1.6;
   padding:11px 16px;border-radius:var(--r-sm);max-width:48%;
-  background:var(--glass);border:1px solid var(--line);
+  background:transparent;border:1px solid var(--line);
   transition:.18s;
 }
 .post-nav a:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
@@ -368,34 +441,78 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
 /* ---------- 页脚 ---------- */
 footer{
   border-top:1px solid var(--line);
-  padding:34px 0 42px;
+  padding:38px 0 46px;
   background:var(--bg-2);
 }
 footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
-/* ---------- 毛玻璃降级（PRD §9.4）---------- */
+/* ---------- 毛玻璃降级（PRD §9.4）----------
+   2026-09-29：首屏不再是毛玻璃信息卡（改满屏 hero），本降级改为只管顶栏。 */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .infocard,.topbar{background:rgba(30,32,40,.95)}
+  body.scrolled .topbar{background:rgba(17,17,20,.97)}
 }
 
 /* ---------- 手机端：只保证不横向滚动（PRD §5.4）---------- */
 @media (max-width:900px){
   .wrap{padding:0 18px}
-  .infocard .row{flex-direction:column;align-items:flex-start}
-  .title{font-size:25px}
+  section{padding:72px 0}
+  .hero{padding:80px 0 32px}
+  /* 手机端：四字不许断行，所以按容器宽反推字号上限（窄屏 360px 下 ≈ 20px×4=80…）
+     实际取 16vw 并允许断行，避免"Ja的小屋"顶出屏幕（PRD §5.4 只要求不横滚） */
+  .title{font-size:clamp(40px,16vw,88px);white-space:normal}
+  .slogan{font-size:12px;letter-spacing:.34em;margin-right:-.34em}
+  .hero-meta{padding-top:22px}
+  .updated{position:static;margin-top:12px;display:block}
+  .sec-head{padding-bottom:16px;margin-bottom:30px;gap:12px}
+  .sec-head h2{font-size:30px}
   .topbar .wrap{height:56px}
   nav{gap:2px}
-  nav a{padding:6px 10px;font-size:13px}
+  nav a{padding:6px 10px;font-size:12px;letter-spacing:.08em}
   /* 手机端照片墙与卡片流都变单列（PRD §7.4：只保证不横向滚动，观感问题不列入验收） */
   .photos{flex-direction:column}
   .photos .col{width:100%;flex-basis:100%}
   .cards{grid-template-columns:1fr}
-  .post h1{font-size:22px}
-  .post-wrap{padding:28px 0 56px}
+  .post h1{font-size:26px}
+  .post-wrap{padding:32px 0 60px}
   .post-nav a{max-width:100%}
   .lightbox{padding:16px}
   .lb-btn{width:38px;height:38px;font-size:20px}
   .lb-prev{left:6px}
   .lb-next{right:6px}
   .lb-close{right:6px;top:6px}
+}
+
+/* ---------- Prisma 皮肤：动效与质感（2026-09-29）----------
+   四个手法全部原生实现（无 Tailwind / Framer Motion —— TECH §3.1 §11）：
+   ① .wpu  标题逐字入场：app.js 把 #siteName 拆成逐字 span，加 .on 触发；
+      overflow:hidden + 下移 110% 是"从底线拉上来"的关键；
+      padding-bottom:.08em 防止中文/字母下伸部分被裁掉。
+   ② .scr  自我介绍滚动显现：初始半透明，进视口后恢复。
+   ③ .rise 卡片/照片/区块头入场：IntersectionObserver 加 .in，JS 按序设错落延迟；
+      入场结束后 JS 移除 class，把 transition 还给元素自己的 hover。
+   ④ body::after 全站噪点覆盖层：feTurbulence data-URI，Prisma 胶片感；
+      z-index 250 在灯箱（300）之下，不干扰看图。 */
+.wpu{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em;margin-bottom:-.08em}
+.wpu > span{
+  display:inline-block;
+  transform:translateY(110%);opacity:0;
+  transition:transform .8s var(--ease-out),opacity .8s var(--ease-out);
+}
+.wpu.on > span{transform:translateY(0);opacity:1}
+
+.scr{opacity:.22;transform:translateY(10px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.scr.on{opacity:1;transform:none}
+
+.rise{opacity:0;transform:translateY(14px) scale(.97);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+.rise.in{opacity:1;transform:none}
+
+body::after{
+  content:"";position:fixed;inset:0;z-index:250;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 尊重系统「减弱动效」设置：直接显示最终态，不做任何动画 */
+@media (prefers-reduced-motion:reduce){
+  .wpu>span,.scr,.rise{transition:none;transform:none;opacity:1}
 }
