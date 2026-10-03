@@ -35,6 +35,97 @@
    ⑤ .hero-bg .tag（"背景大图占位"文字）已删：真图到位，占位标注退役。
 
    依据：PRD.md §4.2 §4.6 §5.3 §5.4 §9.4 · TECH_DESIGN.md §3.1 §11 §13.2
+   ============================================================
+
+   ============================================================
+   Day 9 修复记录（2026-10-02）——「设计规则 → 审查 → 修复」闭环
+   ============================================================
+   规则来源：本轮新立的四组可判定设计规则（A 对比 / B 间距 / C 对齐 /
+   D 交互）。用 design-audit.py 跑出量化证据后按下表修，改前改后的
+   数字都是实测值，不是估计。
+
+   ① 【A1 对比度】全站最小一级文字只有 3.5:1，低于 WCAG 2.1 AA 对
+      小字要求的 4.5:1 —— 这是本次审查里最影响「像不像一个正经产品」
+      的一处（页脚、标签、区块编号、"最后更新于"全都在这一级）。
+        改前：--txt-3 = rgba(222,219,200,.45)
+              → 在 #0A0A0C 上 3.54:1、在页脚 #111114 上 3.57:1   ✗
+        改后：.62 → 5.82:1 / 5.55:1                               ✓
+        顺带：--txt-2 由 .70 提到 .78（7.19:1 → 8.77:1）——
+              它与最小一级的差距由 2.03 倍收到 1.51 倍，仍高于 A2 的
+              「相邻层级 ≥ 1.4 倍」，但层级不再拉得那么开。
+   ② 【B1 间距】全站 34 处 margin / padding / gap 不是 4 的倍数
+      （6 / 10 / 14 / 18 / 22 / 26 / 30 / 90 / 110px 等）。
+      改法：新增一组间距刻度变量 --sp-N（N × 4px = 像素值），34 处
+      全部换成变量。以后要整体调密或调松，只改刻度、不动组件。
+   ③ 【C2 对齐】.updated（"最后更新于"）的 right:0 原本挂在最近的
+      定位祖先 .wrap.hero-inner（宽 1116px）上，而它所属的信息块
+      .hero-meta 只有 720px 宽 → 同一个信息组出现两条右基准。
+      改法：给 .hero-meta 补 position:relative，让 right:0 挂回自己家。
+   ④ 【D1 交互】原先只有 :hover，Tab 键走一遍看不见焦点在哪。
+      改法：集中写一条 a / button / [tabindex] 的 :focus-visible，
+      而不是逐个组件补 —— 以后新增任何可点元素自动生效。
+   ⑤ 【D2 触控】手机端导航条目高 33.0px，低于 36px 下限。
+      改法：padding 6px 10px → 8px 12px（条目高 33.0 → 37.0px）。
+   ⑥ 【A3 顺手归位】"颜色与字体只引用变量"：nav a.active 的 #0A0A0C、
+      .avatar 的 rgba(222,219,200,.62)、.tag.plain 的 rgba(225,224,204,.06)
+      都是写死的值，分别换成 var(--bg) / var(--txt-3) / var(--glass)
+      （数值完全相同，观感零变化）；.sec-no 写死的字体名换成 var(--f-serif)。
+
+   一并说明（不是修复，是纠正一行"说了做不到"的代码）：
+   .hero-meta 原本写着 margin-top:auto 并注释「推到首屏底部」，但它的
+   父级 .hero 是 align-items:center 的居中容器 —— 居中之后没有剩余空间
+   可以分配，auto 只会退化成 0，这行从来没有生效过。首屏现在的实际设计
+   是「整组垂直居中」：标题居中偏上、辅助信息细排落中下部（见下方 §首屏
+   说明），所以本轮按实际设计删掉这行、把注释改成事实，**构图一动不动**。
+   若日后想改成 Prisma 式「标题顶到最上、信息沉到最底」，改法是：
+   .hero 用 align-items:stretch，并让 .hero-inner 撑满高度，再把 auto
+   加回来 —— 三行以内，随时可切。
+
+   ============================================================
+   同日第二轮：六维设计审查与修复（2026-10-02 晚）
+   ============================================================
+   与上一轮的区别：上一轮是"先立自己的规则、再按规则修"；这一轮是
+   **换一把外部尺度复查** —— 用刚装好的 animate 技能（Emil Kowalski）
+   的 Never Ship 清单当尺子，重查六项：信息层级 / 字体大小 / 颜色对比 /
+   卡片间距 / 按钮状态 / 手机宽度布局。
+   证据脚本（会话工作区）：audit-6d.py（六维量化）、
+   hero-contrast.py（首屏底图分层合成，逐像素算对比度）。
+
+   复查结论（全部实测，非推断）：
+     · 平面颜色对比 **全绿**：最低 --txt-3 = 5.82:1（Day 9 上一轮刚修）
+     · 间距 **唯一例外是 .wpu 的 .08em**（文字下划线偏移，不属间距）
+     · 结构卫生 ✓：花括号 140/140、变量 35 定义 / 35 使用
+     · 首屏底图上的文字：**当前每处都达标**（标题 5.9–8.2、定位语 8.1–8.6、
+       副标题与自我介绍 6.2–7.4、"最后更新于" 5.2–5.3）
+   真正的问题集中在下面 4 条，本轮已修：
+
+   ① 【手机宽度布局】.hero 原先只有 min-height:100vh —— 手机上地址栏
+      占位后它是按"地址栏收起"算的，比能看见的区域高，首屏底部那行
+      "最后更新于"被顶出屏幕，PRD §4.6/§5.3「首屏内」做不到。
+      改法：补一行 min-height:100svh 兜底（svh = 地址栏展开时的最小可视
+      高度），.lb-img 同理补 76svh。桌面端 svh ≡ vh，零变化。
+   ② 【按钮状态】全站 :active 规则 **0 条**（点下去零反馈），且有 7 处
+      transition 只写时长不写属性名 —— 等价 transition:all，是 animate
+      技能 Never Ship 清单第一条。改法：集中补一条 a/button/[tabindex]
+      的 :active，并给三个"可推平面"（照片/卡片/圆图标）补 1px 下压。
+      **用 opacity 而非 translateY**：灯箱 ‹ › 靠 transform:translateY(-50%)
+      居中，写 transform 会把它们弹飞。时长 120ms（技能要求 100–160ms）。
+   ③ 【触摸设备】12 条 :hover 全部没有能力门控 —— 手机点一下卡片，卡片
+      会抬起 3px 并一直停住不落回。改法：把各处的 hover 逐个包进
+      @media (hover:hover) and (pointer:fine)。桌面端该查询恒为真，
+      行为与改前完全一致；手机端不再粘住。
+   ④ 【字体大小】.tag 11.5px、.avatar 11px 低于 PRD §4.6 规定的全站基准
+      12.5px → 都提到 12.5px。（.avatar 当前 hidden，零风险对齐。）
+
+   查过但**没有动**的（等 Jack 拍板，不自行决定）：
+     · .cards 的缝 24px ÷ .card-body 内边距 20px = **1.20 倍**，偏挤；
+     · 11 个字号里 13.5/13/12.5/11.5/11 五级只差 1.03–1.09 倍，层级含糊；
+     · 首屏压暗层最浅一档 .62，而底图上有大片白 —— y<55% 段实测
+       --txt-3 只有 2.64–4.24:1；当前文字恰好都落在 y≥52% 的达标区，
+       但安全余量是靠"内容短 + 垂直居中"两个巧合换来的；
+     · public/assets/bg.webp 实为一张《假面骑士》漫画拼贴、右上角带
+       "©I&T"水印，与本文件上方注释写的"真实照片（Rider01 生成）"不符，
+       来源与版权需 Jack 确认。
    ============================================================ */
 
 /* ---------- 视觉规范（依据 PRD §4.6）---------- */
@@ -48,15 +139,46 @@
   --glass-2:    rgba(225,224,204,.10);
   --line:       rgba(225,224,204,.12);
   --txt:        #DEDBC8;          /* 主文字（Prisma Cream） */
-  --txt-2:      rgba(222,219,200,.70);  /* 次级文字 */
-  --txt-3:      rgba(222,219,200,.45);  /* 最小一级文字：全站基准 */
+  /* Day 9 修复①：次级文字 .70 → .78（7.19:1 → 8.77:1） */
+  --txt-2:      rgba(222,219,200,.78);  /* 次级文字 */
+  /* Day 9 修复①：最小一级文字 .45 → .62（3.54:1 → 5.82:1，过 WCAG AA 4.5:1） */
+  --txt-3:      rgba(222,219,200,.62);  /* 最小一级文字：全站基准 */
   --r-card:     16px;
   --r-sm:       10px;
   --maxw:       1180px;
   /* 照片墙间距 = 单张图宽的 1/10（2026-09-26 Jack 指定）
      计算依据：容器 1180 − 内边距 64 = 1116，每列 558，558 ÷ 10 ≈ 56px
-     若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4 */
+     若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4
+     ⚠ 这是间距刻度唯一的例外（规则 B2：例外必须自带推导式）。
+       它的 56px 与下方 --sp-14 数值相同，但来源无关，**不要把
+       --photo-gap 换成 --sp-14** —— 换了两者就绑死，改刻度时会误伤照片墙。 */
   --photo-gap:  56px;
+
+  /* ---- 间距刻度（Day 9 新增；规则 B1：所有 margin / padding / gap
+     只能取下面这些值，一律 4 的倍数）----
+     命名规则：--sp-N 的 N × 4px 就是它的像素值
+     （--sp-1=4px、--sp-4=16px、--sp-28=112px）。
+     需要中间值时——**改刻度，别写死数字**，否则全站节奏会一点点乱掉。
+     不在本表里的数值一律视为违规。
+     ⚠ 不适用于 width / height / font-size / 圆角 —— 那些不是"间距"。 */
+  --sp-1:   4px;
+  --sp-2:   8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-11: 44px;
+  --sp-12: 48px;
+  --sp-14: 56px;
+  --sp-15: 60px;
+  --sp-18: 72px;
+  --sp-20: 80px;
+  --sp-22: 88px;
+  --sp-24: 96px;
+  --sp-28:112px;
+
   --ease-out:   cubic-bezier(.16,1,.3,1);  /* Prisma 动效曲线：快出慢收 */
   --f-serif:    "Instrument Serif","Noto Serif SC",serif;  /* 标题：拉丁斜体 + 中文宋体 */
   --f-serif-sc: "Noto Serif SC",serif;                     /* 纯中文衬线（正体用） */
@@ -78,7 +200,38 @@ a{color:inherit;text-decoration:none}
 /* 最小一级文字样式——全站基准（标签 / 日期 / 页脚 统一沿用，分隔符统一用 ·） */
 .t-min{font-size:12.5px;color:var(--txt-3);letter-spacing:.02em}
 
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp-8)}
+
+/* ---------- 键盘焦点态（Day 9 新增；规则 D1）----------
+   原先全站只有 :hover —— 鼠标用户看不出问题，但用 Tab 键走一遍
+   完全不知道焦点落在哪，键盘用户等于没有导航。
+   这里**集中写一条**，而不是逐个组件补 :focus-visible：
+   以后新增任何 <a> / <button> / [tabindex] 都自动生效 ——
+   这就是"把一条视觉规则写成可复用组件约束"的实例。 */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible{
+  outline:2px solid var(--brand);
+  outline-offset:var(--sp-1);
+}
+
+/* ---------- 按压反馈（Day 9 六维修复②；同一思路的第二条集中约束）----------
+   原先全站 :active 规则 **0 条** —— 鼠标点下去界面一动不动，手感像"没反应"。
+   这里沿用上面 :focus-visible 的做法：**只写一条**，以后新增任何
+   <a> / <button> / [tabindex] 都自动有按压反馈，不用逐个组件补。
+
+   为什么用 opacity 而不是 translateY：
+     灯箱的 ‹ › 两个箭头靠 transform:translateY(-50%) 做垂直居中，
+     一旦在 :active 里写 transform，它们会被弹出去 50%（老居中值被覆盖）。
+     opacity 不碰任何组件的 transform，是这里唯一不会误伤的选择。
+   时长 120ms 落在 animate 技能要求的 100–160ms 区间
+     —— 按压反馈必须"立刻"，跟 hover 的 .18s 不是一回事。 */
+a:active,
+button:active,
+[tabindex]:active{
+  opacity:.82;
+  transition-duration:.12s;
+}
 
 /* 点锚点时给吸顶栏（64px）留出余量，否则目标会被挡住 */
 [id]{scroll-margin-top:80px}
@@ -99,16 +252,28 @@ body.scrolled .topbar{
   border-bottom-color:var(--line);
 }
 .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.06em;font-size:15px}
+.brand{display:flex;align-items:center;gap:var(--sp-2);font-weight:600;letter-spacing:.06em;font-size:15px}
 .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
-nav{display:flex;gap:10px}
+nav{display:flex;gap:var(--sp-2)}
 nav a{
-  padding:7px 14px;border-radius:999px;font-size:13px;color:var(--txt-2);
+  /* Day 9 修复⑤：7px 14px → 8px 16px，触控条目高 36.8 → 38.8px（规则 D2） */
+  padding:var(--sp-2) var(--sp-4);border-radius:999px;font-size:13px;color:var(--txt-2);
   letter-spacing:.14em;   /* Prisma 式宽字距小字导航 */
-  transition:.18s;
+  /* Day 9 六维修复②：原先写 transition:.18s —— 不写属性名等于 transition:all，
+     以后给导航加任何属性都可能被顺手动画到（animate 技能 Never Ship 第一条）。
+     这里只列真正会变的两个（hover 改 color、.active 改 background-color）。
+     时长与缓动都没动：简写里省略缓动 = 默认 ease，与原写法完全一致。 */
+  transition:color .18s, background-color .18s;
 }
-nav a:hover{color:var(--txt)}
-nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacing:.14em}
+/* Day 9 六维修复③（触摸设备）：整组 hover 包进能力门控 ——
+   手机上点一下也会触发 :hover 并且**不会自己松开**，导航会一直留着高亮。
+   (hover:hover) and (pointer:fine) = 有真悬停能力且主指针精细，才应用。
+   桌面端这个查询恒为真，行为与改之前一模一样。 */
+@media (hover:hover) and (pointer:fine){
+  nav a:hover{color:var(--txt)}
+}
+/* Day 9 修复⑥：写死的 #0A0A0C 换成 var(--bg)（同值，观感零变化） */
+nav a.active{color:var(--bg);background:var(--brand);box-shadow:none;letter-spacing:.14em}
 
 /* ---------- 首屏：满屏 hero（Prisma 式 · 2026-09-29 重构）----------
    Jack 2026-09-29 决策 B「首屏整屏重构」：取消毛玻璃信息卡盒子。
@@ -117,13 +282,29 @@ nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacin
      · 不靠盒子、不靠照片讲氛围，靠「大 · 空 · 暗」制造压迫感；
      · 全部辅助信息（定位语/副标题/自我介绍/数字/图标）细排在中下部，
        字号刻意压小、字距刻意拉开，与大标题形成极端对比。
-   ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。 */
+   ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。
+
+   ⚠ align-items:center 是**有意**的（Day 9 审查结论）：
+     它让标题组 + 信息块作为一个整体在首屏垂直居中 = 上面说的"居中偏上 /
+     中下部"。居中之后容器里没有剩余空间，所以**子项上的 margin-top:auto
+     一律无效**（会退化成 0，写了等于没写）—— 原 .hero-meta 上就留着这么
+     一行，Day 9 已删。要改成"标题顶到最上、信息沉到最底"的话，见文件头
+     Day 9 修复记录末段的切换方法。 */
 .hero{
   position:relative;
+  /* Day 9 六维修复①（手机宽度布局）：原先只有 min-height:100vh。
+     手机浏览器的地址栏会占掉一截高度，而 100vh 是按"地址栏收起时"算的，
+     于是首屏底部那行"最后更新于"会被顶出屏幕 —— PRD §4.6/§5.3 要求
+     「首屏不滚动的前提下，主标题与定位语同时可见；副标题也在首屏内」，
+     在手机上就做不到。
+     svh = small viewport height = **地址栏展开时**的最小可视高度，
+     用它兜底就一定装得下。写法是"同一个属性写两行"：
+     不认 svh 的浏览器用上面那行，认的用下面那行；桌面端 svh ≡ vh，零变化。 */
   min-height:100vh;
+  min-height:100svh;
   display:flex;align-items:center;
   overflow:hidden;
-  padding:96px 0 44px;      /* 顶部给悬浮导航留位，底部留出信息细排的呼吸 */
+  padding:var(--sp-24) 0 var(--sp-11);  /* 顶部给悬浮导航留位，底部留出信息细排的呼吸 */
 }
 /* 背景大图：真实照片（bg.webp，由 Rider01 生成）在底层，奶油光斑叠在上层 */
 .hero-bg{
@@ -158,7 +339,7 @@ nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacin
      1440×900 → 200px 封顶；
      矮屏（如 1280×720 的实际可用高更小时）由 34vh 兜住，不会把信息挤出首屏。
    拉丁走 Instrument Serif 真斜体，中文走 Noto Serif SC（浏览器合成斜体）。 */
-.hero-title-wrap{margin-bottom:6px}
+.hero-title-wrap{margin-bottom:var(--sp-2)}
 .title{
   font-family:var(--f-serif);
   font-style:italic;
@@ -177,8 +358,11 @@ nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacin
 
 /* 信息细排区：大标题下方，靠一根细线分隔（「关于」锚点落在这里） */
 .hero-meta{
-  margin-top:auto;                      /* 推到首屏底部 */
-  padding-top:30px;margin-bottom:0;
+  /* Day 9 修复③（规则 C2）：原本没有 position —— 于是 .updated 的
+     right:0 跑去挂到最近的定位祖先 .wrap.hero-inner（1116px）上，
+     与所属信息块（720px）不是同一条右基准。补上 relative 即可。 */
+  position:relative;
+  padding-top:var(--sp-8);
   border-top:1px solid var(--line);
   max-width:720px;
   transition:opacity .3s;
@@ -191,48 +375,57 @@ nav a.active{color:#0A0A0C;background:var(--brand);box-shadow:none;letter-spacin
 
 .subtitle{font-size:14px;color:var(--txt-2);letter-spacing:.06em}
 .intro{
-  margin-top:14px;
+  margin-top:var(--sp-4);
   font-size:14px;color:var(--txt-2);line-height:1.85;
 }
 
 /* 信息细排底部：三个数字 + 两个圆形图标 */
 .cardfoot{
-  margin-top:20px;padding-top:18px;border-top:1px solid var(--line);
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
 }
-.stats{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt-2);letter-spacing:.06em}
+.stats{display:flex;align-items:center;gap:var(--sp-2);font-size:13px;color:var(--txt-2);letter-spacing:.06em}
 .stats b{color:var(--txt);font-weight:600}
-.icons{display:flex;gap:10px}
+.icons{display:flex;gap:var(--sp-2)}
 .icon-round{
   width:36px;height:36px;border-radius:50%;
   background:var(--glass-2);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;
-  transition:.18s;
+  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
+  transition:background-color .18s, border-color .18s, transform .18s;
 }
-.icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
 .icon-round svg{width:17px;height:17px;fill:var(--txt-2)}
-.icon-round:hover svg{fill:var(--txt)}
-.updated{position:absolute;right:0;bottom:-26px}
+/* Day 9 六维修复③：hover 里带 translateY(-2px)，触摸设备上会"粘住"，包门控 */
+@media (hover:hover) and (pointer:fine){
+  .icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
+  .icon-round:hover svg{fill:var(--txt)}
+}
+/* "最后更新于"：挂在 .hero-meta（Day 9 修复③）的右下角外侧 */
+.updated{position:absolute;right:0;bottom:-24px}
 /* 头像：真实头像到位后把这段换成 <img>。当前为占位节点，hidden 不显示 */
 .avatar{
-  width:96px;height:96px;border-radius:18px;
+  width:96px;height:96px;border-radius:var(--r-card);
   background:linear-gradient(145deg,rgba(225,224,204,.28),rgba(150,142,120,.16));
   border:1px solid var(--brand-line);
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:rgba(222,219,200,.62);text-align:center;line-height:1.4;
+  /* 原为写死的 rgba(222,219,200,.62)，正好等于修复①之后的 --txt-3 */
+  /* Day 9 六维修复④：11px → 12.5px，同上对齐全站基准。
+     本元素当前是 hidden 的占位节点（<div class="avatar" hidden>），
+     屏幕上根本不显示，属零风险对齐；真头像到位后字号已是正确值。 */
+  font-size:12.5px;color:var(--txt-3);text-align:center;line-height:1.4;
 }
 .avatar[hidden]{display:none}
 
 /* ---------- 区块通用 ----------
    Prisma 编辑式头部：编号（01/02）+ 超大衬线斜体标题 + 通长细线 */
-section{padding:110px 0}
+section{padding:var(--sp-28) 0}
 .sec-head{
-  display:flex;align-items:baseline;gap:18px;
-  padding-bottom:22px;margin-bottom:44px;
+  display:flex;align-items:baseline;gap:var(--sp-4);
+  padding-bottom:var(--sp-6);margin-bottom:var(--sp-11);
   border-bottom:1px solid var(--line);
 }
 .sec-no{
-  font-family:"Instrument Serif",serif;font-style:italic;
+  font-family:var(--f-serif);font-style:italic;
   font-size:16px;color:var(--txt-3);letter-spacing:.12em;
 }
 .sec-head h2{
@@ -291,14 +484,21 @@ section{padding:110px 0}
 .photo::after{
   content:"";position:absolute;inset:0;
   background:rgba(225,224,204,0);
-  transition:.22s;pointer-events:none;
+  /* Day 9 六维修复②：transition:.22s → 只列 background-color */
+  transition:background-color .22s;pointer-events:none;
 }
-.photo:hover::after{background:rgba(225,224,204,.08)}
-.photo:hover{
-  transform:translateY(-3px);
-  box-shadow:0 14px 34px rgba(0,0,0,.5), 0 0 0 1px var(--brand-line);
+/* Day 9 六维修复③：照片墙这一组是最"粘"的 —— 手指点一下照片，
+   整张图会抬起 3px + 内部放大 1.04 倍，然后一直停在那儿不落回去。
+   整组包进能力门控（.photo:hover 的权重与 .photo:active 相同，
+   靠本文件末尾那条 :active 写在后面取胜）。 */
+@media (hover:hover) and (pointer:fine){
+  .photo:hover::after{background:rgba(225,224,204,.08)}
+  .photo:hover{
+    transform:translateY(-3px);
+    box-shadow:0 14px 34px rgba(0,0,0,.5), 0 0 0 1px var(--brand-line);
+  }
+  .photo:hover img{transform:scale(1.04)}   /* Prisma 手法：图内缩放 */
 }
-.photo:hover img{transform:scale(1.04)}   /* Prisma 手法：图内缩放 */
 
 /* ---------- 照片灯箱（PRD §4.4）---------- */
 .lightbox{
@@ -307,13 +507,15 @@ section{padding:110px 0}
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;
-  padding:56px;
+  gap:var(--sp-3);
+  padding:var(--sp-14);
   cursor:zoom-out;              /* 点任意处关闭，所以整层都是"关闭"手势 */
 }
 .lightbox[hidden]{display:none}
 .lb-img{
-  max-width:100%;max-height:76vh;
+  /* Day 9 六维修复①：同 .hero —— 灯箱是满屏固定层，76vh 在手机上会超出可视区，
+     多出来的部分要靠拖动才能看到。补 76svh 兜底。 */
+  max-width:100%;max-height:76vh;max-height:76svh;
   border-radius:var(--r-sm);
   box-shadow:0 24px 60px rgba(0,0,0,.6);
   background:var(--bg-2);
@@ -325,24 +527,27 @@ section{padding:110px 0}
   background:var(--glass-2);border:1px solid var(--line);
   color:var(--txt);font-size:24px;line-height:1;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:.18s;
+  cursor:pointer;transition:background-color .18s, border-color .18s;
   font-family:inherit;
 }
-.lb-btn:hover{background:var(--brand-dim);border-color:var(--brand-line)}
-.lb-prev{left:22px;top:50%;transform:translateY(-50%)}
-.lb-next{right:22px;top:50%;transform:translateY(-50%)}
-.lb-close{right:22px;top:22px}
+/* Day 9 六维修复③：hover 包门控（灯箱在手机上也会被点到） */
+@media (hover:hover) and (pointer:fine){
+  .lb-btn:hover{background:var(--brand-dim);border-color:var(--brand-line)}
+}
+.lb-prev{left:var(--sp-6);top:50%;transform:translateY(-50%)}
+.lb-next{right:var(--sp-6);top:50%;transform:translateY(-50%)}
+.lb-close{right:var(--sp-6);top:var(--sp-6)}
 body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
 
 /* ---------- 记录卡片流：2 列 · 时间倒序（PRD §4.3）---------- */
 .placeholder-note{
-  margin:-24px 0 28px;
+  margin:calc(-1 * var(--sp-6)) 0 var(--sp-6);
   color:var(--txt-3);
 }
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:22px;
+  gap:var(--sp-6);
   align-items:start;           /* 每张卡各按自己的内容高度，不互相拉平 */
 }
 .card{
@@ -352,13 +557,18 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   border:1px solid var(--line);
   border-radius:var(--r-card);
   overflow:hidden;
-  transition:.25s var(--ease-out);
+  /* Day 9 六维修复②：transition:.25s var(--ease-out) → 列出真正会变的三个属性 */
+  transition:border-color .25s var(--ease-out), background-color .25s var(--ease-out), transform .25s var(--ease-out);
 }
-.card:hover{border-color:var(--brand-line);background:var(--glass);transform:translateY(-3px)}
 .card.note{cursor:pointer}
 .card.thought{cursor:default}  /* 感悟卡不可点（PRD §4.3） */
-/* 感悟卡没有跳转，所以不给悬停位移，免得看起来像能点 */
-.card.thought:hover{transform:none;border-color:var(--line);background:transparent}
+/* Day 9 六维修复③：hover 包门控 —— 卡片是最明显的"粘住"现场
+   （手机点一下，卡片抬起 3px + 描边高亮，不落回去） */
+@media (hover:hover) and (pointer:fine){
+  .card:hover{border-color:var(--brand-line);background:var(--glass);transform:translateY(-3px)}
+  /* 感悟卡没有跳转，所以不给悬停位移，免得看起来像能点 */
+  .card.thought:hover{transform:none;border-color:var(--line);background:transparent}
+}
 
 .cover{                        /* 封面：统一 16:9（PRD §4.6） */
   aspect-ratio:16/9;
@@ -368,17 +578,25 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   overflow:hidden;
 }
 .cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease-out)}
-.card.note:hover .cover img{transform:scale(1.04)}   /* 与照片墙同款图内缩放 */
+/* Day 9 六维修复③：hover 包门控（与照片墙同款图内缩放） */
+@media (hover:hover) and (pointer:fine){
+  .card.note:hover .cover img{transform:scale(1.04)}
+}
 
-.card-body{padding:18px 20px 20px}
-.tagline{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.card-body{padding:var(--sp-5)}
+.tagline{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)}
 .tag{
-  font-size:11.5px;padding:2.5px 9px;border-radius:999px;
+  /* Day 9 六维修复④：11.5px → 12.5px，对齐全站基准。
+     PRD §4.6 原文：副标题所用的"最小一级文字"样式是全站基准，
+     卡片标签、日期、页脚文字统一沿用 —— 12.5px 就是那个基准。
+     视觉影响：标签高度 30.1 → 31.9px（+1.8px），肉眼几乎看不出。 */
+  font-size:12.5px;padding:var(--sp-1) var(--sp-2);border-radius:999px;
   background:var(--brand-dim);color:var(--brand);border:1px solid var(--brand-line);
   letter-spacing:.08em;
 }
 .tag.plain{
-  background:rgba(225,224,204,.06);color:var(--txt-3);border-color:var(--line);
+  /* 原为写死的 rgba(225,224,204,.06)，正是 --glass 的值 */
+  background:var(--glass);color:var(--txt-3);border-color:var(--line);
 }
 /* 笔记卡标题：中文宋体，与卡内正文的黑体形成编辑式层次 */
 .card h3{
@@ -386,26 +604,30 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   font-size:18px;font-weight:700;line-height:1.5;letter-spacing:.02em;
 }
 /* 卡片上的正文摘要（2026-09-28 Jack 定：笔记卡必须有摘要） */
-.card .summary{margin-top:9px;font-size:13.5px;color:var(--txt-2);line-height:1.78}
+.card .summary{margin-top:var(--sp-3);font-size:13.5px;color:var(--txt-2);line-height:1.78}
 .card .summary p{margin:0}
-.card .summary p + p{margin-top:2px}
+.card .summary p + p{margin-top:var(--sp-1)}
 
 /* ---------- 笔记详情页（PRD §4.5 / §9.1）----------
    与首页共用同一套变量与卡片样式，满足 PRD §5.3「全站风格一致」 */
-.post-wrap{padding:56px 0 90px}
+.post-wrap{padding:var(--sp-14) 0 var(--sp-22)}
 .post{max-width:760px}
 .back{
-  display:inline-block;margin-bottom:26px;
+  display:inline-block;margin-bottom:var(--sp-6);
   font-size:13px;color:var(--txt-2);letter-spacing:.1em;
-  padding:7px 15px;border-radius:999px;
+  padding:var(--sp-2) var(--sp-4);border-radius:999px;
   background:transparent;border:1px solid var(--line);
-  transition:.18s;
+  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
+  transition:color .18s, border-color .18s, background-color .18s;
 }
-.back:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+/* Day 9 六维修复③：hover 包门控 */
+@media (hover:hover) and (pointer:fine){
+  .back:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+}
 .post-cover{
   width:100%;aspect-ratio:16/9;object-fit:cover;
   border-radius:var(--r-card);border:1px solid var(--line);
-  margin-bottom:26px;background:var(--bg-2);
+  margin-bottom:var(--sp-6);background:var(--bg-2);
 }
 /* 详情页大标题：中文宋体大字，编辑式 */
 .post h1{
@@ -414,37 +636,41 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   font-weight:700;line-height:1.3;letter-spacing:.01em;
 }
 .post-meta{
-  display:flex;align-items:center;gap:10px;
-  margin-top:14px;padding-bottom:20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:var(--sp-2);
+  margin-top:var(--sp-3);padding-bottom:var(--sp-5);border-bottom:1px solid var(--line);
 }
-.post-body{margin-top:24px;font-size:15.5px;color:var(--txt-2);line-height:1.95}
-.post-body p{margin-bottom:15px}
+.post-body{margin-top:var(--sp-6);font-size:15.5px;color:var(--txt-2);line-height:1.95}
+.post-body p{margin-bottom:var(--sp-4)}
 /* 正文插图：统一 4:3（PRD §4.6） */
 .post-body img{
   width:100%;aspect-ratio:4/3;object-fit:cover;
-  border-radius:var(--r-sm);margin:4px 0 20px;background:var(--bg-2);
+  border-radius:var(--r-sm);margin:var(--sp-1) 0 var(--sp-5);background:var(--bg-2);
 }
 .post-nav{
-  margin-top:42px;padding-top:22px;border-top:1px solid var(--line);
-  display:flex;gap:16px;justify-content:space-between;align-items:stretch;
+  margin-top:var(--sp-10);padding-top:var(--sp-6);border-top:1px solid var(--line);
+  display:flex;gap:var(--sp-4);justify-content:space-between;align-items:stretch;
 }
 .post-nav a{
   font-size:13.5px;color:var(--txt-2);line-height:1.6;
-  padding:11px 16px;border-radius:var(--r-sm);max-width:48%;
+  padding:var(--sp-3) var(--sp-4);border-radius:var(--r-sm);max-width:48%;
   background:transparent;border:1px solid var(--line);
-  transition:.18s;
+  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
+  transition:color .18s, border-color .18s, background-color .18s;
 }
-.post-nav a:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+/* Day 9 六维修复③：hover 包门控 */
+@media (hover:hover) and (pointer:fine){
+  .post-nav a:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
+}
 .post-nav .ph{visibility:hidden;max-width:48%;min-width:1px}  /* 缺一边时占位，保持右边对齐 */
 .post-empty{font-size:15px;color:var(--txt-2);line-height:1.9}
 
 /* ---------- 页脚 ---------- */
 footer{
   border-top:1px solid var(--line);
-  padding:38px 0 46px;
+  padding:var(--sp-10) 0 var(--sp-12);
   background:var(--bg-2);
 }
-footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3)}
 
 /* ---------- 毛玻璃降级（PRD §9.4）----------
    2026-09-29：首屏不再是毛玻璃信息卡（改满屏 hero），本降级改为只管顶栏。 */
@@ -454,32 +680,33 @@ footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-
 
 /* ---------- 手机端：只保证不横向滚动（PRD §5.4）---------- */
 @media (max-width:900px){
-  .wrap{padding:0 18px}
-  section{padding:72px 0}
-  .hero{padding:80px 0 32px}
+  .wrap{padding:0 var(--sp-4)}
+  section{padding:var(--sp-18) 0}
+  .hero{padding:var(--sp-20) 0 var(--sp-8)}
   /* 手机端：四字不许断行，所以按容器宽反推字号上限（窄屏 360px 下 ≈ 20px×4=80…）
      实际取 16vw 并允许断行，避免"Ja的小屋"顶出屏幕（PRD §5.4 只要求不横滚） */
   .title{font-size:clamp(40px,16vw,88px);white-space:normal}
   .slogan{font-size:12px;letter-spacing:.34em;margin-right:-.34em}
-  .hero-meta{padding-top:22px}
-  .updated{position:static;margin-top:12px;display:block}
-  .sec-head{padding-bottom:16px;margin-bottom:30px;gap:12px}
+  .hero-meta{padding-top:var(--sp-6)}
+  .updated{position:static;margin-top:var(--sp-3);display:block}
+  .sec-head{padding-bottom:var(--sp-4);margin-bottom:var(--sp-8);gap:var(--sp-3)}
   .sec-head h2{font-size:30px}
   .topbar .wrap{height:56px}
-  nav{gap:2px}
-  nav a{padding:6px 10px;font-size:12px;letter-spacing:.08em}
+  nav{gap:var(--sp-1)}
+  /* Day 9 修复⑤：6px 10px → 8px 12px，触控条目高 33.0 → 37.0px（规则 D2 ≥36px） */
+  nav a{padding:var(--sp-2) var(--sp-3);font-size:12px;letter-spacing:.08em}
   /* 手机端照片墙与卡片流都变单列（PRD §7.4：只保证不横向滚动，观感问题不列入验收） */
   .photos{flex-direction:column}
   .photos .col{width:100%;flex-basis:100%}
   .cards{grid-template-columns:1fr}
   .post h1{font-size:26px}
-  .post-wrap{padding:32px 0 60px}
+  .post-wrap{padding:var(--sp-8) 0 var(--sp-15)}
   .post-nav a{max-width:100%}
-  .lightbox{padding:16px}
+  .lightbox{padding:var(--sp-4)}
   .lb-btn{width:38px;height:38px;font-size:20px}
-  .lb-prev{left:6px}
-  .lb-next{right:6px}
-  .lb-close{right:6px;top:6px}
+  .lb-prev{left:var(--sp-2)}
+  .lb-next{right:var(--sp-2)}
+  .lb-close{right:var(--sp-2);top:var(--sp-2)}
 }
 
 /* ---------- Prisma 皮肤：动效与质感（2026-09-29）----------
@@ -512,7 +739,24 @@ body::after{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* ---------- 三个"可推的平面"额外给一次物理下压（Day 9 六维修复②）----------
+   照片 / 笔记卡 / 圆形图标 是有面积的可点平面，只有变淡（上面那条 opacity）
+   还不够"按得下去"，这里补一次 1px 下压。
+   为什么放在文件末尾：它们的 :hover 与 :active 权重完全相同，
+   同权重时**后写的赢** —— 必须写在各处 :hover 之后，这一条才生效。
+   .card.thought 的 :hover 权重更高（.card.thought:hover），不会被推动，
+   正好符合"它不可点、不该有按压感"的设计。
+   灯箱 ‹ › 不在这里：它们靠 transform 居中，任何 transform 都会弹出画面。 */
+.photo:active,
+.card:active,
+.icon-round:active{
+  transform:translateY(1px);
+}
+
 /* 尊重系统「减弱动效」设置：直接显示最终态，不做任何动画 */
 @media (prefers-reduced-motion:reduce){
   .wpu>span,.scr,.rise{transition:none;transform:none;opacity:1}
+  /* Day 9 六维修复②的补充：把按压的 1px 位移也一起关掉。
+     反馈保留（变淡仍在），但不再"动"——「减弱动效」的字面要求。 */
+  .photo:active,.card:active,.icon-round:active{transform:none}
 }
