@@ -1,166 +1,49 @@
 /* ============================================================
-   styles.css —— 全站视觉规范（Prisma 皮肤 · 深度版 · 2026-09-29）
+   styles.css —— 全站视觉规范（gpc「Applied Imagination」天空封面风 · 2026-10-05）
    ============================================================
-   皮肤方向：Jack 指定的「Prisma - Creative Studio」风格 —— 奶油色系 +
-   近黑底 + 衬线斜体大字 + 编辑式编号与细线 + 噪点质感 + 滚动动效。
-
-   深度版说明（2026-09-29 晚）：第一版只换了配色与字体，Jack 反馈
-   「感觉改动不大」。本版把 Prisma 的核心手法——排版本身即设计——做到位：
-     ① 主标题 48px → 最大 92px 衬线斜体（首屏的视觉冲击全在这）；
-     ② 区块标题 21px → 52px 衬线斜体，加 01/02 编号与通长细线；
-     ③ 笔记卡标题与详情页大标题改衬线，封面 hover 内缩放大。
-   PRD 硬约束全部保留：毛玻璃信息卡与内容清单（§4.2）、瀑布流两列 +
-   56px 间距 + 圆角无边框（§4.4）、卡片流 2 列与内容构成（§4.3）、
-   封面 16:9 / 插图 4:3（§4.6）、最小一级文字全站基准（§4.6）。
-
-   主色变更：#BA55D3（2026-09-26 Jack 指定）→ #E1E0CC 奶油色
-   （2026-09-29 Jack 决策 D1 选 B）。TECH_DESIGN §13.2 要求
-   「组件只引用变量、不写死色值」，故换色 = 只换 :root 变量块。
+   皮肤方向：Jack 提供的 gpc 参考图 —— 天空浅蓝底 + 白云 + 深墨衬线大标题 +
+   居中叙事 + 底部小号等宽元信息 + 无阴影的扁平组件。
 
    覆盖范围：基础规范 + 顶栏 + 首屏 + 照片墙 + 灯箱 + 记录卡片流 +
-             笔记详情页 + 页脚 + Prisma 动效质感。
+             笔记详情页 + 页脚 + 入场动效。
    （首页 index.html 与详情页 note.html 共用本文件 —— PRD §5.3「全站风格一致」。）
 
-   ---- 有意差异与决策说明 ----
-   ① .hero-bg 已启用 url("../public/assets/bg.webp")（真实背景图，Rider01 生成，
-      2026-09-29 决策 D3 选 A）：照片在底层，奶油光斑叠在上层，::after 继续压暗。
-      同时补上了 PRD §4.6 空了两天的"背景大图"规划。
-   ② [id]{scroll-margin-top:80px}：点「关于」时不被 64px 吸顶栏挡住（PRD §4.2）。
-   ③ 字体：Instrument Serif（拉丁衬线斜体）+ Noto Serif SC（中文宋体），
-      经 Google Fonts 引入，断网自动回退系统字体（2026-09-29 Jack 点头）。
-      浏览器按字符自动选字体：拉丁 → Instrument Serif，中文 → Noto Serif SC。
-      Noto Serif SC 无斜体变体，中文斜体为浏览器合成，拉丁部分是真斜体。
-   ④ 无 Tailwind / React / Framer Motion：TECH_DESIGN §3.1 已否决 Tailwind，
-      §11 把 React 排在阶段二；全部动效原生手写（见文件末尾「Prisma 动效」）。
-   ⑤ .hero-bg .tag（"背景大图占位"文字）已删：真图到位，占位标注退役。
+   ---- 主要变更（相对上一版） ----
+   ① 配色：奶油/纸白底 + 暖棕 → 天空浅蓝底 #B9D7EF + 白云 + 深墨 #101418；
+   ② 首屏背景：从纯色奶油改回 CSS 天空渐变 + 多层 radial 白云，底部带暖地平线；
+   ③ 首屏布局：标题居中顶天、定位语提到标题上方作 eyebrow、介绍段落居中、
+      底部元信息排成一行；
+   ④ 强调色：暖棕退场，全部用深墨/灰蓝作 hover、active、标签；
+   ⑤ 组件：保持扁平无阴影、小圆角，hover 仅边框/文字色变化。
 
-   依据：PRD.md §4.2 §4.6 §5.3 §5.4 §9.4 · TECH_DESIGN.md §3.1 §11 §13.2
-   ============================================================
-
-   ============================================================
-   Day 9 修复记录（2026-10-02）——「设计规则 → 审查 → 修复」闭环
-   ============================================================
-   规则来源：本轮新立的四组可判定设计规则（A 对比 / B 间距 / C 对齐 /
-   D 交互）。用 design-audit.py 跑出量化证据后按下表修，改前改后的
-   数字都是实测值，不是估计。
-
-   ① 【A1 对比度】全站最小一级文字只有 3.5:1，低于 WCAG 2.1 AA 对
-      小字要求的 4.5:1 —— 这是本次审查里最影响「像不像一个正经产品」
-      的一处（页脚、标签、区块编号、"最后更新于"全都在这一级）。
-        改前：--txt-3 = rgba(222,219,200,.45)
-              → 在 #0A0A0C 上 3.54:1、在页脚 #111114 上 3.57:1   ✗
-        改后：.62 → 5.82:1 / 5.55:1                               ✓
-        顺带：--txt-2 由 .70 提到 .78（7.19:1 → 8.77:1）——
-              它与最小一级的差距由 2.03 倍收到 1.51 倍，仍高于 A2 的
-              「相邻层级 ≥ 1.4 倍」，但层级不再拉得那么开。
-   ② 【B1 间距】全站 34 处 margin / padding / gap 不是 4 的倍数
-      （6 / 10 / 14 / 18 / 22 / 26 / 30 / 90 / 110px 等）。
-      改法：新增一组间距刻度变量 --sp-N（N × 4px = 像素值），34 处
-      全部换成变量。以后要整体调密或调松，只改刻度、不动组件。
-   ③ 【C2 对齐】.updated（"最后更新于"）的 right:0 原本挂在最近的
-      定位祖先 .wrap.hero-inner（宽 1116px）上，而它所属的信息块
-      .hero-meta 只有 720px 宽 → 同一个信息组出现两条右基准。
-      改法：给 .hero-meta 补 position:relative，让 right:0 挂回自己家。
-   ④ 【D1 交互】原先只有 :hover，Tab 键走一遍看不见焦点在哪。
-      改法：集中写一条 a / button / [tabindex] 的 :focus-visible，
-      而不是逐个组件补 —— 以后新增任何可点元素自动生效。
-   ⑤ 【D2 触控】手机端导航条目高 33.0px，低于 36px 下限。
-      改法：padding 6px 10px → 8px 12px（条目高 33.0 → 37.0px）。
-   ⑥ 【A3 顺手归位】"颜色与字体只引用变量"：nav a.active 的 #0A0A0C、
-      .avatar 的 rgba(222,219,200,.62)、.tag.plain 的 rgba(225,224,204,.06)
-      都是写死的值，分别换成 var(--bg) / var(--txt-3) / var(--glass)
-      （数值完全相同，观感零变化）；.sec-no 写死的字体名换成 var(--f-serif)。
-
-   一并说明（不是修复，是纠正一行"说了做不到"的代码）：
-   .hero-meta 原本写着 margin-top:auto 并注释「推到首屏底部」，但它的
-   父级 .hero 是 align-items:center 的居中容器 —— 居中之后没有剩余空间
-   可以分配，auto 只会退化成 0，这行从来没有生效过。首屏现在的实际设计
-   是「整组垂直居中」：标题居中偏上、辅助信息细排落中下部（见下方 §首屏
-   说明），所以本轮按实际设计删掉这行、把注释改成事实，**构图一动不动**。
-   若日后想改成 Prisma 式「标题顶到最上、信息沉到最底」，改法是：
-   .hero 用 align-items:stretch，并让 .hero-inner 撑满高度，再把 auto
-   加回来 —— 三行以内，随时可切。
-
-   ============================================================
-   同日第二轮：六维设计审查与修复（2026-10-02 晚）
-   ============================================================
-   与上一轮的区别：上一轮是"先立自己的规则、再按规则修"；这一轮是
-   **换一把外部尺度复查** —— 用刚装好的 animate 技能（Emil Kowalski）
-   的 Never Ship 清单当尺子，重查六项：信息层级 / 字体大小 / 颜色对比 /
-   卡片间距 / 按钮状态 / 手机宽度布局。
-   证据脚本（会话工作区）：audit-6d.py（六维量化）、
-   hero-contrast.py（首屏底图分层合成，逐像素算对比度）。
-
-   复查结论（全部实测，非推断）：
-     · 平面颜色对比 **全绿**：最低 --txt-3 = 5.82:1（Day 9 上一轮刚修）
-     · 间距 **唯一例外是 .wpu 的 .08em**（文字下划线偏移，不属间距）
-     · 结构卫生 ✓：花括号 140/140、变量 35 定义 / 35 使用
-     · 首屏底图上的文字：**当前每处都达标**（标题 5.9–8.2、定位语 8.1–8.6、
-       副标题与自我介绍 6.2–7.4、"最后更新于" 5.2–5.3）
-   真正的问题集中在下面 4 条，本轮已修：
-
-   ① 【手机宽度布局】.hero 原先只有 min-height:100vh —— 手机上地址栏
-      占位后它是按"地址栏收起"算的，比能看见的区域高，首屏底部那行
-      "最后更新于"被顶出屏幕，PRD §4.6/§5.3「首屏内」做不到。
-      改法：补一行 min-height:100svh 兜底（svh = 地址栏展开时的最小可视
-      高度），.lb-img 同理补 76svh。桌面端 svh ≡ vh，零变化。
-   ② 【按钮状态】全站 :active 规则 **0 条**（点下去零反馈），且有 7 处
-      transition 只写时长不写属性名 —— 等价 transition:all，是 animate
-      技能 Never Ship 清单第一条。改法：集中补一条 a/button/[tabindex]
-      的 :active，并给三个"可推平面"（照片/卡片/圆图标）补 1px 下压。
-      **用 opacity 而非 translateY**：灯箱 ‹ › 靠 transform:translateY(-50%)
-      居中，写 transform 会把它们弹飞。时长 120ms（技能要求 100–160ms）。
-   ③ 【触摸设备】12 条 :hover 全部没有能力门控 —— 手机点一下卡片，卡片
-      会抬起 3px 并一直停住不落回。改法：把各处的 hover 逐个包进
-      @media (hover:hover) and (pointer:fine)。桌面端该查询恒为真，
-      行为与改前完全一致；手机端不再粘住。
-   ④ 【字体大小】.tag 11.5px、.avatar 11px 低于 PRD §4.6 规定的全站基准
-      12.5px → 都提到 12.5px。（.avatar 当前 hidden，零风险对齐。）
-
-   查过但**没有动**的（等 Jack 拍板，不自行决定）：
-     · .cards 的缝 24px ÷ .card-body 内边距 20px = **1.20 倍**，偏挤；
-     · 11 个字号里 13.5/13/12.5/11.5/11 五级只差 1.03–1.09 倍，层级含糊；
-     · 首屏压暗层最浅一档 .62，而底图上有大片白 —— y<55% 段实测
-       --txt-3 只有 2.64–4.24:1；当前文字恰好都落在 y≥52% 的达标区，
-       但安全余量是靠"内容短 + 垂直居中"两个巧合换来的；
-     · public/assets/bg.webp 实为一张《假面骑士》漫画拼贴、右上角带
-       "©I&T"水印，与本文件上方注释写的"真实照片（Rider01 生成）"不符，
-       来源与版权需 Jack 确认。
+   依据：PRD.md §4.2 §4.3 §4.4 §4.6 §5.3 §9.4 · TECH_DESIGN.md §3.1 §11 §13.2
    ============================================================ */
 
 /* ---------- 视觉规范（依据 PRD §4.6）---------- */
 :root{
-  --brand:      #E1E0CC;          /* 主色：奶油色（2026-09-29 Jack 定，取代 09-26 的 #BA55D3） */
-  --brand-dim:  rgba(225,224,204,.13);
-  --brand-line: rgba(225,224,204,.36);
-  --bg:         #0A0A0C;          /* 页面底色：近黑 */
-  --bg-2:       #111114;          /* 次级底色 */
-  --glass:      rgba(225,224,204,.06);  /* 毛玻璃（奶油系） */
-  --glass-2:    rgba(225,224,204,.10);
-  --line:       rgba(225,224,204,.12);
-  --txt:        #DEDBC8;          /* 主文字（Prisma Cream） */
-  /* Day 9 修复①：次级文字 .70 → .78（7.19:1 → 8.77:1） */
-  --txt-2:      rgba(222,219,200,.78);  /* 次级文字 */
-  /* Day 9 修复①：最小一级文字 .45 → .62（3.54:1 → 5.82:1，过 WCAG AA 4.5:1） */
-  --txt-3:      rgba(222,219,200,.62);  /* 最小一级文字：全站基准 */
-  --r-card:     16px;
-  --r-sm:       10px;
-  --maxw:       1180px;
-  /* 照片墙间距 = 单张图宽的 1/10（2026-09-26 Jack 指定）
-     计算依据：容器 1180 − 内边距 64 = 1116，每列 558，558 ÷ 10 ≈ 56px
-     若日后调整容器宽度或改为三列，此值需同步重算并写回 PRD §4.4
-     ⚠ 这是间距刻度唯一的例外（规则 B2：例外必须自带推导式）。
-       它的 56px 与下方 --sp-14 数值相同，但来源无关，**不要把
-       --photo-gap 换成 --sp-14** —— 换了两者就绑死，改刻度时会误伤照片墙。 */
-  --photo-gap:  56px;
+  --brand:      #F4581C;          /* 主强调：橙（active、hover、标签） */
+  --brand-ink:  #9A330C;          /* 小字橙：橙系里"能当小字"的那一档 */
+  --brand-dim:  rgba(244,88,28,.10);
+  --brand-line: rgba(244,88,28,.32);
+  --bg:         #B9D7EF;          /* 页面底色：天空浅蓝 */
+  --bg-2:       #FFFFFF;          /* 卡片/页脚表面：纯白 */
+  --glass:      rgba(255,255,255,.72);
+  --glass-2:    rgba(255,255,255,.90);
+  --line:       rgba(16,20,24,.10);
+  --txt:        #101418;          /* 主文字：近黑 */
+  --txt-2:      #4A5560;          /* 次级文字：灰蓝 */
+  --txt-3:      #363F49;          /* 最小级文字 */
+  --lb-txt:     rgba(255,255,255,.88);  /* 灯箱文字（灯箱保持暗底，不吃全站翻转） */
+  --lb-line:    rgba(255,255,255,.28);  /* 灯箱内细线，同上 */
 
-  /* ---- 间距刻度（Day 9 新增；规则 B1：所有 margin / padding / gap
-     只能取下面这些值，一律 4 的倍数）----
-     命名规则：--sp-N 的 N × 4px 就是它的像素值
-     （--sp-1=4px、--sp-4=16px、--sp-28=112px）。
-     需要中间值时——**改刻度，别写死数字**，否则全站节奏会一点点乱掉。
-     不在本表里的数值一律视为违规。
-     ⚠ 不适用于 width / height / font-size / 圆角 —— 那些不是"间距"。 */
+  --r-card:     8px;              /* 编辑式：小圆角 */
+  --r-sm:       4px;
+  --maxw:       1040px;           /* 容器收窄 */
+  /* 照片墙间距：PRD §4.4「单张图宽的 1/10」，容器 1040 − 64 = 976，
+     半宽 488，1/10 ≈ 49px，取整到 4 的倍数 48px。 */
+  --photo-gap:  48px;
+
+  /* ---- 间距刻度（规则 B1：所有 margin / padding / gap 只取这些值）---- */
   --sp-1:   4px;
   --sp-2:   8px;
   --sp-3:  12px;
@@ -178,10 +61,13 @@
   --sp-22: 88px;
   --sp-24: 96px;
   --sp-28:112px;
+  --sp-30:120px;
 
-  --ease-out:   cubic-bezier(.16,1,.3,1);  /* Prisma 动效曲线：快出慢收 */
-  --f-serif:    "Instrument Serif","Noto Serif SC",serif;  /* 标题：拉丁斜体 + 中文宋体 */
-  --f-serif-sc: "Noto Serif SC",serif;                     /* 纯中文衬线（正体用） */
+  --ease-out:   cubic-bezier(.16,1,.3,1);
+  --f-serif:    "Instrument Serif","Noto Serif SC",serif;
+  --f-serif-sc: "Noto Serif SC",serif;
+  --f-sans:     -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --f-mono:     ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -189,7 +75,7 @@ html{scroll-behavior:smooth}
 body{
   background:var(--bg);
   color:var(--txt);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-family:var(--f-sans);
   font-size:16px;
   line-height:1.75;
   -webkit-font-smoothing:antialiased;
@@ -197,17 +83,12 @@ body{
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 
-/* 最小一级文字样式——全站基准（标签 / 日期 / 页脚 统一沿用，分隔符统一用 ·） */
-.t-min{font-size:12.5px;color:var(--txt-3);letter-spacing:.02em}
+/* 最小一级文字样式——全站基准 */
+.t-min{font-size:12.5px;font-family:var(--f-mono);color:var(--txt-3);letter-spacing:.06em}
 
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp-8)}
 
-/* ---------- 键盘焦点态（Day 9 新增；规则 D1）----------
-   原先全站只有 :hover —— 鼠标用户看不出问题，但用 Tab 键走一遍
-   完全不知道焦点落在哪，键盘用户等于没有导航。
-   这里**集中写一条**，而不是逐个组件补 :focus-visible：
-   以后新增任何 <a> / <button> / [tabindex] 都自动生效 ——
-   这就是"把一条视觉规则写成可复用组件约束"的实例。 */
+/* ---------- 键盘焦点态（Day 9）---------- */
 a:focus-visible,
 button:focus-visible,
 [tabindex]:focus-visible{
@@ -215,17 +96,7 @@ button:focus-visible,
   outline-offset:var(--sp-1);
 }
 
-/* ---------- 按压反馈（Day 9 六维修复②；同一思路的第二条集中约束）----------
-   原先全站 :active 规则 **0 条** —— 鼠标点下去界面一动不动，手感像"没反应"。
-   这里沿用上面 :focus-visible 的做法：**只写一条**，以后新增任何
-   <a> / <button> / [tabindex] 都自动有按压反馈，不用逐个组件补。
-
-   为什么用 opacity 而不是 translateY：
-     灯箱的 ‹ › 两个箭头靠 transform:translateY(-50%) 做垂直居中，
-     一旦在 :active 里写 transform，它们会被弹出去 50%（老居中值被覆盖）。
-     opacity 不碰任何组件的 transform，是这里唯一不会误伤的选择。
-   时长 120ms 落在 animate 技能要求的 100–160ms 区间
-     —— 按压反馈必须"立刻"，跟 hover 的 .18s 不是一回事。 */
+/* ---------- 按压反馈（Day 9）---------- */
 a:active,
 button:active,
 [tabindex]:active{
@@ -233,142 +104,86 @@ button:active,
   transition-duration:.12s;
 }
 
-/* 点锚点时给吸顶栏（64px）留出余量，否则目标会被挡住 */
 [id]{scroll-margin-top:80px}
 
-/* ---------- 顶栏：吸顶 + 毛玻璃（PRD §4.2）----------
-   2026-09-29：首屏改满屏 hero 后，顶栏默认透明，只有滚动离开首屏
-   （滚动到照片墙那一屏）才浮出毛玻璃底 —— Prisma 式「导航先融进画面」。 */
+/* ---------- 顶栏 ---------- */
 .topbar{
   position:sticky;top:0;z-index:100;
-  background:transparent;
-  border-bottom:1px solid transparent;
+  background:var(--glass-2);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);
   transition:background .35s var(--ease-out),border-color .35s var(--ease-out),backdrop-filter .35s;
 }
 body.scrolled .topbar{
-  background:rgba(10,10,12,.78);
+  background:var(--glass);
   backdrop-filter:blur(14px) saturate(140%);
   -webkit-backdrop-filter:blur(14px) saturate(140%);
   border-bottom-color:var(--line);
 }
 .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:var(--sp-2);font-weight:600;letter-spacing:.06em;font-size:15px}
-.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+.brand{display:flex;align-items:center;gap:var(--sp-2);font-family:var(--f-serif);font-weight:400;letter-spacing:.04em;font-size:15px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--brand)}
 nav{display:flex;gap:var(--sp-2)}
 nav a{
-  /* Day 9 修复⑤：7px 14px → 8px 16px，触控条目高 36.8 → 38.8px（规则 D2） */
-  padding:var(--sp-2) var(--sp-4);border-radius:999px;font-size:13px;color:var(--txt-2);
-  letter-spacing:.14em;   /* Prisma 式宽字距小字导航 */
-  /* Day 9 六维修复②：原先写 transition:.18s —— 不写属性名等于 transition:all，
-     以后给导航加任何属性都可能被顺手动画到（animate 技能 Never Ship 第一条）。
-     这里只列真正会变的两个（hover 改 color、.active 改 background-color）。
-     时长与缓动都没动：简写里省略缓动 = 默认 ease，与原写法完全一致。 */
+  padding:var(--sp-2) var(--sp-4);border-radius:999px;font-size:13px;
+  color:var(--txt);
+  letter-spacing:.12em;
   transition:color .18s, background-color .18s;
 }
-/* Day 9 六维修复③（触摸设备）：整组 hover 包进能力门控 ——
-   手机上点一下也会触发 :hover 并且**不会自己松开**，导航会一直留着高亮。
-   (hover:hover) and (pointer:fine) = 有真悬停能力且主指针精细，才应用。
-   桌面端这个查询恒为真，行为与改之前一模一样。 */
+body.scrolled nav a{color:var(--txt-2)}
 @media (hover:hover) and (pointer:fine){
-  nav a:hover{color:var(--txt)}
+  nav a:hover{color:var(--txt-2)}
 }
-/* Day 9 修复⑥：写死的 #0A0A0C 换成 var(--bg)（同值，观感零变化） */
-nav a.active{color:var(--bg);background:var(--brand);box-shadow:none;letter-spacing:.14em}
+nav a.active{color:var(--bg-2);background:var(--brand);box-shadow:none;letter-spacing:.12em}
 
-/* ---------- 首屏：满屏 hero（Prisma 式 · 2026-09-29 重构）----------
-   Jack 2026-09-29 决策 B「首屏整屏重构」：取消毛玻璃信息卡盒子。
-   现在这一屏的做法（Prisma 的核心语言）：
-     · 站点名以满屏字号直接压在暗场上，居中偏上，占满视野宽度；
-     · 不靠盒子、不靠照片讲氛围，靠「大 · 空 · 暗」制造压迫感；
-     · 全部辅助信息（定位语/副标题/自我介绍/数字/图标）细排在中下部，
-       字号刻意压小、字距刻意拉开，与大标题形成极端对比。
-   ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。
-
-   ⚠ align-items:center 是**有意**的（Day 9 审查结论）：
-     它让标题组 + 信息块作为一个整体在首屏垂直居中 = 上面说的"居中偏上 /
-     中下部"。居中之后容器里没有剩余空间，所以**子项上的 margin-top:auto
-     一律无效**（会退化成 0，写了等于没写）—— 原 .hero-meta 上就留着这么
-     一行，Day 9 已删。要改成"标题顶到最上、信息沉到最底"的话，见文件头
-     Day 9 修复记录末段的切换方法。 */
+/* ---------- 首屏：天空封面 · 左对齐编辑式 ----------
+   参考构图：超大衬线标题靠左，下方橙色定位语，介绍段落左对齐，
+   底部统计靠左、图标与更新时间靠右。 */
 .hero{
   position:relative;
-  /* Day 9 六维修复①（手机宽度布局）：原先只有 min-height:100vh。
-     手机浏览器的地址栏会占掉一截高度，而 100vh 是按"地址栏收起时"算的，
-     于是首屏底部那行"最后更新于"会被顶出屏幕 —— PRD §4.6/§5.3 要求
-     「首屏不滚动的前提下，主标题与定位语同时可见；副标题也在首屏内」，
-     在手机上就做不到。
-     svh = small viewport height = **地址栏展开时**的最小可视高度，
-     用它兜底就一定装得下。写法是"同一个属性写两行"：
-     不认 svh 的浏览器用上面那行，认的用下面那行；桌面端 svh ≡ vh，零变化。 */
   min-height:100vh;
   min-height:100svh;
-  display:flex;align-items:center;
+  display:flex;
+  align-items:flex-start;         /* 顶部起手，不再整体垂直居中 */
+  justify-content:flex-start;
   overflow:hidden;
-  padding:var(--sp-24) 0 var(--sp-11);  /* 顶部给悬浮导航留位，底部留出信息细排的呼吸 */
+  padding:var(--sp-28) 0 var(--sp-20);
 }
-/* 背景大图：真实照片（bg.webp，由 Rider01 生成）在底层，奶油光斑叠在上层 */
-.hero-bg{
-  position:absolute;inset:0;
-  background-image:
-    radial-gradient(1200px 620px at 18% 8%,  rgba(225,224,204,.14), transparent 62%),
-    radial-gradient(900px 520px at 82% 92%,  rgba(150,140,120,.10), transparent 60%),
-    url("../public/assets/bg.webp");
-  background-size:cover;
-  background-position:center;
-  filter:saturate(105%);
-}
-/* 压暗层：满屏 hero 里大字要压住照片，所以比原版压得更深，
-   并且底部再叠一层向黑色的过渡，让信息细排区彻底沉进暗部 */
-.hero-bg::after{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(180deg,rgba(6,6,8,.62) 0%,rgba(6,6,8,.78) 46%,rgba(6,6,8,.94) 100%);
-  backdrop-filter:blur(3px);
-}
+.hero-bg{position:absolute;inset:0;background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIwIDEwODAiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIHNsaWNlIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM5RkQ3RjAiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI0OCUiIHN0b3AtY29sb3I9IiNCNERCRUYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI3NiUiIHN0b3AtY29sb3I9IiNDNkUxRUEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRUFFNkNDIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0iY2xvdWRCbHVyIiB4PSItNTAlIiB5PSItNTAlIiB3aWR0aD0iMjAwJSIgaGVpZ2h0PSIyMDAlIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMjYiIHJlc3VsdD0iYmx1ciIvPgogICAgICA8ZmVDb21wb25lbnRUcmFuc2ZlciBpbj0iYmx1ciI+CiAgICAgICAgPGZlRnVuY0EgdHlwZT0ibGluZWFyIiBzbG9wZT0iMC44NSIgaW50ZXJjZXB0PSIwIi8+CiAgICAgIDwvZmVDb21wb25lbnRUcmFuc2Zlcj4KICAgIDwvZmlsdGVyPgogICAgPGZpbHRlciBpZD0ic29mdEJsdXIiIHg9Ii01MCUiIHk9Ii01MCUiIHdpZHRoPSIyMDAlIiBoZWlnaHQ9IjIwMCUiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIxOCIvPgogICAgPC9maWx0ZXI+CiAgICA8cGF0dGVybiBpZD0iaHQiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxjaXJjbGUgY3g9IjYiIGN5PSI2IiByPSIxLjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNSIvPgogICAgPC9wYXR0ZXJuPgogICAgPG1hc2sgaWQ9ImNsb3VkTWFzayI+CiAgICAgIDxnIGZpbHRlcj0idXJsKCNzb2Z0Qmx1cikiPgogICAgICAgIDxlbGxpcHNlIGN4PSIzOTcuNiIgY3k9Ijg3NC4yIiByeD0iMjgxLjgiIHJ5PSIyMjYuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iLTE4LjQiIGN5PSI4NjcuOSIgcng9IjMzMy44IiByeT0iMjk1LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDMiLz4KPGVsbGlwc2UgY3g9IjExNzguNCIgY3k9IjEyNjAuOCIgcng9IjMxMC45IiByeT0iMTEyLjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzIiLz4KPGVsbGlwc2UgY3g9IjcyMi44IiBjeT0iODcyLjIiIHJ4PSIzMjkuNiIgcnk9IjE0MS42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ2Ii8+CjxlbGxpcHNlIGN4PSIyMTE3LjgiIGN5PSI3NzcuNiIgcng9IjMyNC41IiByeT0iMzE3LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDUiLz4KPGVsbGlwc2UgY3g9IjEwMTQuOCIgY3k9IjEyMDQuOSIgcng9IjMxMi4zIiByeT0iMjY4LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzIiLz4KPGVsbGlwc2UgY3g9Ijg5MS44IiBjeT0iNzYzLjAiIHJ4PSI1MzQuOCIgcnk9IjE3Ny42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSItMTM4LjAiIGN5PSIxMDkxLjAiIHJ4PSI0NzQuNiIgcnk9IjIwMC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSIxMzA0LjQiIGN5PSIxMzEzLjgiIHJ4PSI1ODIuNCIgcnk9IjE0OC41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ2Ii8+CjxlbGxpcHNlIGN4PSIxNjIxLjciIGN5PSIxMzM2LjciIHJ4PSIyOTEuMyIgcnk9IjExMC41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ3Ii8+CjxlbGxpcHNlIGN4PSIyMDc2LjciIGN5PSI4NzkuOCIgcng9IjQ1Mi4xIiByeT0iMzA4LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzQiLz4KPGVsbGlwc2UgY3g9IjQ1Mi40IiBjeT0iNjgyLjciIHJ4PSI1MjMuNyIgcnk9IjIyMi43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI4Ii8+CjxlbGxpcHNlIGN4PSIxNDUuNyIgY3k9IjkxNS43IiByeD0iMzE5LjkiIHJ5PSIyMDQuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MSIvPgo8ZWxsaXBzZSBjeD0iMjI2LjciIGN5PSI5MDkuNSIgcng9IjQ4My4zIiByeT0iMzA4LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDIiLz4KPGVsbGlwc2UgY3g9IjE5NjguNSIgY3k9IjExNTcuMyIgcng9IjQ0OS45IiByeT0iMjUxLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjkiLz4KPGVsbGlwc2UgY3g9Ii0yMi41IiBjeT0iMTI3OC4yIiByeD0iNTUyLjAiIHJ5PSIxNDAuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iNDkxLjgiIGN5PSIxMzI0LjQiIHJ4PSIyODAuMCIgcnk9IjIzMS4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSIxMjg2LjUiIGN5PSIxMTU1LjciIHJ4PSI1OTkuNSIgcnk9IjExMC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM5Ii8+CjxlbGxpcHNlIGN4PSIyMjA0LjQiIGN5PSI4NzkuMSIgcng9IjI3NS45IiByeT0iMTI2LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDIiLz4KPGVsbGlwc2UgY3g9IjMxNy43IiBjeT0iOTM3LjAiIHJ4PSI0MTQuMCIgcnk9IjE3OC4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSIzMzguNSIgY3k9Ijc1OC40IiByeD0iMjQxLjMiIHJ5PSIyNzAuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MCIvPgo8ZWxsaXBzZSBjeD0iNTYwLjYiIGN5PSI5NzQuNCIgcng9IjM0My4xIiByeT0iMTkzLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzgiLz4KPGVsbGlwc2UgY3g9IjE0MjcuNyIgY3k9IjEwNTIuMyIgcng9IjIyMy4wIiByeT0iMTE1LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDAiLz4KPGVsbGlwc2UgY3g9IjE5MTQuNCIgY3k9IjEwNTUuMCIgcng9IjM1My4yIiByeT0iMzA5LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDUiLz4KPGVsbGlwc2UgY3g9Ijg4My40IiBjeT0iMTIyOC41IiByeD0iNjAxLjYiIHJ5PSIyMTAuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iMTYwNS40IiBjeT0iNzI3LjMiIHJ4PSI0NzkuMSIgcnk9IjE2MS4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQxIi8+CjxlbGxpcHNlIGN4PSI4ODEuMCIgY3k9IjEwMzguNCIgcng9IjU5Ny4yIiByeT0iMTQwLjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDYiLz4KPGVsbGlwc2UgY3g9Ijg2Mi42IiBjeT0iMTE2OS41IiByeD0iMzQ5LjUiIHJ5PSIyODEuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iLTI4Ny44IiBjeT0iMTI0NC42IiByeD0iNTE2LjQiIHJ5PSIxNTkuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MCIvPgo8ZWxsaXBzZSBjeD0iNjcxLjYiIGN5PSIxMjYxLjAiIHJ4PSI2MDQuMSIgcnk9IjI5NC43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQwIi8+CjxlbGxpcHNlIGN4PSItMjYxLjYiIGN5PSI4NjkuMCIgcng9IjQ0Ny40IiByeT0iMTQ3LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDciLz4KPGVsbGlwc2UgY3g9IjIxMDIuNyIgY3k9Ijc1NS44IiByeD0iNDEyLjciIHJ5PSIyMzEuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOCIvPgo8ZWxsaXBzZSBjeD0iMTA4MC45IiBjeT0iODM5LjYiIHJ4PSIzMjYuNSIgcnk9IjE0OC44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQxIi8+CjxlbGxpcHNlIGN4PSIxNDMyLjQiIGN5PSI5NDAuNCIgcng9IjQyMC45IiByeT0iMTc0LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzMiLz4KPGVsbGlwc2UgY3g9IjEwNjkuMSIgY3k9IjY5Ni4zIiByeD0iNDkxLjciIHJ5PSIxMTQuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40OSIvPgo8ZWxsaXBzZSBjeD0iMTk5NS44IiBjeT0iOTc0LjIiIHJ4PSIzMDUuMCIgcnk9IjE2NS4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQwIi8+CjxlbGxpcHNlIGN4PSIyMDY3LjIiIGN5PSI5NjIuMCIgcng9IjM4Mi45IiByeT0iMjc1LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDMiLz4KPGVsbGlwc2UgY3g9Ii0xOC4xIiBjeT0iMTA3MS4yIiByeD0iMjYzLjEiIHJ5PSIyODEuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40OCIvPgo8ZWxsaXBzZSBjeD0iMTU3LjAiIGN5PSI3MDYuMSIgcng9IjM1MC41IiByeT0iMjE4LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDAiLz4KPGVsbGlwc2UgY3g9Ii0xMzkuNyIgY3k9Ijc0OS4yIiByeD0iNDc2LjUiIHJ5PSIxNTYuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iMTMzNC44IiBjeT0iMTIwNC4yIiByeD0iNTI2LjciIHJ5PSIxMjcuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNyIvPgo8ZWxsaXBzZSBjeD0iMTc5OC4zIiBjeT0iMTI4My4zIiByeD0iNTI5LjAiIHJ5PSIxNjcuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MSIvPgo8ZWxsaXBzZSBjeD0iMTY0My40IiBjeT0iODM5LjQiIHJ4PSIzMzUuNiIgcnk9IjE2NS4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMxIi8+CjxlbGxpcHNlIGN4PSI0My40IiBjeT0iODE3LjIiIHJ4PSIyMzYuOCIgcnk9IjE0OS43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ0Ii8+CjxlbGxpcHNlIGN4PSIxOTk0LjMiIGN5PSIxMDM3LjciIHJ4PSIzNDkuOSIgcnk9IjIxMS4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSIyMDkxLjkiIGN5PSIxMjY5LjIiIHJ4PSI1NTIuMiIgcnk9IjIzMC40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM3Ii8+CjxlbGxpcHNlIGN4PSI4NjAuNyIgY3k9IjEyODcuOSIgcng9IjMxMi4yIiByeT0iMjQ2LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDkiLz4KPGVsbGlwc2UgY3g9IjQ2MC43IiBjeT0iMTI5OS4zIiByeD0iNTE0LjkiIHJ5PSIyMjIuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zOCIvPgo8ZWxsaXBzZSBjeD0iLTIxNS4yIiBjeT0iNzc4LjAiIHJ4PSIzNzkuNSIgcnk9IjE5Mi44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQxIi8+CjxlbGxpcHNlIGN4PSI2MC44IiBjeT0iMTE4NC4xIiByeD0iMjc5LjkiIHJ5PSIyODcuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NiIvPgo8ZWxsaXBzZSBjeD0iLTEwNy43IiBjeT0iMTE5OC44IiByeD0iMjczLjUiIHJ5PSIyMDguNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iMzc1LjIiIGN5PSI3MDIuMyIgcng9IjI2NC41IiByeT0iMjEwLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTAiLz4KPGVsbGlwc2UgY3g9IjEzOTIuMCIgY3k9IjgwNi4zIiByeD0iMjY3LjYiIHJ5PSIyNjYuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MSIvPgo8ZWxsaXBzZSBjeD0iMTYxNC4wIiBjeT0iMTEyMi44IiByeD0iNjA4LjMiIHJ5PSIyNTAuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iNDE2LjEiIGN5PSI3NTIuOCIgcng9IjMxNy4wIiByeT0iMzE1LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDMiLz4KPGVsbGlwc2UgY3g9Ii0xNDUuMSIgY3k9IjExMzYuMCIgcng9IjI3MC4yIiByeT0iMjAxLjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzciLz4KPGVsbGlwc2UgY3g9Ijg2OC4xIiBjeT0iMTA1Ny45IiByeD0iNDc2LjAiIHJ5PSIyMDguMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MiIvPgo8ZWxsaXBzZSBjeD0iMTcyMy41IiBjeT0iODEwLjQiIHJ4PSIzNTMuNiIgcnk9IjI3OS4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM2Ii8+CjxlbGxpcHNlIGN4PSI0MjYuMSIgY3k9IjkxMi4zIiByeD0iMjg5LjQiIHJ5PSIyODYuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMyIvPgo8ZWxsaXBzZSBjeD0iMjI1LjYiIGN5PSIxMjc5LjYiIHJ4PSI1MjAuOSIgcnk9IjI3MS45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjUxIi8+CjxlbGxpcHNlIGN4PSIxMTAwLjUiIGN5PSI4MDQuOSIgcng9IjIyOS40IiByeT0iMjUzLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDIiLz4KPGVsbGlwc2UgY3g9IjE1MS41IiBjeT0iMTEwNi42IiByeD0iNDI4LjIiIHJ5PSIyNzMuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NiIvPgo8ZWxsaXBzZSBjeD0iNzMzLjciIGN5PSIxMDg5LjUiIHJ4PSIzNTQuNSIgcnk9IjIzNy43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMyIi8+CjxlbGxpcHNlIGN4PSI1MDIuOCIgY3k9IjEwNTEuMyIgcng9IjU3Ni43IiByeT0iMjMzLjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDYiLz4KPGVsbGlwc2UgY3g9IjgzNS4xIiBjeT0iODM2LjQiIHJ4PSIyNDEuNiIgcnk9IjEyNy4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ5Ii8+CjxlbGxpcHNlIGN4PSIxOTUuNCIgY3k9IjEyNjEuOSIgcng9IjM0NC4zIiByeT0iMjg3LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzciLz4KPGVsbGlwc2UgY3g9IjUxNi42IiBjeT0iMTIyMi43IiByeD0iNTYxLjUiIHJ5PSIyNjEuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iMTgzNy42IiBjeT0iMTM0Ny40IiByeD0iNDM4LjMiIHJ5PSIyOTQuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNyIvPgo8ZWxsaXBzZSBjeD0iMTMzLjgiIGN5PSIxMzAxLjIiIHJ4PSI0NjQuOSIgcnk9IjE3Ny42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM1Ii8+CjxlbGxpcHNlIGN4PSItMjk2LjciIGN5PSI4MDEuOSIgcng9IjU0Mi42IiByeT0iMjA4LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDkiLz4KPGVsbGlwc2UgY3g9IjE2NDMuNyIgY3k9Ijc2OS4yIiByeD0iNDg0LjgiIHJ5PSIzMDQuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NSIvPgo8ZWxsaXBzZSBjeD0iMTAzOC43IiBjeT0iNzAyLjkiIHJ4PSIzNTguNyIgcnk9IjI0Mi40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSI3MzguNyIgY3k9IjEwMDIuNiIgcng9IjQ3Ny4wIiByeT0iMjAxLjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzciLz4KPGVsbGlwc2UgY3g9IjU1Mi43IiBjeT0iMTI1OC44IiByeD0iNTc4LjYiIHJ5PSIxOTcuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40OSIvPgo8ZWxsaXBzZSBjeD0iNDkuOSIgY3k9IjcwNy4xIiByeD0iMzczLjAiIHJ5PSIyNzYuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MSIvPgo8ZWxsaXBzZSBjeD0iMjA1OC40IiBjeT0iMTM0My4yIiByeD0iMzM5LjMiIHJ5PSIxODcuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MCIvPgo8ZWxsaXBzZSBjeD0iODEuNyIgY3k9Ijk3My43IiByeD0iNDQ1LjEiIHJ5PSIyNTguNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMiIvPgo8ZWxsaXBzZSBjeD0iMTY4OC44IiBjeT0iMTI3My45IiByeD0iNTE4LjciIHJ5PSIyMDYuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MCIvPgo8ZWxsaXBzZSBjeD0iOTcxLjAiIGN5PSIxMDkwLjkiIHJ4PSI1NTUuNSIgcnk9IjI0Ny44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ1Ii8+CjxlbGxpcHNlIGN4PSIxMzEyLjMiIGN5PSI3ODIuMCIgcng9IjQ0NS45IiByeT0iMTk1LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjI2MC42IiBjeT0iMjkxLjIiIHJ4PSI1MzcuNCIgcnk9IjE0NC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI2Ii8+CjxlbGxpcHNlIGN4PSIxNjUuNSIgY3k9IjQ2MS4wIiByeD0iNDkzLjUiIHJ5PSIxNzUuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iLTEyNS45IiBjeT0iNjQ3LjUiIHJ4PSI0OTIuNiIgcnk9IjIwMi41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMxIi8+CjxlbGxpcHNlIGN4PSItMTg3LjciIGN5PSI3MzcuMCIgcng9IjQ5Ni4yIiByeT0iMTU4LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjYiLz4KPGVsbGlwc2UgY3g9Ii0zNi4xIiBjeT0iNzg2LjgiIHJ4PSIzMDMuMyIgcnk9IjI4OS4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSI1MS40IiBjeT0iNjcyLjIiIHJ4PSIyNTkuMyIgcnk9IjI1OS4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMwIi8+CjxlbGxpcHNlIGN4PSItMTI5LjAiIGN5PSIzNDIuMyIgcng9IjMyNy41IiByeT0iMjI4LjMiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDMiLz4KPGVsbGlwc2UgY3g9IjE0NS43IiBjeT0iODIzLjYiIHJ4PSIyNTkuNCIgcnk9IjI0NS4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM1Ii8+CjxlbGxpcHNlIGN4PSIxMzAuMiIgY3k9IjI3My42IiByeD0iMjYzLjQiIHJ5PSIxNDYuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOCIvPgo8ZWxsaXBzZSBjeD0iMjQyLjkiIGN5PSI1MTMuNyIgcng9IjQzNi4xIiByeT0iMjcyLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjIiLz4KPGVsbGlwc2UgY3g9Ii0xNzEuMCIgY3k9IjMxMC42IiByeD0iNDE4LjYiIHJ5PSIyMTUuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NCIvPgo8ZWxsaXBzZSBjeD0iLTE0Ni45IiBjeT0iMzk1LjMiIHJ4PSIzMTYuNyIgcnk9IjIxMy45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSIyMjguNSIgY3k9Ijg2Ni41IiByeD0iNDYyLjciIHJ5PSIxNzIuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iLTIwNy4yIiBjeT0iNDQ2LjEiIHJ4PSI1NDIuMCIgcnk9IjE4MC43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMyIi8+CjxlbGxpcHNlIGN4PSI3NS4wIiBjeT0iNjU4LjMiIHJ4PSIyNjMuNiIgcnk9IjE3MC4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMwIi8+CjxlbGxpcHNlIGN4PSItNDMuNiIgY3k9IjY3OS42IiByeD0iNDg3LjkiIHJ5PSIxOTMuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iNTIuOSIgY3k9IjM2MS45IiByeD0iMjg2LjAiIHJ5PSIxNzIuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NSIvPgo8ZWxsaXBzZSBjeD0iLTI4NC44IiBjeT0iMjQwLjUiIHJ4PSI1MzguMCIgcnk9IjE2NS44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQwIi8+CjxlbGxpcHNlIGN4PSItMTc3LjEiIGN5PSIyMDEuMiIgcng9IjUyMi42IiByeT0iMTQyLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzYiLz4KPGVsbGlwc2UgY3g9IjE5LjMiIGN5PSI3MzYuNyIgcng9IjQwNi40IiByeT0iMTc0LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjQiLz4KPGVsbGlwc2UgY3g9Ii02My40IiBjeT0iNjI5LjMiIHJ4PSI1MjEuMyIgcnk9IjI1NS4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM2Ii8+CjxlbGxpcHNlIGN4PSI3OS43IiBjeT0iNjQ5LjgiIHJ4PSIzNjAuMiIgcnk9IjE1NS45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIyIi8+CjxlbGxpcHNlIGN4PSItMjgxLjYiIGN5PSI2MTcuNiIgcng9IjQ3Mi43IiByeT0iMjU2LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDEiLz4KPGVsbGlwc2UgY3g9IjkwLjkiIGN5PSI4MjMuOCIgcng9IjMwOC40IiByeT0iMTk3LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzUiLz4KPGVsbGlwc2UgY3g9IjE0NTguMiIgY3k9IjEwNC4yIiByeD0iNDI3LjYiIHJ5PSIyMTUuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNyIvPgo8ZWxsaXBzZSBjeD0iMTM5NC43IiBjeT0iNTkuMCIgcng9IjM3My4zIiByeT0iMTc4LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjgiLz4KPGVsbGlwc2UgY3g9IjE1MzcuNyIgY3k9IjM1MS43IiByeD0iMzQ3LjgiIHJ5PSIxNzcuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMCIvPgo8ZWxsaXBzZSBjeD0iMTQ0NS4xIiBjeT0iMjAuMyIgcng9IjM2Mi4xIiByeT0iMTcwLjMiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjEiLz4KPGVsbGlwc2UgY3g9IjE1NzguOSIgY3k9IjM4Ni45IiByeD0iMjI0LjIiIHJ5PSIxMjEuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MSIvPgo8ZWxsaXBzZSBjeD0iMTYwOS42IiBjeT0iNDA3LjYiIHJ4PSIyOTMuNiIgcnk9IjI3MS4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE3Ii8+CjxlbGxpcHNlIGN4PSIxNjk5LjYiIGN5PSIzNzcuNCIgcng9IjM2Ni44IiByeT0iMjQ0LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzgiLz4KPGVsbGlwc2UgY3g9IjE4MzQuMyIgY3k9IjQxOS43IiByeD0iMjkzLjMiIHJ5PSIxNjYuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNiIvPgo8ZWxsaXBzZSBjeD0iMTc4Ni43IiBjeT0iMTA3LjYiIHJ4PSI0NDMuNiIgcnk9IjE2Ny43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM3Ii8+CjxlbGxpcHNlIGN4PSIxODYwLjEiIGN5PSItNTAuNyIgcng9IjI5Mi42IiByeT0iMTIxLjMiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzEiLz4KPGVsbGlwc2UgY3g9IjE4NjYuOCIgY3k9IjEwNC4xIiByeD0iMzc0LjUiIHJ5PSIxNDAuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNCIvPgo8ZWxsaXBzZSBjeD0iMTkyNC42IiBjeT0iMjE4LjUiIHJ4PSIzNTcuNyIgcnk9IjE2My45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSIyMDQwLjAiIGN5PSIxNTIuMiIgcng9IjMxOC4yIiByeT0iMjQyLjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjUiLz4KPGVsbGlwc2UgY3g9IjIwMTIuOCIgY3k9IjQyNC4zIiByeD0iMjc2LjUiIHJ5PSIyNjYuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xNyIvPgo8ZWxsaXBzZSBjeD0iMjAxMy43IiBjeT0iNDUxLjciIHJ4PSI0NzYuNiIgcnk9IjI0NC4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM1Ii8+CjxlbGxpcHNlIGN4PSIyMDIyLjciIGN5PSI0MDkuNiIgcng9IjUyMy45IiByeT0iMjA1LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjE0MDMuOCIgY3k9IjQzMS43IiByeD0iMzUxLjUiIHJ5PSIxNTQuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iMTYxOC4xIiBjeT0iLTYyLjkiIHJ4PSIyNzQuNiIgcnk9IjE5Mi4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM4Ii8+CjxlbGxpcHNlIGN4PSIxNDQxLjUiIGN5PSIyNjMuNCIgcng9IjMzNy40IiByeT0iMTM0LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDEiLz4KPGVsbGlwc2UgY3g9IjE5NzEuMiIgY3k9IjIzMC44IiByeD0iMzg0LjUiIHJ5PSIyMDguMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNiIvPgo8ZWxsaXBzZSBjeD0iMTc3My41IiBjeT0iMzkyLjciIHJ4PSIyOTcuMyIgcnk9IjEyNy44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIyIi8+CjxlbGxpcHNlIGN4PSIxNjM0LjYiIGN5PSIxMjMuNSIgcng9IjI5Mi45IiByeT0iMjQ5LjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzQiLz4KPGVsbGlwc2UgY3g9IjIxMzguNSIgY3k9IjcyMC40IiByeD0iMzExLjYiIHJ5PSIxNDYuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iMTYzNy42IiBjeT0iNjkyLjkiIHJ4PSI0NjMuOSIgcnk9IjIzMS41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSIyMTU4LjciIGN5PSI4NDEuMCIgcng9IjQ3MC44IiByeT0iMTI5LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjkiLz4KPGVsbGlwc2UgY3g9IjIwNzguMyIgY3k9Ijc3OS41IiByeD0iMzUwLjIiIHJ5PSIyMjEuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xOCIvPgo8ZWxsaXBzZSBjeD0iMTU1OC4wIiBjeT0iODI5LjMiIHJ4PSIyMDYuMSIgcnk9IjEwMS4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE1Ii8+CjxlbGxpcHNlIGN4PSIxNzQ5LjgiIGN5PSI2MTEuNyIgcng9IjIxMy4wIiByeT0iMTQ4LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjE5MzYuOSIgY3k9IjY3NS42IiByeD0iMjM2LjQiIHJ5PSIyMDQuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNiIvPgo8ZWxsaXBzZSBjeD0iMTU2NS45IiBjeT0iNDE1LjMiIHJ4PSI0MTUuNiIgcnk9IjE2NS4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI0Ii8+CjxlbGxpcHNlIGN4PSIxODE0LjEiIGN5PSI2MjIuMiIgcng9IjIwMC40IiByeT0iMjA5LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzMiLz4KPGVsbGlwc2UgY3g9IjE2MjkuOSIgY3k9IjYyOS4yIiByeD0iNDA0LjkiIHJ5PSIxMTUuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iMjEyNC42IiBjeT0iNTE4LjgiIHJ4PSI0NTMuNiIgcnk9IjE1MC45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI4Ii8+CjxlbGxpcHNlIGN4PSIyMTAzLjYiIGN5PSI3MDMuMSIgcng9IjI0OC4xIiByeT0iMTI4LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjMiLz4KPGVsbGlwc2UgY3g9IjE2ODEuNCIgY3k9IjQ4Ni4wIiByeD0iMzQ5LjQiIHJ5PSIxMTIuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMyIvPgo8ZWxsaXBzZSBjeD0iMjAzNS45IiBjeT0iNzk1LjUiIHJ4PSIzMzIuOCIgcnk9IjE1My45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIwIi8+CjxlbGxpcHNlIGN4PSIxOTIyLjYiIGN5PSI3MjcuOCIgcng9IjI1MC4wIiByeT0iMTU3LjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzgiLz4KPGVsbGlwc2UgY3g9IjIwNTMuNyIgY3k9IjgyOC4yIiByeD0iMzQ1LjUiIHJ5PSIxNzEuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iMTkyMi4wIiBjeT0iNzU2LjIiIHJ4PSIyNDAuNyIgcnk9IjE4Ny4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIxIi8+CjxlbGxpcHNlIGN4PSIxNjM2LjkiIGN5PSI1NjkuNSIgcng9IjQyOC44IiByeT0iMTM5LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzMiLz4KPGVsbGlwc2UgY3g9IjUzNy40IiBjeT0iLTQyLjEiIHJ4PSIxNDQuNyIgcnk9Ijk0LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDgiLz4KPGVsbGlwc2UgY3g9IjE3MjYuMCIgY3k9Ii0zMC40IiByeD0iMTQxLjEiIHJ5PSI3Mi45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIzIi8+CjxlbGxpcHNlIGN4PSIzNjcuMCIgY3k9Ii0xNTQuMiIgcng9IjE5MS4xIiByeT0iMTA0LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTAiLz4KPGVsbGlwc2UgY3g9IjE2MTYuNSIgY3k9Ii0zNS4zIiByeD0iMzk0LjgiIHJ5PSIxMjQuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4wOSIvPgo8ZWxsaXBzZSBjeD0iODU5LjEiIGN5PSIyMDEuMyIgcng9IjI5OS45IiByeT0iMTUyLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDkiLz4KPGVsbGlwc2UgY3g9IjQwOS41IiBjeT0iMjE5LjIiIHJ4PSIyMjMuMiIgcnk9IjExMS44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjA4Ii8+CjxlbGxpcHNlIGN4PSIxMDg3LjIiIGN5PSIyMTkuOCIgcng9IjIyMC4xIiByeT0iMTY0LjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDgiLz4KPGVsbGlwc2UgY3g9Ijc1MC43IiBjeT0iLTg5LjciIHJ4PSIxNTQuNyIgcnk9IjEzNi4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE4Ii8+CjxlbGxpcHNlIGN4PSI0MjIuNSIgY3k9IjY3LjAiIHJ4PSIzMjMuOSIgcnk9IjgzLjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDkiLz4KPGVsbGlwc2UgY3g9IjE3NTEuMiIgY3k9Ii0xMjMuNyIgcng9IjI4Ny4yIiByeT0iODguOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMCIvPgo8ZWxsaXBzZSBjeD0iODg1LjYiIGN5PSI0Ni4xIiByeD0iMjAxLjIiIHJ5PSI3NS43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE1Ii8+CjxlbGxpcHNlIGN4PSI5ODMuOSIgY3k9IjIuNCIgcng9IjM1Ny4zIiByeT0iNzguMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xMSIvPgo8ZWxsaXBzZSBjeD0iMTYzNC42IiBjeT0iMjAuNyIgcng9IjMxOS45IiByeT0iOTguNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4wOSIvPgo8ZWxsaXBzZSBjeD0iMzkwLjAiIGN5PSItMTUwLjYiIHJ4PSIzOTAuMiIgcnk9IjgxLjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjMiLz4KPGVsbGlwc2UgY3g9IjE2MjYuOCIgY3k9IjIwNi41IiByeD0iMzEzLjciIHJ5PSIxMTguNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNSIvPgo8ZWxsaXBzZSBjeD0iMzk1LjEiIGN5PSIxNzAuNSIgcng9IjE0Mi42IiByeT0iNzYuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMSIvPgo8ZWxsaXBzZSBjeD0iMTQ4NS44IiBjeT0iMjYxLjYiIHJ4PSIyMzkuNiIgcnk9IjEzMC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI2Ii8+CjxlbGxpcHNlIGN4PSIxNDgxLjciIGN5PSIxMzIuMyIgcng9IjI4OC4yIiByeT0iMTUwLjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTMiLz4KPGVsbGlwc2UgY3g9IjE0MTMuNyIgY3k9IjI5MC41IiByeD0iMTU0LjgiIHJ5PSI4Mi42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE5Ii8+CjxlbGxpcHNlIGN4PSIxNTM0LjQiIGN5PSIxNzUuOCIgcng9IjE2Ni4zIiByeT0iMTQwLjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTMiLz4KPGVsbGlwc2UgY3g9IjQ3NS4zIiBjeT0iMTczLjQiIHJ4PSIzMDMuOSIgcnk9Ijg0LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTEiLz4KPGVsbGlwc2UgY3g9IjE0MjYuNSIgY3k9IjIzMS40IiByeD0iMjMwLjMiIHJ5PSIxMjIuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMiIvPgo8ZWxsaXBzZSBjeD0iNDU0LjgiIGN5PSIzMTAuNyIgcng9IjE5MC42IiByeT0iMTMzLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjEiLz4KPGVsbGlwc2UgY3g9IjI0Ny4yIiBjeT0iMTQ3LjciIHJ4PSIyNDEuMyIgcnk9Ijc0LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjEiLz4KICAgICAgPC9nPgogICAgPC9tYXNrPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3NreSkiLz4KICA8ZyBmaWx0ZXI9InVybCgjY2xvdWRCbHVyKSI+CiAgICA8ZWxsaXBzZSBjeD0iMzk3LjYiIGN5PSI4NzQuMiIgcng9IjI4MS44IiByeT0iMjI2LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjkiLz4KPGVsbGlwc2UgY3g9Ii0xOC40IiBjeT0iODY3LjkiIHJ4PSIzMzMuOCIgcnk9IjI5NS42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSIxMTc4LjQiIGN5PSIxMjYwLjgiIHJ4PSIzMTAuOSIgcnk9IjExMi4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMyIi8+CjxlbGxpcHNlIGN4PSI3MjIuOCIgY3k9Ijg3Mi4yIiByeD0iMzI5LjYiIHJ5PSIxNDEuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NiIvPgo8ZWxsaXBzZSBjeD0iMjExNy44IiBjeT0iNzc3LjYiIHJ4PSIzMjQuNSIgcnk9IjMxNy40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ1Ii8+CjxlbGxpcHNlIGN4PSIxMDE0LjgiIGN5PSIxMjA0LjkiIHJ4PSIzMTIuMyIgcnk9IjI2OC40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMyIi8+CjxlbGxpcHNlIGN4PSI4OTEuOCIgY3k9Ijc2My4wIiByeD0iNTM0LjgiIHJ5PSIxNzcuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNCIvPgo8ZWxsaXBzZSBjeD0iLTEzOC4wIiBjeT0iMTA5MS4wIiByeD0iNDc0LjYiIHJ5PSIyMDAuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iMTMwNC40IiBjeT0iMTMxMy44IiByeD0iNTgyLjQiIHJ5PSIxNDguNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NiIvPgo8ZWxsaXBzZSBjeD0iMTYyMS43IiBjeT0iMTMzNi43IiByeD0iMjkxLjMiIHJ5PSIxMTAuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NyIvPgo8ZWxsaXBzZSBjeD0iMjA3Ni43IiBjeT0iODc5LjgiIHJ4PSI0NTIuMSIgcnk9IjMwOC43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSI0NTIuNCIgY3k9IjY4Mi43IiByeD0iNTIzLjciIHJ5PSIyMjIuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOCIvPgo8ZWxsaXBzZSBjeD0iMTQ1LjciIGN5PSI5MTUuNyIgcng9IjMxOS45IiByeT0iMjA0LjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTEiLz4KPGVsbGlwc2UgY3g9IjIyNi43IiBjeT0iOTA5LjUiIHJ4PSI0ODMuMyIgcnk9IjMwOC40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQyIi8+CjxlbGxpcHNlIGN4PSIxOTY4LjUiIGN5PSIxMTU3LjMiIHJ4PSI0NDkuOSIgcnk9IjI1MS4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSItMjIuNSIgY3k9IjEyNzguMiIgcng9IjU1Mi4wIiByeT0iMTQwLjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzUiLz4KPGVsbGlwc2UgY3g9IjQ5MS44IiBjeT0iMTMyNC40IiByeD0iMjgwLjAiIHJ5PSIyMzEuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MyIvPgo8ZWxsaXBzZSBjeD0iMTI4Ni41IiBjeT0iMTE1NS43IiByeD0iNTk5LjUiIHJ5PSIxMTAuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zOSIvPgo8ZWxsaXBzZSBjeD0iMjIwNC40IiBjeT0iODc5LjEiIHJ4PSIyNzUuOSIgcnk9IjEyNi41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQyIi8+CjxlbGxpcHNlIGN4PSIzMTcuNyIgY3k9IjkzNy4wIiByeD0iNDE0LjAiIHJ5PSIxNzguMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNCIvPgo8ZWxsaXBzZSBjeD0iMzM4LjUiIGN5PSI3NTguNCIgcng9IjI0MS4zIiByeT0iMjcwLjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTAiLz4KPGVsbGlwc2UgY3g9IjU2MC42IiBjeT0iOTc0LjQiIHJ4PSIzNDMuMSIgcnk9IjE5My43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM4Ii8+CjxlbGxpcHNlIGN4PSIxNDI3LjciIGN5PSIxMDUyLjMiIHJ4PSIyMjMuMCIgcnk9IjExNS40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQwIi8+CjxlbGxpcHNlIGN4PSIxOTE0LjQiIGN5PSIxMDU1LjAiIHJ4PSIzNTMuMiIgcnk9IjMwOS41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ1Ii8+CjxlbGxpcHNlIGN4PSI4ODMuNCIgY3k9IjEyMjguNSIgcng9IjYwMS42IiByeT0iMjEwLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzUiLz4KPGVsbGlwc2UgY3g9IjE2MDUuNCIgY3k9IjcyNy4zIiByeD0iNDc5LjEiIHJ5PSIxNjEuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MSIvPgo8ZWxsaXBzZSBjeD0iODgxLjAiIGN5PSIxMDM4LjQiIHJ4PSI1OTcuMiIgcnk9IjE0MC44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ2Ii8+CjxlbGxpcHNlIGN4PSI4NjIuNiIgY3k9IjExNjkuNSIgcng9IjM0OS41IiByeT0iMjgxLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9Ii0yODcuOCIgY3k9IjEyNDQuNiIgcng9IjUxNi40IiByeT0iMTU5LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDAiLz4KPGVsbGlwc2UgY3g9IjY3MS42IiBjeT0iMTI2MS4wIiByeD0iNjA0LjEiIHJ5PSIyOTQuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MCIvPgo8ZWxsaXBzZSBjeD0iLTI2MS42IiBjeT0iODY5LjAiIHJ4PSI0NDcuNCIgcnk9IjE0Ny43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ3Ii8+CjxlbGxpcHNlIGN4PSIyMTAyLjciIGN5PSI3NTUuOCIgcng9IjQxMi43IiByeT0iMjMxLjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjgiLz4KPGVsbGlwc2UgY3g9IjEwODAuOSIgY3k9IjgzOS42IiByeD0iMzI2LjUiIHJ5PSIxNDguOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MSIvPgo8ZWxsaXBzZSBjeD0iMTQzMi40IiBjeT0iOTQwLjQiIHJ4PSI0MjAuOSIgcnk9IjE3NC41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMzIi8+CjxlbGxpcHNlIGN4PSIxMDY5LjEiIGN5PSI2OTYuMyIgcng9IjQ5MS43IiByeT0iMTE0LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDkiLz4KPGVsbGlwc2UgY3g9IjE5OTUuOCIgY3k9Ijk3NC4yIiByeD0iMzA1LjAiIHJ5PSIxNjUuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MCIvPgo8ZWxsaXBzZSBjeD0iMjA2Ny4yIiBjeT0iOTYyLjAiIHJ4PSIzODIuOSIgcnk9IjI3NS43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSItMTguMSIgY3k9IjEwNzEuMiIgcng9IjI2My4xIiByeT0iMjgxLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDgiLz4KPGVsbGlwc2UgY3g9IjE1Ny4wIiBjeT0iNzA2LjEiIHJ4PSIzNTAuNSIgcnk9IjIxOC4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQwIi8+CjxlbGxpcHNlIGN4PSItMTM5LjciIGN5PSI3NDkuMiIgcng9IjQ3Ni41IiByeT0iMTU2LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjEzMzQuOCIgY3k9IjEyMDQuMiIgcng9IjUyNi43IiByeT0iMTI3LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzciLz4KPGVsbGlwc2UgY3g9IjE3OTguMyIgY3k9IjEyODMuMyIgcng9IjUyOS4wIiByeT0iMTY3LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTEiLz4KPGVsbGlwc2UgY3g9IjE2NDMuNCIgY3k9IjgzOS40IiByeD0iMzM1LjYiIHJ5PSIxNjUuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iNDMuNCIgY3k9IjgxNy4yIiByeD0iMjM2LjgiIHJ5PSIxNDkuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NCIvPgo8ZWxsaXBzZSBjeD0iMTk5NC4zIiBjeT0iMTAzNy43IiByeD0iMzQ5LjkiIHJ5PSIyMTEuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MyIvPgo8ZWxsaXBzZSBjeD0iMjA5MS45IiBjeT0iMTI2OS4yIiByeD0iNTUyLjIiIHJ5PSIyMzAuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNyIvPgo8ZWxsaXBzZSBjeD0iODYwLjciIGN5PSIxMjg3LjkiIHJ4PSIzMTIuMiIgcnk9IjI0Ni40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ5Ii8+CjxlbGxpcHNlIGN4PSI0NjAuNyIgY3k9IjEyOTkuMyIgcng9IjUxNC45IiByeT0iMjIyLjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzgiLz4KPGVsbGlwc2UgY3g9Ii0yMTUuMiIgY3k9Ijc3OC4wIiByeD0iMzc5LjUiIHJ5PSIxOTIuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MSIvPgo8ZWxsaXBzZSBjeD0iNjAuOCIgY3k9IjExODQuMSIgcng9IjI3OS45IiByeT0iMjg3LjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDYiLz4KPGVsbGlwc2UgY3g9Ii0xMDcuNyIgY3k9IjExOTguOCIgcng9IjI3My41IiByeT0iMjA4LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzUiLz4KPGVsbGlwc2UgY3g9IjM3NS4yIiBjeT0iNzAyLjMiIHJ4PSIyNjQuNSIgcnk9IjIxMC4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjUwIi8+CjxlbGxpcHNlIGN4PSIxMzkyLjAiIGN5PSI4MDYuMyIgcng9IjI2Ny42IiByeT0iMjY2LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTEiLz4KPGVsbGlwc2UgY3g9IjE2MTQuMCIgY3k9IjExMjIuOCIgcng9IjYwOC4zIiByeT0iMjUwLjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjkiLz4KPGVsbGlwc2UgY3g9IjQxNi4xIiBjeT0iNzUyLjgiIHJ4PSIzMTcuMCIgcnk9IjMxNS4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSItMTQ1LjEiIGN5PSIxMTM2LjAiIHJ4PSIyNzAuMiIgcnk9IjIwMS40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM3Ii8+CjxlbGxpcHNlIGN4PSI4NjguMSIgY3k9IjEwNTcuOSIgcng9IjQ3Ni4wIiByeT0iMjA4LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDIiLz4KPGVsbGlwc2UgY3g9IjE3MjMuNSIgY3k9IjgxMC40IiByeD0iMzUzLjYiIHJ5PSIyNzkuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNiIvPgo8ZWxsaXBzZSBjeD0iNDI2LjEiIGN5PSI5MTIuMyIgcng9IjI4OS40IiByeT0iMjg2LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzMiLz4KPGVsbGlwc2UgY3g9IjIyNS42IiBjeT0iMTI3OS42IiByeD0iNTIwLjkiIHJ5PSIyNzEuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC41MSIvPgo8ZWxsaXBzZSBjeD0iMTEwMC41IiBjeT0iODA0LjkiIHJ4PSIyMjkuNCIgcnk9IjI1My4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQyIi8+CjxlbGxpcHNlIGN4PSIxNTEuNSIgY3k9IjExMDYuNiIgcng9IjQyOC4yIiByeT0iMjczLjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDYiLz4KPGVsbGlwc2UgY3g9IjczMy43IiBjeT0iMTA4OS41IiByeD0iMzU0LjUiIHJ5PSIyMzcuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMiIvPgo8ZWxsaXBzZSBjeD0iNTAyLjgiIGN5PSIxMDUxLjMiIHJ4PSI1NzYuNyIgcnk9IjIzMy45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ2Ii8+CjxlbGxpcHNlIGN4PSI4MzUuMSIgY3k9IjgzNi40IiByeD0iMjQxLjYiIHJ5PSIxMjcuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40OSIvPgo8ZWxsaXBzZSBjeD0iMTk1LjQiIGN5PSIxMjYxLjkiIHJ4PSIzNDQuMyIgcnk9IjI4Ny4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM3Ii8+CjxlbGxpcHNlIGN4PSI1MTYuNiIgY3k9IjEyMjIuNyIgcng9IjU2MS41IiByeT0iMjYxLjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzEiLz4KPGVsbGlwc2UgY3g9IjE4MzcuNiIgY3k9IjEzNDcuNCIgcng9IjQzOC4zIiByeT0iMjk0LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzciLz4KPGVsbGlwc2UgY3g9IjEzMy44IiBjeT0iMTMwMS4yIiByeD0iNDY0LjkiIHJ5PSIxNzcuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iLTI5Ni43IiBjeT0iODAxLjkiIHJ4PSI1NDIuNiIgcnk9IjIwOC43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQ5Ii8+CjxlbGxpcHNlIGN4PSIxNjQzLjciIGN5PSI3NjkuMiIgcng9IjQ4NC44IiByeT0iMzA0LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDUiLz4KPGVsbGlwc2UgY3g9IjEwMzguNyIgY3k9IjcwMi45IiByeD0iMzU4LjciIHJ5PSIyNDIuNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNCIvPgo8ZWxsaXBzZSBjeD0iNzM4LjciIGN5PSIxMDAyLjYiIHJ4PSI0NzcuMCIgcnk9IjIwMS41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM3Ii8+CjxlbGxpcHNlIGN4PSI1NTIuNyIgY3k9IjEyNTguOCIgcng9IjU3OC42IiByeT0iMTk3LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDkiLz4KPGVsbGlwc2UgY3g9IjQ5LjkiIGN5PSI3MDcuMSIgcng9IjM3My4wIiByeT0iMjc2LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDEiLz4KPGVsbGlwc2UgY3g9IjIwNTguNCIgY3k9IjEzNDMuMiIgcng9IjMzOS4zIiByeT0iMTg3LjMiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNTAiLz4KPGVsbGlwc2UgY3g9IjgxLjciIGN5PSI5NzMuNyIgcng9IjQ0NS4xIiByeT0iMjU4LjUiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzIiLz4KPGVsbGlwc2UgY3g9IjE2ODguOCIgY3k9IjEyNzMuOSIgcng9IjUxOC43IiByeT0iMjA2LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDAiLz4KPGVsbGlwc2UgY3g9Ijk3MS4wIiBjeT0iMTA5MC45IiByeD0iNTU1LjUiIHJ5PSIyNDcuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40NSIvPgo8ZWxsaXBzZSBjeD0iMTMxMi4zIiBjeT0iNzgyLjAiIHJ4PSI0NDUuOSIgcnk9IjE5NS43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMwIi8+CjxlbGxpcHNlIGN4PSIyNjAuNiIgY3k9IjI5MS4yIiByeD0iNTM3LjQiIHJ5PSIxNDQuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNiIvPgo8ZWxsaXBzZSBjeD0iMTY1LjUiIGN5PSI0NjEuMCIgcng9IjQ5My41IiByeT0iMTc1LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzEiLz4KPGVsbGlwc2UgY3g9Ii0xMjUuOSIgY3k9IjY0Ny41IiByeD0iNDkyLjYiIHJ5PSIyMDIuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMSIvPgo8ZWxsaXBzZSBjeD0iLTE4Ny43IiBjeT0iNzM3LjAiIHJ4PSI0OTYuMiIgcnk9IjE1OC4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI2Ii8+CjxlbGxpcHNlIGN4PSItMzYuMSIgY3k9Ijc4Ni44IiByeD0iMzAzLjMiIHJ5PSIyODkuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iNTEuNCIgY3k9IjY3Mi4yIiByeD0iMjU5LjMiIHJ5PSIyNTkuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iLTEyOS4wIiBjeT0iMzQyLjMiIHJ4PSIzMjcuNSIgcnk9IjIyOC4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQzIi8+CjxlbGxpcHNlIGN4PSIxNDUuNyIgY3k9IjgyMy42IiByeD0iMjU5LjQiIHJ5PSIyNDUuMCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iMTMwLjIiIGN5PSIyNzMuNiIgcng9IjI2My40IiByeT0iMTQ2LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjgiLz4KPGVsbGlwc2UgY3g9IjI0Mi45IiBjeT0iNTEzLjciIHJ4PSI0MzYuMSIgcnk9IjI3Mi4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIyIi8+CjxlbGxpcHNlIGN4PSItMTcxLjAiIGN5PSIzMTAuNiIgcng9IjQxOC42IiByeT0iMjE1LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDQiLz4KPGVsbGlwc2UgY3g9Ii0xNDYuOSIgY3k9IjM5NS4zIiByeD0iMzE2LjciIHJ5PSIyMTMuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iMjI4LjUiIGN5PSI4NjYuNSIgcng9IjQ2Mi43IiByeT0iMTcyLjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9Ii0yMDcuMiIgY3k9IjQ0Ni4xIiByeD0iNTQyLjAiIHJ5PSIxODAuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMiIvPgo8ZWxsaXBzZSBjeD0iNzUuMCIgY3k9IjY1OC4zIiByeD0iMjYzLjYiIHJ5PSIxNzAuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zMCIvPgo8ZWxsaXBzZSBjeD0iLTQzLjYiIGN5PSI2NzkuNiIgcng9IjQ4Ny45IiByeT0iMTkzLjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzUiLz4KPGVsbGlwc2UgY3g9IjUyLjkiIGN5PSIzNjEuOSIgcng9IjI4Ni4wIiByeT0iMTcyLjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDUiLz4KPGVsbGlwc2UgY3g9Ii0yODQuOCIgY3k9IjI0MC41IiByeD0iNTM4LjAiIHJ5PSIxNjUuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC40MCIvPgo8ZWxsaXBzZSBjeD0iLTE3Ny4xIiBjeT0iMjAxLjIiIHJ4PSI1MjIuNiIgcnk9IjE0Mi43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM2Ii8+CjxlbGxpcHNlIGN4PSIxOS4zIiBjeT0iNzM2LjciIHJ4PSI0MDYuNCIgcnk9IjE3NC41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI0Ii8+CjxlbGxpcHNlIGN4PSItNjMuNCIgY3k9IjYyOS4zIiByeD0iNTIxLjMiIHJ5PSIyNTUuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNiIvPgo8ZWxsaXBzZSBjeD0iNzkuNyIgY3k9IjY0OS44IiByeD0iMzYwLjIiIHJ5PSIxNTUuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMiIvPgo8ZWxsaXBzZSBjeD0iLTI4MS42IiBjeT0iNjE3LjYiIHJ4PSI0NzIuNyIgcnk9IjI1Ni43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQxIi8+CjxlbGxpcHNlIGN4PSI5MC45IiBjeT0iODIzLjgiIHJ4PSIzMDguNCIgcnk9IjE5Ny4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM1Ii8+CjxlbGxpcHNlIGN4PSIxNDU4LjIiIGN5PSIxMDQuMiIgcng9IjQyNy42IiByeT0iMjE1LjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjciLz4KPGVsbGlwc2UgY3g9IjEzOTQuNyIgY3k9IjU5LjAiIHJ4PSIzNzMuMyIgcnk9IjE3OC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI4Ii8+CjxlbGxpcHNlIGN4PSIxNTM3LjciIGN5PSIzNTEuNyIgcng9IjM0Ny44IiByeT0iMTc3LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjAiLz4KPGVsbGlwc2UgY3g9IjE0NDUuMSIgY3k9IjIwLjMiIHJ4PSIzNjIuMSIgcnk9IjE3MC4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIxIi8+CjxlbGxpcHNlIGN4PSIxNTc4LjkiIGN5PSIzODYuOSIgcng9IjIyNC4yIiByeT0iMTIxLjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuNDEiLz4KPGVsbGlwc2UgY3g9IjE2MDkuNiIgY3k9IjQwNy42IiByeD0iMjkzLjYiIHJ5PSIyNzEuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xNyIvPgo8ZWxsaXBzZSBjeD0iMTY5OS42IiBjeT0iMzc3LjQiIHJ4PSIzNjYuOCIgcnk9IjI0NC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM4Ii8+CjxlbGxpcHNlIGN4PSIxODM0LjMiIGN5PSI0MTkuNyIgcng9IjI5My4zIiByeT0iMTY2LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjYiLz4KPGVsbGlwc2UgY3g9IjE3ODYuNyIgY3k9IjEwNy42IiByeD0iNDQzLjYiIHJ5PSIxNjcuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNyIvPgo8ZWxsaXBzZSBjeD0iMTg2MC4xIiBjeT0iLTUwLjciIHJ4PSIyOTIuNiIgcnk9IjEyMS4zIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMxIi8+CjxlbGxpcHNlIGN4PSIxODY2LjgiIGN5PSIxMDQuMSIgcng9IjM3NC41IiByeT0iMTQwLjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzQiLz4KPGVsbGlwc2UgY3g9IjE5MjQuNiIgY3k9IjIxOC41IiByeD0iMzU3LjciIHJ5PSIxNjMuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOSIvPgo8ZWxsaXBzZSBjeD0iMjA0MC4wIiBjeT0iMTUyLjIiIHJ4PSIzMTguMiIgcnk9IjI0Mi42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI1Ii8+CjxlbGxpcHNlIGN4PSIyMDEyLjgiIGN5PSI0MjQuMyIgcng9IjI3Ni41IiByeT0iMjY2LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTciLz4KPGVsbGlwc2UgY3g9IjIwMTMuNyIgY3k9IjQ1MS43IiByeD0iNDc2LjYiIHJ5PSIyNDQuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNSIvPgo8ZWxsaXBzZSBjeD0iMjAyMi43IiBjeT0iNDA5LjYiIHJ4PSI1MjMuOSIgcnk9IjIwNS40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMwIi8+CjxlbGxpcHNlIGN4PSIxNDAzLjgiIGN5PSI0MzEuNyIgcng9IjM1MS41IiByeT0iMTU0LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjE2MTguMSIgY3k9Ii02Mi45IiByeD0iMjc0LjYiIHJ5PSIxOTIuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zOCIvPgo8ZWxsaXBzZSBjeD0iMTQ0MS41IiBjeT0iMjYzLjQiIHJ4PSIzMzcuNCIgcnk9IjEzNC4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjQxIi8+CjxlbGxpcHNlIGN4PSIxOTcxLjIiIGN5PSIyMzAuOCIgcng9IjM4NC41IiByeT0iMjA4LjIiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzYiLz4KPGVsbGlwc2UgY3g9IjE3NzMuNSIgY3k9IjM5Mi43IiByeD0iMjk3LjMiIHJ5PSIxMjcuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMiIvPgo8ZWxsaXBzZSBjeD0iMTYzNC42IiBjeT0iMTIzLjUiIHJ4PSIyOTIuOSIgcnk9IjI0OS44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM0Ii8+CjxlbGxpcHNlIGN4PSIyMTM4LjUiIGN5PSI3MjAuNCIgcng9IjMxMS42IiByeT0iMTQ2LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzEiLz4KPGVsbGlwc2UgY3g9IjE2MzcuNiIgY3k9IjY5Mi45IiByeD0iNDYzLjkiIHJ5PSIyMzEuNSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4zNCIvPgo8ZWxsaXBzZSBjeD0iMjE1OC43IiBjeT0iODQxLjAiIHJ4PSI0NzAuOCIgcnk9IjEyOS40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjI5Ii8+CjxlbGxpcHNlIGN4PSIyMDc4LjMiIGN5PSI3NzkuNSIgcng9IjM1MC4yIiByeT0iMjIxLjgiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTgiLz4KPGVsbGlwc2UgY3g9IjE1NTguMCIgY3k9IjgyOS4zIiByeD0iMjA2LjEiIHJ5PSIxMDEuMiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xNSIvPgo8ZWxsaXBzZSBjeD0iMTc0OS44IiBjeT0iNjExLjciIHJ4PSIyMTMuMCIgcnk9IjE0OC45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMwIi8+CjxlbGxpcHNlIGN4PSIxOTM2LjkiIGN5PSI2NzUuNiIgcng9IjIzNi40IiByeT0iMjA0LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzYiLz4KPGVsbGlwc2UgY3g9IjE1NjUuOSIgY3k9IjQxNS4zIiByeD0iNDE1LjYiIHJ5PSIxNjUuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNCIvPgo8ZWxsaXBzZSBjeD0iMTgxNC4xIiBjeT0iNjIyLjIiIHJ4PSIyMDAuNCIgcnk9IjIwOS41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMzIi8+CjxlbGxpcHNlIGN4PSIxNjI5LjkiIGN5PSI2MjkuMiIgcng9IjQwNC45IiByeT0iMTE1LjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzAiLz4KPGVsbGlwc2UgY3g9IjIxMjQuNiIgY3k9IjUxOC44IiByeD0iNDUzLjYiIHJ5PSIxNTAuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yOCIvPgo8ZWxsaXBzZSBjeD0iMjEwMy42IiBjeT0iNzAzLjEiIHJ4PSIyNDguMSIgcnk9IjEyOC40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIzIi8+CjxlbGxpcHNlIGN4PSIxNjgxLjQiIGN5PSI0ODYuMCIgcng9IjM0OS40IiByeT0iMTEyLjAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjMiLz4KPGVsbGlwc2UgY3g9IjIwMzUuOSIgY3k9Ijc5NS41IiByeD0iMzMyLjgiIHJ5PSIxNTMuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMCIvPgo8ZWxsaXBzZSBjeD0iMTkyMi42IiBjeT0iNzI3LjgiIHJ4PSIyNTAuMCIgcnk9IjE1Ny44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjM4Ii8+CjxlbGxpcHNlIGN4PSIyMDUzLjciIGN5PSI4MjguMiIgcng9IjM0NS41IiByeT0iMTcxLjYiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMzEiLz4KPGVsbGlwc2UgY3g9IjE5MjIuMCIgY3k9Ijc1Ni4yIiByeD0iMjQwLjciIHJ5PSIxODcuMSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMSIvPgo8ZWxsaXBzZSBjeD0iMTYzNi45IiBjeT0iNTY5LjUiIHJ4PSI0MjguOCIgcnk9IjEzOS41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjMzIi8+CjxlbGxpcHNlIGN4PSI1MzcuNCIgY3k9Ii00Mi4xIiByeD0iMTQ0LjciIHJ5PSI5NC4wIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjA4Ii8+CjxlbGxpcHNlIGN4PSIxNzI2LjAiIGN5PSItMzAuNCIgcng9IjE0MS4xIiByeT0iNzIuOSIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yMyIvPgo8ZWxsaXBzZSBjeD0iMzY3LjAiIGN5PSItMTU0LjIiIHJ4PSIxOTEuMSIgcnk9IjEwNC4yIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjEwIi8+CjxlbGxpcHNlIGN4PSIxNjE2LjUiIGN5PSItMzUuMyIgcng9IjM5NC44IiByeT0iMTI0LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDkiLz4KPGVsbGlwc2UgY3g9Ijg1OS4xIiBjeT0iMjAxLjMiIHJ4PSIyOTkuOSIgcnk9IjE1Mi43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjA5Ii8+CjxlbGxpcHNlIGN4PSI0MDkuNSIgY3k9IjIxOS4yIiByeD0iMjIzLjIiIHJ5PSIxMTEuOCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4wOCIvPgo8ZWxsaXBzZSBjeD0iMTA4Ny4yIiBjeT0iMjE5LjgiIHJ4PSIyMjAuMSIgcnk9IjE2NC44IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjA4Ii8+CjxlbGxpcHNlIGN4PSI3NTAuNyIgY3k9Ii04OS43IiByeD0iMTU0LjciIHJ5PSIxMzYuMyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xOCIvPgo8ZWxsaXBzZSBjeD0iNDIyLjUiIGN5PSI2Ny4wIiByeD0iMzIzLjkiIHJ5PSI4My41IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjA5Ii8+CjxlbGxpcHNlIGN4PSIxNzUxLjIiIGN5PSItMTIzLjciIHJ4PSIyODcuMiIgcnk9Ijg4LjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjAiLz4KPGVsbGlwc2UgY3g9Ijg4NS42IiBjeT0iNDYuMSIgcng9IjIwMS4yIiByeT0iNzUuNyIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xNSIvPgo8ZWxsaXBzZSBjeD0iOTgzLjkiIGN5PSIyLjQiIHJ4PSIzNTcuMyIgcnk9Ijc4LjEiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMTEiLz4KPGVsbGlwc2UgY3g9IjE2MzQuNiIgY3k9IjIwLjciIHJ4PSIzMTkuOSIgcnk9Ijk4LjciIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMDkiLz4KPGVsbGlwc2UgY3g9IjM5MC4wIiBjeT0iLTE1MC42IiByeD0iMzkwLjIiIHJ5PSI4MS45IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIzIi8+CjxlbGxpcHNlIGN4PSIxNjI2LjgiIGN5PSIyMDYuNSIgcng9IjMxMy43IiByeT0iMTE4LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjUiLz4KPGVsbGlwc2UgY3g9IjM5NS4xIiBjeT0iMTcwLjUiIHJ4PSIxNDIuNiIgcnk9Ijc2LjQiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjEiLz4KPGVsbGlwc2UgY3g9IjE0ODUuOCIgY3k9IjI2MS42IiByeD0iMjM5LjYiIHJ5PSIxMzAuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4yNiIvPgo8ZWxsaXBzZSBjeD0iMTQ4MS43IiBjeT0iMTMyLjMiIHJ4PSIyODguMiIgcnk9IjE1MC40IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjEzIi8+CjxlbGxpcHNlIGN4PSIxNDEzLjciIGN5PSIyOTAuNSIgcng9IjE1NC44IiByeT0iODIuNiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4xOSIvPgo8ZWxsaXBzZSBjeD0iMTUzNC40IiBjeT0iMTc1LjgiIHJ4PSIxNjYuMyIgcnk9IjE0MC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjEzIi8+CjxlbGxpcHNlIGN4PSI0NzUuMyIgY3k9IjE3My40IiByeD0iMzAzLjkiIHJ5PSI4NC4xIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjExIi8+CjxlbGxpcHNlIGN4PSIxNDI2LjUiIGN5PSIyMzEuNCIgcng9IjIzMC4zIiByeT0iMTIyLjkiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMjIiLz4KPGVsbGlwc2UgY3g9IjQ1NC44IiBjeT0iMzEwLjciIHJ4PSIxOTAuNiIgcnk9IjEzMy43IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIxIi8+CjxlbGxpcHNlIGN4PSIyNDcuMiIgY3k9IjE0Ny43IiByeD0iMjQxLjMiIHJ5PSI3NC42IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjIxIi8+CiAgPC9nPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjaHQpIiBtYXNrPSJ1cmwoI2Nsb3VkTWFzaykiIG9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4=") center/cover no-repeat;}
 .hero .wrap{position:relative;z-index:2;width:100%}
-.hero-inner{display:flex;flex-direction:column}
+/* 极淡的纸张纹理覆盖层 */
+.hero-inner{
+  display:flex;flex-direction:column;align-items:flex-start;text-align:left;
+}
 
-/* 站点名：整屏舞台的主角。
-   2026-09-29 按 1280×720 基准实算（见 layout-check.py 的核算）：
-   两个约束要同时满足，所以用 min() 取小者 ——
-     ① 横向：容器内宽 1116px，「Ja的小屋」四字要铺满整行 → 单字约 200px；
-     ② 纵向：首屏 720px 里还要塞下定位语 + 细排信息（约 260px），
-        留给标题的约 720 − 96(上) − 44(下) − 260 ≈ 320px → 单行高不超过约 300px。
-   取 clamp(72px, min(19vw, 34vh), 200px)：
-     1280×720 → min(243, 245) → 200px 封顶，四字 800px 宽，一行放下，高位占用 200px；
-     1440×900 → 200px 封顶；
-     矮屏（如 1280×720 的实际可用高更小时）由 34vh 兜住，不会把信息挤出首屏。
-   拉丁走 Instrument Serif 真斜体，中文走 Noto Serif SC（浏览器合成斜体）。 */
 .hero-title-wrap{margin-bottom:var(--sp-2)}
 .title{
   font-family:var(--f-serif);
-  font-style:italic;
-  font-size:clamp(72px,min(19vw,34vh),200px);
-  font-weight:700;letter-spacing:.01em;line-height:1.0;
-  text-shadow:0 8px 60px rgba(0,0,0,.5);
-  white-space:nowrap;            /* 四字不许断行——断行就没有"满屏"的压迫感了 */
+  font-style:normal;
+  font-size:clamp(68px,min(18vw,32vh),200px);
+  font-weight:400;letter-spacing:-0.02em;line-height:1.0;
+  text-shadow:0 8px 60px rgba(21,48,84,.14);
+  white-space:nowrap;
 }
-/* 定位语：eyebrow 式小字 + 超宽字距，与大标题形成 Prisma 式极端对比 */
+/* 定位语：橙色小字，出现在标题下方 */
 .slogan{
-  font-family:var(--f-serif-sc);
-  font-size:13px;color:var(--brand);
-  letter-spacing:.5em;margin-right:-.5em;
+  font-family:var(--f-sans);
+  font-size:13px;color:var(--brand-ink);
+  letter-spacing:.4em;
   font-weight:600;
+  margin:var(--sp-4) 0 0;
+  text-transform:uppercase;
 }
 
-/* 信息细排区：大标题下方，靠一根细线分隔（「关于」锚点落在这里） */
 .hero-meta{
-  /* Day 9 修复③（规则 C2）：原本没有 position —— 于是 .updated 的
-     right:0 跑去挂到最近的定位祖先 .wrap.hero-inner（1116px）上，
-     与所属信息块（720px）不是同一条右基准。补上 relative 即可。 */
   position:relative;
-  padding-top:var(--sp-8);
+  padding-top:var(--sp-10);
   border-top:1px solid var(--line);
-  max-width:720px;
+  max-width:680px;
+  margin-top:var(--sp-10);
   transition:opacity .3s;
 }
-/* 点导航「关于」时的短暂高亮（PRD §4.2：避免「点了没反应」）——
-   没有盒子了，改用文字整体提亮 + 细线着色来表示 */
 .hero-meta.flash{border-top-color:var(--brand-line)}
 .hero-meta.flash .subtitle,
 .hero-meta.flash .intro{color:var(--txt)}
@@ -376,80 +191,62 @@ nav a.active{color:var(--bg);background:var(--brand);box-shadow:none;letter-spac
 .subtitle{font-size:14px;color:var(--txt-2);letter-spacing:.06em}
 .intro{
   margin-top:var(--sp-4);
-  font-size:14px;color:var(--txt-2);line-height:1.85;
+  font-size:15px;color:var(--txt-2);line-height:1.8;
 }
 
-/* 信息细排底部：三个数字 + 两个圆形图标 */
 .cardfoot{
-  margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--line);
-  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+  margin-top:var(--sp-6);padding-top:var(--sp-6);border-top:1px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-4);flex-wrap:wrap;
 }
-.stats{display:flex;align-items:center;gap:var(--sp-2);font-size:13px;color:var(--txt-2);letter-spacing:.06em}
-.stats b{color:var(--txt);font-weight:600}
+.stats{display:flex;align-items:center;gap:var(--sp-2);font-size:13px;font-family:var(--f-mono);color:var(--txt-2);letter-spacing:.08em;text-transform:uppercase}
+.stats b{color:var(--txt);font-weight:500}
 .icons{display:flex;gap:var(--sp-2)}
 .icon-round{
-  width:36px;height:36px;border-radius:50%;
-  background:var(--glass-2);border:1px solid var(--line);
+  width:40px;height:40px;border-radius:50%;
+  background:transparent;border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;
-  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
   transition:background-color .18s, border-color .18s, transform .18s;
 }
 .icon-round svg{width:17px;height:17px;fill:var(--txt-2)}
-/* Day 9 六维修复③：hover 里带 translateY(-2px)，触摸设备上会"粘住"，包门控 */
 @media (hover:hover) and (pointer:fine){
-  .icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line);transform:translateY(-2px)}
+  .icon-round:hover{background:var(--brand-dim);border-color:var(--brand-line)}
   .icon-round:hover svg{fill:var(--txt)}
 }
-/* "最后更新于"：挂在 .hero-meta（Day 9 修复③）的右下角外侧 */
-.updated{position:absolute;right:0;bottom:-24px}
-/* 头像：真实头像到位后把这段换成 <img>。当前为占位节点，hidden 不显示 */
+.updated{display:block;width:100%;text-align:right;margin-top:var(--sp-4)}
 .avatar{
   width:96px;height:96px;border-radius:var(--r-card);
-  background:linear-gradient(145deg,rgba(225,224,204,.28),rgba(150,142,120,.16));
-  border:1px solid var(--brand-line);
+  background:var(--bg-2);
+  border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;
-  /* 原为写死的 rgba(222,219,200,.62)，正好等于修复①之后的 --txt-3 */
-  /* Day 9 六维修复④：11px → 12.5px，同上对齐全站基准。
-     本元素当前是 hidden 的占位节点（<div class="avatar" hidden>），
-     屏幕上根本不显示，属零风险对齐；真头像到位后字号已是正确值。 */
   font-size:12.5px;color:var(--txt-3);text-align:center;line-height:1.4;
 }
 .avatar[hidden]{display:none}
 
-/* ---------- 区块通用 ----------
-   Prisma 编辑式头部：编号（01/02）+ 超大衬线斜体标题 + 通长细线 */
-section{padding:var(--sp-28) 0}
+/* ---------- 区块通用 ---------- */
+section{padding:var(--sp-30) 0}
 .sec-head{
   display:flex;align-items:baseline;gap:var(--sp-4);
-  padding-bottom:var(--sp-6);margin-bottom:var(--sp-11);
+  padding-bottom:var(--sp-8);margin-bottom:var(--sp-14);
   border-bottom:1px solid var(--line);
 }
 .sec-no{
-  font-family:var(--f-serif);font-style:italic;
-  font-size:16px;color:var(--txt-3);letter-spacing:.12em;
+  font-family:var(--f-mono);font-style:normal;
+  font-size:16px;color:var(--txt-3);letter-spacing:.1em;
 }
 .sec-head h2{
   font-family:var(--f-serif);
-  font-style:italic;font-weight:700;
-  font-size:clamp(32px,4.2vw,52px);
-  line-height:1.1;letter-spacing:.01em;
+  font-style:normal;font-weight:400;
+  font-size:clamp(36px,5vw,64px);
+  line-height:1.1;letter-spacing:0;
 }
 .sec-head .count{margin-left:auto}
 
-/* ---------- 照片墙：错落两列 · 瀑布流（PRD §4.4）----------
-   2026-09-26 按 Jack 意见三轮迭代定稿（顺序即迭代过程）：
-     ① 图与图之间不留缝（密铺）—— 仅保留一轮，随即被 ③ 取代；
-     ② 分列方式改为瀑布流——每张图放进「当前累计高度较短」的那一列，
-        因此会出现「左列一张小图，它下面接右列一张大图」这类交错；
-     ③ 图与图之间恢复间距，约为「图宽的 1/10」（当前 ≈56px）——
-        间距基准为单张图宽（半宽），不是容器整宽。
-   「错落」= 图片尺寸与排列位置错落；间距是刻意的留白，不是排版空隙。
-   照片比例不写在这里：每张图的 aspect-ratio 由 app.js 按数据里的 w/h 内联设置。 */
+/* ---------- 照片墙：错落两列 ---------- */
 .photos{
-  display:flex;                /* 两列并排 */
-  gap:var(--photo-gap);        /* 列间距 = 图宽的 1/10 */
+  display:flex;
+  gap:var(--photo-gap);
   align-items:flex-start;
-  line-height:0;               /* 消除 inline 元素底部空隙 */
+  line-height:0;
 }
 .photos .col{
   flex:1 1 50%;
@@ -457,9 +254,8 @@ section{padding:var(--sp-28) 0}
   min-width:0;
   display:flex;
   flex-direction:column;
-  gap:var(--photo-gap);        /* 列内间距与列间距一致 */
+  gap:var(--photo-gap);
 }
-/* 脚本没跑起来时：退化为单列，并给一句说明，而不是一块空白 */
 .photos.no-js{flex-direction:column}
 .photos.no-js .col{width:100%;flex-basis:100%}
 .photos.no-js:empty::before{
@@ -467,40 +263,31 @@ section{padding:var(--sp-28) 0}
   font-size:13px;color:var(--txt-3);line-height:1.8;
 }
 
-/* 单张照片：外层是 <a>，JS 失效时点进去直接就是原图（PRD §4.4 末句） */
 .photo{
   display:block;
   position:relative;
   width:100%;
-  border-radius:var(--r-sm);   /* 有间距后图与图不再相邻，圆角不会露出底色缺角 */
+  border-radius:var(--r-card);
   border:none;
   overflow:hidden;
   cursor:zoom-in;
-  background:var(--bg-2);      /* 图片没加载出来时的占位底色（PRD §9.3） */
-  transition:box-shadow .22s, transform .22s;
+  background:var(--bg-2);
+  transition:transform .25s var(--ease-out);
   line-height:0;
 }
 .photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s var(--ease-out)}
 .photo::after{
   content:"";position:absolute;inset:0;
-  background:rgba(225,224,204,0);
-  /* Day 9 六维修复②：transition:.22s → 只列 background-color */
+  background:rgba(16,20,24,0);
   transition:background-color .22s;pointer-events:none;
 }
-/* Day 9 六维修复③：照片墙这一组是最"粘"的 —— 手指点一下照片，
-   整张图会抬起 3px + 内部放大 1.04 倍，然后一直停在那儿不落回去。
-   整组包进能力门控（.photo:hover 的权重与 .photo:active 相同，
-   靠本文件末尾那条 :active 写在后面取胜）。 */
 @media (hover:hover) and (pointer:fine){
-  .photo:hover::after{background:rgba(225,224,204,.08)}
-  .photo:hover{
-    transform:translateY(-3px);
-    box-shadow:0 14px 34px rgba(0,0,0,.5), 0 0 0 1px var(--brand-line);
-  }
-  .photo:hover img{transform:scale(1.04)}   /* Prisma 手法：图内缩放 */
+  .photo:hover::after{background:rgba(16,20,24,.05)}
+  .photo:hover{transform:translateY(-2px)}
+  .photo:hover img{transform:scale(1.03)}
 }
 
-/* ---------- 照片灯箱（PRD §4.4）---------- */
+/* ---------- 照片灯箱 ---------- */
 .lightbox{
   position:fixed;inset:0;z-index:300;
   background:rgba(5,5,7,.92);
@@ -509,37 +296,34 @@ section{padding:var(--sp-28) 0}
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-3);
   padding:var(--sp-14);
-  cursor:zoom-out;              /* 点任意处关闭，所以整层都是"关闭"手势 */
+  cursor:zoom-out;
 }
 .lightbox[hidden]{display:none}
 .lb-img{
-  /* Day 9 六维修复①：同 .hero —— 灯箱是满屏固定层，76vh 在手机上会超出可视区，
-     多出来的部分要靠拖动才能看到。补 76svh 兜底。 */
   max-width:100%;max-height:76vh;max-height:76svh;
   border-radius:var(--r-sm);
   box-shadow:0 24px 60px rgba(0,0,0,.6);
   background:var(--bg-2);
 }
-.lb-cap{color:var(--txt-2)}
+.lb-cap{color:var(--lb-txt)}
 .lb-btn{
   position:absolute;
   width:46px;height:46px;border-radius:50%;
-  background:var(--glass-2);border:1px solid var(--line);
+  background:var(--glass-2);border:1px solid var(--lb-line);
   color:var(--txt);font-size:24px;line-height:1;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;transition:background-color .18s, border-color .18s;
   font-family:inherit;
 }
-/* Day 9 六维修复③：hover 包门控（灯箱在手机上也会被点到） */
 @media (hover:hover) and (pointer:fine){
   .lb-btn:hover{background:var(--brand-dim);border-color:var(--brand-line)}
 }
 .lb-prev{left:var(--sp-6);top:50%;transform:translateY(-50%)}
 .lb-next{right:var(--sp-6);top:50%;transform:translateY(-50%)}
 .lb-close{right:var(--sp-6);top:var(--sp-6)}
-body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
+body.lb-open{overflow:hidden}
 
-/* ---------- 记录卡片流：2 列 · 时间倒序（PRD §4.3）---------- */
+/* ---------- 记录卡片流 ---------- */
 .placeholder-note{
   margin:calc(-1 * var(--sp-6)) 0 var(--sp-6);
   color:var(--txt-3);
@@ -547,30 +331,28 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:var(--sp-6);
-  align-items:start;           /* 每张卡各按自己的内容高度，不互相拉平 */
+  gap:var(--sp-12);
+  align-items:start;
 }
 .card{
-  display:block;               /* 笔记卡是 <a>，要它像块一样撑满 */
+  display:block;
   color:inherit;
-  background:transparent;      /* Prisma 式隐形卡：平时只有细线，hover 才浮出 */
+  background:var(--bg-2);
   border:1px solid var(--line);
   border-radius:var(--r-card);
+  box-shadow:none;
   overflow:hidden;
-  /* Day 9 六维修复②：transition:.25s var(--ease-out) → 列出真正会变的三个属性 */
-  transition:border-color .25s var(--ease-out), background-color .25s var(--ease-out), transform .25s var(--ease-out);
+  transition:border-color .25s var(--ease-out), background-color .25s var(--ease-out),
+             transform .25s var(--ease-out);
 }
 .card.note{cursor:pointer}
-.card.thought{cursor:default}  /* 感悟卡不可点（PRD §4.3） */
-/* Day 9 六维修复③：hover 包门控 —— 卡片是最明显的"粘住"现场
-   （手机点一下，卡片抬起 3px + 描边高亮，不落回去） */
+.card.thought{cursor:default}
 @media (hover:hover) and (pointer:fine){
-  .card:hover{border-color:var(--brand-line);background:var(--glass);transform:translateY(-3px)}
-  /* 感悟卡没有跳转，所以不给悬停位移，免得看起来像能点 */
-  .card.thought:hover{transform:none;border-color:var(--line);background:transparent}
+  .card:hover{border-color:var(--brand-line);background:var(--bg-2);transform:translateY(-2px)}
+  .card.thought:hover{transform:none;border-color:var(--line)}
 }
 
-.cover{                        /* 封面：统一 16:9（PRD §4.6） */
+.cover{
   aspect-ratio:16/9;
   display:flex;align-items:center;justify-content:center;
   border-bottom:1px solid var(--line);
@@ -578,49 +360,39 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   overflow:hidden;
 }
 .cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease-out)}
-/* Day 9 六维修复③：hover 包门控（与照片墙同款图内缩放） */
 @media (hover:hover) and (pointer:fine){
-  .card.note:hover .cover img{transform:scale(1.04)}
+  .card.note:hover .cover img{transform:scale(1.03)}
 }
 
-.card-body{padding:var(--sp-5)}
+.card-body{padding:var(--sp-8)}
 .tagline{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)}
 .tag{
-  /* Day 9 六维修复④：11.5px → 12.5px，对齐全站基准。
-     PRD §4.6 原文：副标题所用的"最小一级文字"样式是全站基准，
-     卡片标签、日期、页脚文字统一沿用 —— 12.5px 就是那个基准。
-     视觉影响：标签高度 30.1 → 31.9px（+1.8px），肉眼几乎看不出。 */
-  font-size:12.5px;padding:var(--sp-1) var(--sp-2);border-radius:999px;
-  background:var(--brand-dim);color:var(--brand);border:1px solid var(--brand-line);
+  font-size:12.5px;padding:var(--sp-1) var(--sp-3);border-radius:var(--r-sm);
+  background:transparent;color:var(--txt-2);border:1px solid var(--line);
   letter-spacing:.08em;
+  font-family:var(--f-mono);
 }
 .tag.plain{
-  /* 原为写死的 rgba(225,224,204,.06)，正是 --glass 的值 */
-  background:var(--glass);color:var(--txt-3);border-color:var(--line);
+  background:var(--bg);color:var(--txt-3);border-color:var(--line);
 }
-/* 笔记卡标题：中文宋体，与卡内正文的黑体形成编辑式层次 */
 .card h3{
-  font-family:var(--f-serif-sc);
-  font-size:18px;font-weight:700;line-height:1.5;letter-spacing:.02em;
+  font-family:var(--f-serif);
+  font-size:22px;font-weight:400;line-height:1.35;letter-spacing:0;
 }
-/* 卡片上的正文摘要（2026-09-28 Jack 定：笔记卡必须有摘要） */
-.card .summary{margin-top:var(--sp-3);font-size:13.5px;color:var(--txt-2);line-height:1.78}
+.card .summary{margin-top:var(--sp-3);font-size:15px;color:var(--txt-2);line-height:1.75}
 .card .summary p{margin:0}
 .card .summary p + p{margin-top:var(--sp-1)}
 
-/* ---------- 笔记详情页（PRD §4.5 / §9.1）----------
-   与首页共用同一套变量与卡片样式，满足 PRD §5.3「全站风格一致」 */
+/* ---------- 笔记详情页 ---------- */
 .post-wrap{padding:var(--sp-14) 0 var(--sp-22)}
-.post{max-width:760px}
+.post{max-width:720px}
 .back{
   display:inline-block;margin-bottom:var(--sp-6);
-  font-size:13px;color:var(--txt-2);letter-spacing:.1em;
+  font-size:14px;color:var(--txt-2);letter-spacing:.1em;
   padding:var(--sp-2) var(--sp-4);border-radius:999px;
-  background:transparent;border:1px solid var(--line);
-  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
+  background:var(--bg-2);border:1px solid var(--line);
   transition:color .18s, border-color .18s, background-color .18s;
 }
-/* Day 9 六维修复③：hover 包门控 */
 @media (hover:hover) and (pointer:fine){
   .back:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
 }
@@ -629,19 +401,17 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   border-radius:var(--r-card);border:1px solid var(--line);
   margin-bottom:var(--sp-6);background:var(--bg-2);
 }
-/* 详情页大标题：中文宋体大字，编辑式 */
 .post h1{
-  font-family:var(--f-serif-sc);
-  font-size:clamp(30px,3.6vw,42px);
-  font-weight:700;line-height:1.3;letter-spacing:.01em;
+  font-family:var(--f-serif);
+  font-size:clamp(32px,4vw,48px);
+  font-weight:400;line-height:1.2;letter-spacing:0;
 }
 .post-meta{
   display:flex;align-items:center;gap:var(--sp-2);
-  margin-top:var(--sp-3);padding-bottom:var(--sp-5);border-bottom:1px solid var(--line);
+  margin-top:var(--sp-3);padding-bottom:var(--sp-6);border-bottom:1px solid var(--line);
 }
-.post-body{margin-top:var(--sp-6);font-size:15.5px;color:var(--txt-2);line-height:1.95}
+.post-body{margin-top:var(--sp-6);font-size:16px;color:var(--txt-2);line-height:1.85}
 .post-body p{margin-bottom:var(--sp-4)}
-/* 正文插图：统一 4:3（PRD §4.6） */
 .post-body img{
   width:100%;aspect-ratio:4/3;object-fit:cover;
   border-radius:var(--r-sm);margin:var(--sp-1) 0 var(--sp-5);background:var(--bg-2);
@@ -651,18 +421,16 @@ body.lb-open{overflow:hidden}    /* 灯箱打开时锁住背景滚动 */
   display:flex;gap:var(--sp-4);justify-content:space-between;align-items:stretch;
 }
 .post-nav a{
-  font-size:13.5px;color:var(--txt-2);line-height:1.6;
+  font-size:14px;color:var(--txt-2);line-height:1.6;
   padding:var(--sp-3) var(--sp-4);border-radius:var(--r-sm);max-width:48%;
-  background:transparent;border:1px solid var(--line);
-  /* Day 9 六维修复②：transition:.18s → 列出真正会变的三个属性 */
+  background:var(--bg-2);border:1px solid var(--line);
   transition:color .18s, border-color .18s, background-color .18s;
 }
-/* Day 9 六维修复③：hover 包门控 */
 @media (hover:hover) and (pointer:fine){
   .post-nav a:hover{color:var(--txt);border-color:var(--brand-line);background:var(--brand-dim)}
 }
-.post-nav .ph{visibility:hidden;max-width:48%;min-width:1px}  /* 缺一边时占位，保持右边对齐 */
-.post-empty{font-size:15px;color:var(--txt-2);line-height:1.9}
+.post-nav .ph{visibility:hidden;max-width:48%;min-width:1px}
+.post-empty{font-size:16px;color:var(--txt-2);line-height:1.9}
 
 /* ---------- 页脚 ---------- */
 footer{
@@ -672,30 +440,25 @@ footer{
 }
 footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3)}
 
-/* ---------- 毛玻璃降级（PRD §9.4）----------
-   2026-09-29：首屏不再是毛玻璃信息卡（改满屏 hero），本降级改为只管顶栏。 */
+/* ---------- 毛玻璃降级 ---------- */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  body.scrolled .topbar{background:rgba(17,17,20,.97)}
+  body.scrolled .topbar{background:rgba(255,255,255,.97)}
 }
 
-/* ---------- 手机端：只保证不横向滚动（PRD §5.4）---------- */
+/* ---------- 手机端 ---------- */
 @media (max-width:900px){
   .wrap{padding:0 var(--sp-4)}
-  section{padding:var(--sp-18) 0}
-  .hero{padding:var(--sp-20) 0 var(--sp-8)}
-  /* 手机端：四字不许断行，所以按容器宽反推字号上限（窄屏 360px 下 ≈ 20px×4=80…）
-     实际取 16vw 并允许断行，避免"Ja的小屋"顶出屏幕（PRD §5.4 只要求不横滚） */
-  .title{font-size:clamp(40px,16vw,88px);white-space:normal}
-  .slogan{font-size:12px;letter-spacing:.34em;margin-right:-.34em}
-  .hero-meta{padding-top:var(--sp-6)}
-  .updated{position:static;margin-top:var(--sp-3);display:block}
+  section{padding:var(--sp-22) 0}
+  .hero{padding:var(--sp-18) 0 var(--sp-8)}
+  .title{font-size:clamp(48px,15vw,88px);white-space:normal;letter-spacing:-0.01em}
+  .slogan{font-size:12px;letter-spacing:.25em;margin-bottom:var(--sp-3)}
+  .hero-meta{padding-top:var(--sp-6);margin-top:var(--sp-6)}
+  .updated{margin-top:var(--sp-3)}
   .sec-head{padding-bottom:var(--sp-4);margin-bottom:var(--sp-8);gap:var(--sp-3)}
-  .sec-head h2{font-size:30px}
+  .sec-head h2{font-size:32px}
   .topbar .wrap{height:56px}
   nav{gap:var(--sp-1)}
-  /* Day 9 修复⑤：6px 10px → 8px 12px，触控条目高 33.0 → 37.0px（规则 D2 ≥36px） */
   nav a{padding:var(--sp-2) var(--sp-3);font-size:12px;letter-spacing:.08em}
-  /* 手机端照片墙与卡片流都变单列（PRD §7.4：只保证不横向滚动，观感问题不列入验收） */
   .photos{flex-direction:column}
   .photos .col{width:100%;flex-basis:100%}
   .cards{grid-template-columns:1fr}
@@ -709,16 +472,7 @@ footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-
   .lb-close{right:var(--sp-2);top:var(--sp-2)}
 }
 
-/* ---------- Prisma 皮肤：动效与质感（2026-09-29）----------
-   四个手法全部原生实现（无 Tailwind / Framer Motion —— TECH §3.1 §11）：
-   ① .wpu  标题逐字入场：app.js 把 #siteName 拆成逐字 span，加 .on 触发；
-      overflow:hidden + 下移 110% 是"从底线拉上来"的关键；
-      padding-bottom:.08em 防止中文/字母下伸部分被裁掉。
-   ② .scr  自我介绍滚动显现：初始半透明，进视口后恢复。
-   ③ .rise 卡片/照片/区块头入场：IntersectionObserver 加 .in，JS 按序设错落延迟；
-      入场结束后 JS 移除 class，把 transition 还给元素自己的 hover。
-   ④ body::after 全站噪点覆盖层：feTurbulence data-URI，Prisma 胶片感；
-      z-index 250 在灯箱（300）之下，不干扰看图。 */
+/* ---------- 入场动效 ---------- */
 .wpu{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em;margin-bottom:-.08em}
 .wpu > span{
   display:inline-block;
@@ -733,30 +487,114 @@ footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-
 .rise{opacity:0;transform:translateY(14px) scale(.97);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
 .rise.in{opacity:1;transform:none}
 
-body::after{
-  content:"";position:fixed;inset:0;z-index:250;pointer-events:none;
-  opacity:.05;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* ---------- 三个"可推的平面"额外给一次物理下压（Day 9 六维修复②）----------
-   照片 / 笔记卡 / 圆形图标 是有面积的可点平面，只有变淡（上面那条 opacity）
-   还不够"按得下去"，这里补一次 1px 下压。
-   为什么放在文件末尾：它们的 :hover 与 :active 权重完全相同，
-   同权重时**后写的赢** —— 必须写在各处 :hover 之后，这一条才生效。
-   .card.thought 的 :hover 权重更高（.card.thought:hover），不会被推动，
-   正好符合"它不可点、不该有按压感"的设计。
-   灯箱 ‹ › 不在这里：它们靠 transform 居中，任何 transform 都会弹出画面。 */
+/* ---------- 可推平面下压 ---------- */
 .photo:active,
 .card:active,
 .icon-round:active{
   transform:translateY(1px);
 }
 
-/* 尊重系统「减弱动效」设置：直接显示最终态，不做任何动画 */
 @media (prefers-reduced-motion:reduce){
   .wpu>span,.scr,.rise{transition:none;transform:none;opacity:1}
-  /* Day 9 六维修复②的补充：把按压的 1px 位移也一起关掉。
-     反馈保留（变淡仍在），但不再"动"——「减弱动效」的字面要求。 */
   .photo:active,.card:active,.icon-round:active{transform:none}
+}
+
+/* ---------- 记录区云层底幕（Aceternity Cloud Shader 配套 · 2026-10-06）----------
+   WebGL 天空顶部是深蓝 #3876BA，原深色小字在上面对比不够，
+   该区块内的小字与分隔线改为高透白；卡片本体白底，不受影响。
+   大标题（衬线 h2）保持深墨：大字号在深蓝底上满足 AA 大字标准。 */
+#notes .sec-no,
+#notes .sec-head .count,
+#notes .placeholder-note{color:rgba(255,255,255,.92)}
+#notes .sec-head{border-bottom-color:rgba(255,255,255,.24)}
+
+/* ---------- 照片墙云层底幕（2026-10-06 Jack 追加：照片墙也换 shader）----------
+#photos .sec-no,
+#photos .sec-head .count,
+#photos .photos.no-js:empty::before{color:rgba(255,255,255,.92)}
+#photos .sec-head{border-bottom-color:rgba(255,255,255,.24)}
+/* ---------- 13. 顶栏 Dock 导航（2026-10-06 Jack 指定：Aceternity Floating Dock 原生移植；当晚反馈「位置还在原导航处」后从页面底部改回顶栏）----------
+   桌面端（≥901px 且有鼠标）：JS 在顶栏 .wrap 原导航位置挂载 #dock，body 加 dock-on → 顶栏只留品牌字 + dock（brand 左 · dock 右，与原导航同位）。
+   移动端/触屏：dock 隐藏，原顶栏导航原样。
+   结构：#dock > a.dock-item > span.dock-cap（弹簧驱动宽高 30↔54，原版 40↔80 的等比缩小）
+                                   > span.dock-tip（气泡，顶栏在页顶 → 翻到图标下方浮现）
+                                   + span.dock-ico（图标框，恒为 cap 一半）。 */
+#dock{
+  display:flex;align-items:center;gap:12px;
+  height:44px;padding:0 12px;
+  border-radius:12px;
+  background:rgba(16,20,24,.04);
+}
+@media (min-width:901px){
+  body.dock-on #nav{display:none}
+}
+@media (max-width:900px){
+  #dock{display:none}
+  body.dock-on #nav{display:flex}
+}
+.dock-item{display:block;color:var(--txt-2)}
+.dock-cap{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;
+  border-radius:999px;
+  background:rgba(16,20,24,.05);
+  transition:background .2s;
+}
+.dock-item:hover .dock-cap{background:rgba(16,20,24,.08)}
+.dock-item.active .dock-cap{background:var(--brand)}
+.dock-item.active{color:#fff}
+.dock-ico{display:flex;align-items:center;justify-content:center;width:15px;height:15px}
+.dock-ico svg{width:100%;height:100%;display:block}
+.dock-tip{
+  position:absolute;left:50%;top:calc(100% + 6px);
+  transform:translate(-50%,-8px);
+  padding:3px 8px;
+  border-radius:6px;
+  background:var(--txt);color:#fff;
+  font-size:12px;line-height:1.5;letter-spacing:.04em;
+  white-space:nowrap;
+  opacity:0;pointer-events:none;
+  z-index:5;
+  transition:opacity .18s ease,transform .22s cubic-bezier(.2,.7,.3,1);
+}
+.dock-item:hover .dock-tip{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){
+  .dock-cap,.dock-tip{transition:none}
+}
+
+/* ---------- 14. 卡片流筛选条（Day 12：类型按钮 + 关键字搜索）---------- */
+.filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 var(--sp-4)}
+.fgroup{display:flex;gap:6px}
+.fbtn{
+  padding:7px 15px;border-radius:999px;
+  border:1px solid var(--line);background:transparent;
+  color:var(--txt-2);font-size:13px;letter-spacing:.06em;
+  cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s,transform .1s;
+}
+.fbtn:hover{color:var(--txt);border-color:var(--brand-line)}
+.fbtn:active{transform:scale(.96)}
+.fbtn.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.finput{
+  flex:1 1 160px;min-width:0;max-width:260px;
+  padding:7px 12px;border-radius:8px;
+  border:1px solid var(--line);background:var(--bg-2);
+  color:var(--txt);font-size:13px;
+}
+.finput:focus{outline:none;border-color:var(--brand-line)}
+.fclear{
+  padding:7px 13px;border-radius:8px;border:1px solid var(--line);
+  background:transparent;color:var(--txt-2);font-size:12px;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.fclear:hover{color:var(--txt);border-color:var(--brand-line)}
+.fcount{margin-left:auto;white-space:nowrap}
+.fempty{
+  padding:var(--sp-4);text-align:center;color:var(--txt-2);
+  border:1px dashed var(--line);border-radius:var(--r-card);
+}
+@media (max-width:900px){
+  .fbtn{padding:10px 16px}   /* 触屏点按区 ≥40px 高 */
+  .finput{flex-basis:100%;max-width:none}   /* 360px 下不横向滚动 */
 }
