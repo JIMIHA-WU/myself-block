@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记录归档 · Ja的小屋</title>
+<!-- 字体：拉丁字符用 Instrument Serif（衬线斜体），中文用思源宋体；
+     加载失败会自动回退系统字体，不影响页面打开 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=12">
+<!--
+  ============================================================
+  记录归档页（Day 13）—— 第 3 个视图
+  ============================================================
+  它是什么：同一批记录数据（api/data.js 的 4 条），换一种看法 ——
+    首页记录区是「2 列卡片流」，这里是「按月份分组的时间轴」。
+    不加任何新数据，只是重排（Day 13 边界：今日不做新数据）。
+
+  它和另外两个视图共用同一套东西：
+    · styles.css  —— 配色、字号、圆角、四态样式全站一套（PRD §5.3）
+    · app.js      —— 发现页面上有 #archiveRegion 就走「归档」那一段（第 15 节）
+    · api/data.js —— 内容仍从一个地方取；取数同样走 feedAsync，
+                     所以本页也有 加载 / 空 / 错误 / 正常 四种状态
+
+  入口在哪：首页「记录」区块头部的「查看归档 →」链接（导航四项不动，PRD 定的）。
+
+  四种状态的地址栏直达方式（截图用，阶段二接真接口时删掉）：
+    archive.html                → 正常态
+    archive.html?demo=slow      → 加载中（延迟 2.5 秒）
+    archive.html?demo=empty     → 空态
+    archive.html?demo=error     → 错误态（可点重试）
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============
+     注意：这里的导航要带回 index.html，否则点了没有落点（PRD §5.2 无死链） -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Ja的小屋</span></a>
+    <nav id="nav">
+      <a href="index.html#top">首页</a>
+      <a href="index.html#photos">照片墙</a>
+      <a href="index.html#notes">记录</a>
+      <a href="index.html#about">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 归档区（四态状态挂在 #archiveRegion 的 class 上）============ -->
+<section id="archiveRegion">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-no">03</span>
+      <h2>记录归档</h2>
+      <span class="count t-min" id="archiveCount"></span>
+    </div>
+
+    <p class="placeholder-note t-min">同一批记录，按月份重排 —— 数据不变，换一种看法。</p>
+
+    <!-- 四态占位：与首页记录区同一套结构、同一套样式（.feed-states） -->
+    <div class="feed-states">
+      <div class="feed-skel" aria-hidden="true"><div></div><div></div><div></div></div>
+      <div class="feed-empty" role="status">归档还是空的 —— 记录写好后会按月份收进这里。</div>
+      <div class="feed-error" role="alert">
+        <p>归档没取出来，可能是网络问题。</p>
+        <button class="feed-retry" id="archiveRetry" type="button">重试</button>
+      </div>
+    </div>
+
+    <!-- 归档列表由 app.js 第 15 节按月分组生成：笔记行可点进详情页，感悟行不可点 -->
+    <div id="archiveList"></div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，归档无法显示。请开启 JavaScript 后刷新，或
+    <a href="index.html" style="color:var(--txt)">返回首页</a>。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面（同一个 app.js 同时管首页 / 详情页 / 归档页）-->
+<script src="app.js?v=8"></script>
+
+</body>
+</html>

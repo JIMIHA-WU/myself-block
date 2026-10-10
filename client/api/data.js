@@ -246,6 +246,51 @@
   }
 
   /* ------------------------------------------------------------
+     4c. 模拟异步取数（Day 13：给「加载中 / 出错」两种状态搭骨架）
+     ------------------------------------------------------------
+     【为什么要有这个函数】
+       现在数据写在本文件里，一读就有，永远不会出现「等一下」或「取失败」。
+       但真实网站的数据放在服务器上，网络有快有慢、偶尔还会失败。
+       阶段二要换成调云函数（见本文件头部说明），到时页面必须已经会处理
+       「加载中 / 失败」这两种局面。所以阶段一先做个假的：feedAsync()
+       返回一个 Promise，默认等 0.5 秒再给出数据 —— 对页面来说，行为
+       跟真的网络请求一模一样，只是数据来源还是本地。
+
+     【演示开关（截图用；阶段二接入真接口时整段删掉）】
+       地址栏带上 ?demo= 参数：
+         ?demo=error  → 假装取数失败，页面走错误态
+         ?demo=empty  → 返回空列表，页面走空态
+         ?demo=slow   → 延迟拉长到 2.5 秒，方便截图「加载中」
+       不带参数就是正常路径。
+
+     【检查台怎么把它变快】
+       JaData._fake.delay 改成 0（_fake 与内部 FAKE 是同一个对象，
+       运行时读取，改了立即生效）。
+     ------------------------------------------------------------ */
+  var FAKE = { delay: 500 };     // 默认模拟 0.5 秒「网络延迟」
+  var SLOW_DELAY = 2500;         // ?demo=slow 时用，方便截图加载态
+
+  function demoParam() {
+    try {
+      var m = (global.location && global.location.search || '').match(/[?&]demo=([^&]+)/);
+      return m ? m[1] : '';
+    } catch (e) { return ''; }
+  }
+
+  function feedAsync(opts) {
+    var o = opts || {};
+    var demo = demoParam();
+    var delay = (typeof o.delay === 'number') ? o.delay : FAKE.delay;
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        if (demo === 'error') { reject(new Error('demo: 模拟取数失败')); return; }
+        if (demo === 'empty') { resolve([]); return; }
+        resolve(feed());
+      }, demo === 'slow' ? SLOW_DELAY : delay);
+    });
+  }
+
+  /* ------------------------------------------------------------
      5. 对外出口
      ------------------------------------------------------------ */
   global.JaData = {
@@ -259,7 +304,11 @@
     notes:          notes,
     noteById:       noteById,
     noteNeighbors:  noteNeighbors,
-    cardText:       cardText
+    cardText:       cardText,
+
+    /* Day 13：模拟异步取数（4c 节） */
+    feedAsync:      feedAsync,
+    _fake:          FAKE        /* 检查台用：_fake.delay = 0 可跳过模拟延迟 */
   };
 
 })(window);

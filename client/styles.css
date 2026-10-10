@@ -598,3 +598,69 @@ footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-
   .fbtn{padding:10px 16px}   /* 触屏点按区 ≥40px 高 */
   .finput{flex-basis:100%;max-width:none}   /* 360px 下不横向滚动 */
 }
+
+/* ============================================================
+   15. 记录区四态 + 归档视图（Day 13）
+   ------------------------------------------------------------
+   四态显隐由区域容器的 state-* class 驱动（app.js 第 8/15 节）：
+     state-loading 骨架占位 / state-empty 数据为空 /
+     state-error 错误+重试 / state-done 正常内容。
+   非 done 状态下隐藏筛选条与筛选空态：没数据，筛选没有意义。
+   ============================================================ */
+.feed-states>*{display:none}
+.state-loading .feed-skel,
+.state-empty .feed-empty,
+.state-error .feed-error{display:block}
+.state-done .feed-states{display:none}
+#notes:not(.state-done) .filterbar,
+#notes:not(.state-done) .fempty{display:none}
+
+/* 加载骨架：三张灰卡轻微呼吸；系统开了「减少动态」就静止（技能条目） */
+.feed-skel{grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+.state-loading .feed-skel{display:grid}
+.feed-skel>div{height:180px;border-radius:var(--r-card);background:var(--line);animation:skel-breathe 1.2s ease-in-out infinite}
+.feed-skel>div:nth-child(2){animation-delay:.15s}
+.feed-skel>div:nth-child(3){animation-delay:.3s}
+@keyframes skel-breathe{0%,100%{opacity:.45}50%{opacity:.95}}
+@media (prefers-reduced-motion:reduce){
+  .feed-skel>div{animation:none;opacity:.6}
+}
+
+/* 数据为空的大空态（区别于筛选无结果的 .fempty 小空态） */
+.feed-empty{
+  padding:var(--sp-8) var(--sp-4);text-align:center;color:var(--txt-2);
+  border:1px dashed var(--line);border-radius:var(--r-card)
+}
+
+/* 错误态：提示 + 重试按钮（三态：默认描边 / hover 反色 / 按压微缩） */
+.feed-error{
+  padding:var(--sp-4);text-align:center;
+  border:1px solid var(--brand-line);border-radius:var(--r-card)
+}
+.feed-error p{margin:0 0 var(--sp-3);color:var(--txt)}
+.feed-retry{
+  padding:10px 24px;border-radius:999px;border:1px solid var(--brand);
+  background:transparent;color:var(--brand-ink);font:inherit;cursor:pointer;
+  transition:background .15s,color .15s
+}
+.feed-retry:hover{background:var(--brand);color:#fff}
+.feed-retry:active{transform:scale(.96)}
+
+/* ---- 归档视图：同一批记录按月分组重排（archive.html）---- */
+.amonth{margin-bottom:var(--sp-8)}
+.amonth-title{font-family:var(--f-serif);font-size:20px;margin:0 0 var(--sp-3)}
+.amonth-list{list-style:none;margin:0;padding:0}
+.aitem{display:flex;align-items:baseline;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--line)}
+.aitem-main{display:inline-flex;align-items:baseline;gap:var(--sp-2);color:var(--txt);text-decoration:none}
+a.aitem-main:hover .aitem-title{color:var(--brand)}
+.aitem-title{font-size:15px}
+.aitem-date{margin-left:auto;white-space:nowrap}
+@media (max-width:900px){
+  .feed-skel{grid-template-columns:1fr}   /* 手机宽度骨架单列 */
+  .aitem{flex-wrap:wrap}                  /* 日期换行，标题不挤 */
+  .aitem-date{margin-left:0;flex-basis:100%}
+}
+
+/* 归档入口（首页记录区头部 → archive.html，Day 13） */
+.archive-link{margin-left:var(--sp-3);font-size:13px;color:var(--txt-2);text-decoration:none}
+.archive-link:hover{color:var(--brand)}

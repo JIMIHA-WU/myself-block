@@ -292,16 +292,47 @@
     return card;
   }
 
+  /* ---- Day 13：四态辅助 —— 状态挂在区域容器的 class 上，CSS 据此显隐 ----
+     state-loading 骨架占位 · state-empty 数据为空 · state-error 取数失败 · state-done 正常
+     加载 / 空 / 错误三种状态下 CSS 会隐藏筛选条（没有数据，筛选没有意义）。 */
+  function setRegionState(region, state) {
+    if (!region) return;
+    region.classList.remove('state-loading', 'state-empty', 'state-error', 'state-done');
+    region.classList.add('state-' + state);
+  }
+
   var flow = document.getElementById('cardFlow');
+  var feedSection = document.getElementById('notes');
+  var filterInited = false;
 
-  if (flow) {
-    var flowFrag = document.createDocumentFragment();
-    D.feed().forEach(function (p) { flowFrag.appendChild(buildCard(p)); });
+  function renderFeedCards(list) {
+    var frag = document.createDocumentFragment();
+    list.forEach(function (p) { frag.appendChild(buildCard(p)); });
     flow.innerHTML = '';
-    flow.appendChild(flowFrag);
-
+    flow.appendChild(frag);
     var nMoment = D.POSTS.filter(function (p) { return p.type === 'moment'; }).length;
     text('recordCount', '笔记 ' + D.notes().length + ' 篇　·　感悟 ' + nMoment + ' 条　·　按时间倒序');
+  }
+
+  /* Day 13：取数走 feedAsync（模拟网络），页面按 加载 → 空/错误/正常 呈现。
+     筛选（第 14 节）等到卡片真正渲染完成才初始化一次；重试成功后走同一条路。 */
+  function loadFeed() {
+    if (!flow) return;
+    setRegionState(feedSection, 'loading');
+    D.feedAsync().then(function (list) {
+      if (!list || !list.length) { setRegionState(feedSection, 'empty'); return; }
+      renderFeedCards(list);
+      setRegionState(feedSection, 'done');
+      if (!filterInited) { filterInited = true; initFilter(); }
+    }).catch(function () {
+      setRegionState(feedSection, 'error');
+    });
+  }
+
+  if (flow) {
+    loadFeed();
+    var feedRetry = document.getElementById('feedRetry');
+    if (feedRetry) feedRetry.addEventListener('click', loadFeed);
   }
 
   /* ============================================================
@@ -1566,8 +1597,13 @@ void main() {
      匹配走数据（D.feed / D.cardText）而不是 DOM 文字：
      标题 + cardText 全部段落拼一起做小写包含判断，检查台可断言。
      卡片类型映射：数据 type 'moment' ↔ DOM 类名 'thought'。
+
+     【Day 13 改动】从「脚本启动就跑」改成函数 initFilter()，
+     由第 8 节在卡片渲染完成后调用一次——数据改成异步取数后，
+     启动时卡片还没渲染，筛选抢跑会算出「0 / 0 条」与加载态打架。
+     函数声明会提升，所以第 8 节（在前）可以直接调用。
   ============================================================ */
-  (function () {
+  function initFilter() {
     var bar = document.getElementById('filterBar');
     var flow = document.getElementById('cardFlow');
     if (!bar || !flow) return;
@@ -1637,5 +1673,99 @@ void main() {
     });
 
     apply();   /* 初始归位：计数「4 / 4 条」，其余控件按默认态渲染 */
+  }
+
+  /* ============================================================
+     15. 归档视图（Day 13）：同一批记录，按月份分组重排
+     ------------------------------------------------------------
+     对应 archive.html（第 3 个视图）。数据不加新的一条，只换排列：
+       首页记录区 = 2 列卡片流；这里 = 按月份分组的时间轴列表。
+     取数同样走 feedAsync → 本页也有 加载 / 空 / 错误 / 正常 四态，
+     占位结构与样式和首页共用（.feed-states / .feed-skel / …）。
+     笔记行可点进详情页（PRD §4.3：感悟卡不可点，这里同样）。
+     ============================================================ */
+  (function () {
+    var region = document.getElementById('archiveRegion');
+    var listEl = document.getElementById('archiveList');
+    if (!region || !listEl) return;
+    var countEl = document.getElementById('archiveCount');
+
+    function render(list) {
+      /* 按月分组：date 'YYYY-MM-DD' → 组键 'YYYY-MM'；组内保持传入顺序（倒序） */
+      var groups = [];
+      var byKey = {};
+      list.forEach(function (p) {
+        var key = (p.date || '').slice(0, 7);
+        if (!byKey[key]) { byKey[key] = []; groups.push(key); }
+        byKey[key].push(p);
+      });
+
+      listEl.innerHTML = '';
+      groups.forEach(function (key) {
+        var sec = document.createElement('section');
+        sec.className = 'amonth';
+
+        var h3 = document.createElement('h3');
+        h3.className = 'amonth-title';
+        h3.textContent = key.replace('-', ' 年 ') + ' 月';
+
+        var ol = document.createElement('ol');
+        ol.className = 'amonth-list';
+
+        byKey[key].forEach(function (p) {
+          var li = document.createElement('li');
+          li.className = 'aitem';
+          var isNote = (p.type === 'note');
+
+          /* 笔记 → 链接进详情页；感悟 → 普通行（同卡片流的可点规则） */
+          var main = document.createElement(isNote ? 'a' : 'span');
+          main.className = 'aitem-main';
+          if (isNote) main.setAttribute('href', 'note.html?id=' + encodeURIComponent(p.id));
+
+          var tag = document.createElement('span');
+          tag.className = 'tag' + (isNote ? '' : ' plain');
+          tag.textContent = isNote ? '笔记' : '感悟';
+
+          var title = document.createElement('span');
+          title.className = 'aitem-title';
+          title.textContent = isNote ? (p.title || '（无标题）') : (D.cardText(p)[0] || '');
+
+          main.appendChild(tag);
+          main.appendChild(title);
+
+          var dateEl = document.createElement('span');
+          dateEl.className = 't-min aitem-date';
+          dateEl.textContent = p.date;
+
+          li.appendChild(main);
+          li.appendChild(dateEl);
+          ol.appendChild(li);
+        });
+
+        sec.appendChild(h3);
+        sec.appendChild(ol);
+        listEl.appendChild(sec);
+      });
+
+      if (countEl) {
+        countEl.textContent = list.length + ' 条 · 按 ' + groups.length + ' 个月归档';
+      }
+    }
+
+    function load() {
+      setRegionState(region, 'loading');
+      D.feedAsync().then(function (list) {
+        if (!list || !list.length) { setRegionState(region, 'empty'); return; }
+        render(list);
+        setRegionState(region, 'done');
+      }).catch(function () {
+        setRegionState(region, 'error');
+      });
+    }
+
+    var retry = document.getElementById('archiveRetry');
+    if (retry) retry.addEventListener('click', load);
+
+    load();
   })();
 })();

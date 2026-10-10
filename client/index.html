@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="styles.css?v=12">
 <!--
   ============================================================
   首页 —— 第 2 步：视觉规范 + 首屏已就位
@@ -119,6 +119,8 @@
       <span class="sec-no">02</span>
       <h2>记录</h2>
       <span class="count t-min" id="recordCount"></span>
+      <!-- Day 13：归档视图入口（第 3 个视图，导航四项不动，PRD 定的） -->
+      <a class="archive-link" href="archive.html">查看归档 →</a>
     </div>
 
     <p class="placeholder-note t-min">以下为占位示例内容 —— C2（3 篇笔记）/ C3（1 条感悟）素材到位后替换。</p>
@@ -136,6 +138,18 @@
       <span class="fcount t-min" id="filterCount" aria-live="polite"></span>
     </div>
     <p class="fempty" id="filterEmpty" role="status" hidden>没有找到匹配的内容 —— 换个关键词，或点「清空」恢复全部。</p>
+
+    <!-- 四态占位（Day 13）：加载 / 空 / 错误。显隐由 #notes 的 state-* class 驱动 CSS
+         （见 app.js 第 8 节 loadFeed），正常态 state-done 时整块隐藏。
+         错误态可点「重试」重新取数；加载骨架对读屏隐藏（aria-hidden）。 -->
+    <div class="feed-states">
+      <div class="feed-skel" aria-hidden="true"><div></div><div></div><div></div></div>
+      <div class="feed-empty" role="status">还没有记录 —— 第一篇写好会出现在这里。</div>
+      <div class="feed-error" role="alert">
+        <p>记录没取出来，可能是网络问题。</p>
+        <button class="feed-retry" id="feedRetry" type="button">重试</button>
+      </div>
+    </div>
 
     <!-- 卡片由 app.js 按时间倒序生成：笔记卡可点进详情页，感悟卡不可点 -->
     <div class="cards" id="cardFlow"></div>
@@ -168,7 +182,7 @@
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
 <!-- 渲染层：把数据写进页面 -->
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 
 </body>
 </html>
