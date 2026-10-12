@@ -432,7 +432,7 @@
     root.innerHTML = '';
     root.appendChild(frag);
 
-    if (typeof document.title === 'string') document.title = post.title + ' · Ja的小屋';
+    if (typeof document.title === 'string') document.title = post.title + ' · Rover';
   }
 
   var postRoot = document.getElementById('postRoot');
