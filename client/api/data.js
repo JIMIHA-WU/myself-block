@@ -72,24 +72,17 @@
   /* ------------------------------------------------------------
      2. 照片（PRD §4.4：纯图，无标题、无说明）
 
-     【2026-09-28 换成 Jack 的真实照片】4 张，全部 16:9 附近，均由
-       Rider01 / RiderKing / RiderKiva / RiderMice 四张原图转出：
-         · 长边压到 1600px，按 PRD §8 命名 photo-01.webp … photo-04.webp
-         · WebP（q82，RiderKing 为压到 300KB 内降到 q77），全部 ≤300KB（PRD §9.5）
-         · 原始宽高比保留，未裁切
-       路径写成 '../public/assets/photos/photo-NN.webp'：
-         client/ 与 public/ 平级，所以从页面出发要退一级（PRD §8 目录树）。
-       保留 w / h 是为了让照片墙能算出瀑布流分列（不依赖图片加载完）。
+     【v1.11 · 2026-10-11 Jack 删除了 4 张照片】photo-01~04.webp
+       已从 public/assets/photos/ 删除（提交 88036aa 留痕）。
+       照片墙当前为空 —— 新素材到位后按下面格式补条目即可：
+         { id:'p1', added_at:'YYYY-MM-DD', alt:'照片 01', w:1600, h:900,
+           src: PHOTO_BASE + 'photo-01.webp' }
+       w / h 是原始宽高，用于瀑布流分列（不依赖图片加载完）。
        alt 按 PRD §3.3 隐私边界，只写中性描述，不含地点与人物身份。
      ------------------------------------------------------------ */
   var PHOTO_BASE = '../public/assets/photos/';
 
-  var PHOTOS = [
-    { id: 'p1', added_at: '2026-09-28', alt: '照片 01', w: 1600, h:  900, src: PHOTO_BASE + 'photo-01.webp' },
-    { id: 'p2', added_at: '2026-09-28', alt: '照片 02', w: 1600, h: 1132, src: PHOTO_BASE + 'photo-02.webp' },
-    { id: 'p3', added_at: '2026-09-28', alt: '照片 03', w: 1600, h: 1067, src: PHOTO_BASE + 'photo-03.webp' },
-    { id: 'p4', added_at: '2026-09-28', alt: '照片 04', w: 1600, h:  900, src: PHOTO_BASE + 'photo-04.webp' }
-  ];
+  var PHOTOS = [];
 
   /* ------------------------------------------------------------
      3. 内容（笔记 + 感悟同一条流，PRD §4.3）
@@ -147,6 +140,56 @@
         '从写需求文档到提交代码，中间返工了两次。'
       ]
     }
+  ];
+
+  /* ------------------------------------------------------------
+     3b. 作品集（PRD §4.11，v1.11 新增）
+     字段：title 必填；cover 截图（可选，存 public/assets/works/work-NN.webp）；
+           desc 简介 1–2 句；url 外链（可选，新窗口打开、noopener）。
+     【占位内容】作品到位后替换字段值即可，页面代码不用改。
+     ------------------------------------------------------------ */
+  var WORKS_BASE = '../public/assets/works/';
+
+  var WORKS = [
+    {
+      id: 'w1', date: '2026-10-12',
+      title: '这个网站本身',
+      cover: ph('作品截图 16:9', 1600, 900),
+      desc: '当前你正在看的这个站点 —— 从需求文档、视觉方案到代码全部自己走了一遍。',
+      url: 'https://github.com/JIMIHA-WU/myself-block'
+    },
+    {
+      id: 'w2', date: '2026-10-01',
+      title: '课程作业：信号仿真',
+      cover: ph('作品截图 16:9', 1600, 900),
+      desc: '《信号与系统》的实验仿真，用 MATLAB 复现了几个基本变换。',
+      url: ''
+    }
+  ];
+
+  /* ------------------------------------------------------------
+     3c. 音乐（PRD §4.12，v1.11 新增）
+     字段：title 曲名 / artist 作者 / duration 时长（列表右侧显示）/ src 音频地址。
+     【占位曲目】音频文件存 public/assets/audio/track-NN.mp3（单文件 ≤5MB）；
+       素材未到位时点击条目不报错，页面显示一句"音频文件未就位"。
+     ------------------------------------------------------------ */
+  var AUDIO_BASE = '../public/assets/audio/';
+
+  var MUSIC = [
+    { id: 't1', title: '未命名曲目一', artist: 'Jack', duration: '3:24', src: AUDIO_BASE + 'track-01.mp3' },
+    { id: 't2', title: '未命名曲目二', artist: 'Jack', duration: '2:58', src: AUDIO_BASE + 'track-02.mp3' },
+    { id: 't3', title: '未命名曲目三', artist: 'Jack', duration: '4:11', src: AUDIO_BASE + 'track-03.mp3' }
+  ];
+
+  /* ------------------------------------------------------------
+     3d. 首页板块入口卡（PRD §4.2，v1.11 新增）
+     首页不再内嵌板块，改为四张入口卡（结构 + 文案在这里）。
+     ------------------------------------------------------------ */
+  var ENTRIES = [
+    { no: '01', title: '照片墙', desc: '拍下来的东西，错落两列地摆着。', href: 'photos.html' },
+    { no: '02', title: '记录',   desc: '笔记与感悟，按时间倒序。',       href: 'notes.html' },
+    { no: '03', title: '作品集', desc: '做出来的东西，带链接和截图。',   href: 'works.html' },
+    { no: '04', title: '音乐',   desc: '写下的曲子，列表里点开听。',     href: 'music.html' }
   ];
 
   /* ------------------------------------------------------------
@@ -297,6 +340,9 @@
     SITE:   SITE,
     PHOTOS: PHOTOS,
     POSTS:  POSTS,
+    WORKS:  WORKS,
+    MUSIC:  MUSIC,
+    ENTRIES: ENTRIES,
 
     /* 派生计算 */
     stats:          stats,

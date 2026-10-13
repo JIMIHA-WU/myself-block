@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 <!--
   ============================================================
   记录归档页（Day 13）—— 第 3 个视图
@@ -42,10 +42,12 @@
   <div class="wrap">
     <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
     <nav id="nav">
-      <a href="index.html#top">首页</a>
-      <a href="index.html#photos">照片墙</a>
-      <a href="index.html#notes">记录</a>
-      <a href="index.html#about">关于</a>
+      <a href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a class="active" href="notes.html">记录</a>
+      <a href="works.html">作品集</a>
+      <a href="music.html">音乐</a>
+      <a href="about.html">关于</a>
     </nav>
   </div>
 </header>
@@ -94,7 +96,7 @@
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
 <!-- 渲染层：把数据写进页面（同一个 app.js 同时管首页 / 详情页 / 归档页）-->
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 
 </body>
 </html>

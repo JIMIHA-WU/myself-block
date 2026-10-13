@@ -664,3 +664,87 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 /* 归档入口（首页记录区头部 → archive.html，Day 13） */
 .archive-link{margin-left:var(--sp-3);font-size:13px;color:var(--txt-2);text-decoration:none}
 .archive-link:hover{color:var(--brand)}
+
+/* ============================================================
+   14. Day 14（v1.11）新增组件：首页入口卡 / 作品集 / 音乐 / 空态
+   ============================================================ */
+
+/* ---- 首页板块入口卡（PRD §4.2 v1.11：hero + 入口，不再内嵌板块）---- */
+.entries{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4)}
+.entry-card{
+  position:relative;display:flex;flex-direction:column;gap:var(--sp-2);
+  padding:var(--sp-6);border:1px solid var(--line);border-radius:var(--r-card);
+  background:#fff;text-decoration:none;color:var(--txt);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.entry-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,20,24,.08);border-color:var(--brand)}
+.entry-card:active{transform:none}
+.entry-no{font-size:12px;color:var(--txt-2);letter-spacing:.12em}
+.entry-card h3{margin:0;font-size:18px}
+.entry-card p{margin:0;font-size:13px;line-height:1.7}
+.entry-arrow{margin-top:auto;font-size:14px;color:var(--brand)}
+@media (max-width:1024px){.entries{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.entries{grid-template-columns:1fr}}
+
+/* ---- 作品集（PRD §4.11）：卡片网格 · 桌面 3 列 ---- */
+.works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
+.work-card{
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid var(--line);border-radius:var(--r-card);background:#fff;
+}
+.work-cover{aspect-ratio:16/9;overflow:hidden;background:var(--line)}
+.work-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.work-body{display:flex;flex-direction:column;gap:var(--sp-2);padding:var(--sp-5)}
+.work-body h3{margin:0;font-size:16px}
+.work-body p{margin:0;font-size:13px;line-height:1.7}
+.work-link{
+  margin-top:var(--sp-2);align-self:flex-start;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:var(--sp-2) var(--sp-4);border-radius:999px;
+  background:var(--brand);color:#fff;font-size:13px;text-decoration:none;
+  transition:opacity .2s ease;
+}
+.work-link:hover{opacity:.86}
+@media (max-width:1024px){.works-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.works-grid{grid-template-columns:1fr}}
+
+/* ---- 音乐（PRD §4.12）：页内播放列表 · 手动播放 ---- */
+.music-list{
+  display:flex;flex-direction:column;
+  border:1px solid var(--line);border-radius:var(--r-card);
+  overflow:hidden;background:#fff;
+}
+.track{
+  display:flex;align-items:center;gap:var(--sp-4);width:100%;
+  padding:var(--sp-4) var(--sp-5);
+  border:0;border-bottom:1px solid var(--line);
+  background:transparent;font:inherit;color:var(--txt);
+  text-align:left;cursor:pointer;
+  transition:background .2s ease;
+}
+.track:last-child{border-bottom:0}
+.track:hover{background:rgba(244,88,28,.06)}
+.track.playing{background:rgba(244,88,28,.10)}
+.track.playing .track-title{color:var(--brand)}
+.track-no{font-size:12px;color:var(--txt-2);letter-spacing:.1em}
+.track-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.track-title{font-size:15px}
+.track-artist{font-size:12px}
+.track-dur{margin-left:auto;font-size:12px}
+
+/* ---- 空态 / 提示（照片墙 · 作品集 · 音乐共用，PRD 各节空态要求）---- */
+.ph-empty{
+  margin:var(--sp-4) 0 0;padding:var(--sp-14) var(--sp-6);
+  border:1px dashed var(--line);border-radius:var(--r-card);
+  text-align:center;font-size:14px;color:var(--txt-2);
+}
+/* 照片墙容器本身是分列布局：空态时改为普通块级 */
+.photos.ph-empty{display:block;columns:auto}
+/* 照片墙区块在云层底幕上（见第 12 节块），空态文字用高透白 */
+#photos .ph-empty{color:rgba(255,255,255,.92);border-color:rgba(255,255,255,.35)}
+
+/* ---- 关于页（v1.11）：信息块容器 ---- */
+.about-box{max-width:720px}
+.about-box .subtitle{font-size:16px}
+.about-box .intro{margin-top:var(--sp-4)}
+.about-box .cardfoot{margin-top:var(--sp-10)}

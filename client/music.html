@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐 · Rover</title>
+<!-- 字体：拉丁字符用 Instrument Serif（衬线斜体），中文用思源宋体；
+     加载失败会自动回退系统字体，不影响页面打开 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=13">
+<!--
+  ============================================================
+  音乐页（v1.11 新增，PRD §4.12）
+  ============================================================
+  内容：音频播放列表 —— 曲名 / 作者 / 时长，点击某条在该页播放。
+  规则（PRD §5.2 验收项）：
+    · 打开页面不自动出声（手动播放）
+    · 点击某条 → 该条高亮并播放；再点一次暂停；点另一条切换
+  音频文件：public/assets/audio/track-NN.mp3（单文件 ≤5MB）；
+    素材未就位时点击会显示一句提示，不弹错误、不打断页面。
+  数据：api/data.js 的 MUSIC 数组（当前 3 条占位曲目）。
+  不做（PRD §4.12 明确）：歌词 / 波形 / 循环与随机播放控制。
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
+    <nav id="nav">
+      <a href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a href="notes.html">记录</a>
+      <a href="works.html">作品集</a>
+      <a class="active" href="music.html">音乐</a>
+      <a href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 音乐 ============ -->
+<section id="music">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-no">05</span>
+      <h2>音乐</h2>
+      <span class="count t-min" id="musicCount"></span>
+    </div>
+
+    <p class="placeholder-note t-min">以下为占位曲目 —— 音频文件放进 public/assets/audio/ 后即可播放。</p>
+
+    <!-- 素材未就位等情况的提示（app.js 第 17 节控制显隐） -->
+    <p class="ph-empty t-min" id="musicTip" role="status" hidden></p>
+
+    <!-- 空态：MUSIC 为空时显示 -->
+    <p class="ph-empty t-min" id="musicEmpty" role="status" hidden>播放列表还是空的。</p>
+
+    <!-- 播放列表由 app.js 第 17 节生成；<audio> 元素也由脚本插入（preload=none，不自动播放） -->
+    <div class="music-list" id="musicList"></div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，播放列表无法显示。请开启 JavaScript 后刷新。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面 -->
+<script src="app.js?v=9"></script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记录 · Rover</title>
+<!-- 字体：拉丁字符用 Instrument Serif（衬线斜体），中文用思源宋体；
+     加载失败会自动回退系统字体，不影响页面打开 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=13">
+<!--
+  ============================================================
+  记录页（v1.11 新增，原首页 #notes 区块独立成页）
+  ============================================================
+  内容：笔记 + 感悟同一条流（PRD §4.3），2 列、时间倒序；
+    筛选条（Day 12）与四态（Day 13）随区块一起搬来，行为不变。
+  四态的地址栏直达方式（截图用，阶段二接真接口时删掉）：
+    notes.html                → 正常态
+    notes.html?demo=slow      → 加载中（延迟 2.5 秒）
+    notes.html?demo=empty     → 空态
+    notes.html?demo=error     → 错误态（可点重试）
+  入口：归档（archive.html）链接在本页区块头部（同 v1.9 口径）。
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
+    <nav id="nav">
+      <a href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a class="active" href="notes.html">记录</a>
+      <a href="works.html">作品集</a>
+      <a href="music.html">音乐</a>
+      <a href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 记录卡片流：2 列 · 时间倒序（PRD §4.3）============ -->
+<section id="notes">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-no">02</span>
+      <h2>记录</h2>
+      <span class="count t-min" id="recordCount"></span>
+      <!-- Day 13：归档视图入口（第 3 个视图） -->
+      <a class="archive-link" href="archive.html">查看归档 →</a>
+    </div>
+
+    <p class="placeholder-note t-min">以下为占位示例内容 —— C2（3 篇笔记）/ C3（1 条感悟）素材到位后替换。</p>
+
+    <!-- 筛选条（Day 12）：类型按钮 + 关键字搜索，行为在 app.js 第 14 节；
+         三种状态（有结果 / 无结果 / 清空恢复）是验收硬标准 -->
+    <div class="filterbar" id="filterBar">
+      <div class="fgroup" role="group" aria-label="按类型筛选">
+        <button class="fbtn active" type="button" data-type="all" aria-pressed="true">全部</button>
+        <button class="fbtn" type="button" data-type="note" aria-pressed="false">笔记</button>
+        <button class="fbtn" type="button" data-type="moment" aria-pressed="false">感悟</button>
+      </div>
+      <input class="finput" id="filterInput" type="search" placeholder="搜标题或正文" aria-label="搜索标题或正文">
+      <button class="fclear" id="filterClear" type="button" hidden>清空</button>
+      <span class="fcount t-min" id="filterCount" aria-live="polite"></span>
+    </div>
+    <p class="fempty" id="filterEmpty" role="status" hidden>没有找到匹配的内容 —— 换个关键词，或点「清空」恢复全部。</p>
+
+    <!-- 四态占位（Day 13）：加载 / 空 / 错误。显隐由 #notes 的 state-* class 驱动 CSS
+         （见 app.js 第 8 节 loadFeed），正常态 state-done 时整块隐藏。 -->
+    <div class="feed-states">
+      <div class="feed-skel" aria-hidden="true"><div></div><div></div><div></div></div>
+      <div class="feed-empty" role="status">还没有记录 —— 第一篇写好会出现在这里。</div>
+      <div class="feed-error" role="alert">
+        <p>记录没取出来，可能是网络问题。</p>
+        <button class="feed-retry" id="feedRetry" type="button">重试</button>
+      </div>
+    </div>
+
+    <!-- 卡片由 app.js 按时间倒序生成：笔记卡可点进详情页，感悟卡不可点 -->
+    <div class="cards" id="cardFlow"></div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，记录无法显示。请开启 JavaScript 后刷新。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面 -->
+<script src="app.js?v=9"></script>
+
+</body>
+</html>

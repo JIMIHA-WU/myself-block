@@ -9,22 +9,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 <!--
   ============================================================
-  首页 —— 第 2 步：视觉规范 + 首屏已就位
+  首页（v1.11 板块拆分后）—— 封面 + 板块入口
   ============================================================
-  区块与顺序依据 PRD.md §4.2：
-    顶栏 → 背景大图 + 信息卡 → 照片墙 → 记录卡片流 → 页脚
+  区块与顺序依据 PRD.md §4.2（v1.11 变更）：
+    顶栏（六项导航） → 封面 hero → 四张板块入口卡 → 页脚
 
-  本文件只放「结构」，不放内容：
-    文案与数字都从 api/data.js 取，由 app.js 填进来。
-    好处是以后加一条笔记、换一张照片，只动 data.js 一个文件。
-
-  当前完成度：
-    ✅ 顶栏（吸顶 + 毛玻璃）    ✅ 首屏（背景大图 + 信息卡）
-    ✅ 照片墙（瀑布流 + 灯箱）  ✅ 记录卡片流    ✅ 页脚
-    笔记详情页 → 另一个文件 note.html
+  与 v1.11 之前的区别：
+    ✂ 照片墙 / 记录卡片流 / 关于 已各自独立成页（photos / notes / about）
+    ✂ 首页不再内嵌板块内容，只留 hero 与入口卡（PRD §4.2、§5.2 验收项）
+    ✂ 导航六项全部为页面跳转：首页→照片墙→记录→作品集→音乐→关于
   ============================================================
 -->
 </head>
@@ -33,23 +29,22 @@
 <!-- ============ 1. 顶栏（吸顶 · 毛玻璃）============ -->
 <header class="topbar">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="dot"></span><span id="brandName">Rover</span></a>
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
     <nav id="nav">
-      <a class="active" href="#top">首页</a>
-      <a href="#photos">照片墙</a>
-      <a href="#notes">记录</a>
-      <a href="#about">关于</a>
+      <a class="active" href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a href="notes.html">记录</a>
+      <a href="works.html">作品集</a>
+      <a href="music.html">音乐</a>
+      <a href="about.html">关于</a>
     </nav>
   </div>
 </header>
 
-<!-- ============ 2. 首屏：满屏 hero（Prisma 式 · 2026-09-29 重构）============
-     2026-09-29 Jack 决策 B「首屏整屏重构」：取消毛玻璃信息卡盒子，
-     改动前形式为「深色大图 + 一张毛玻璃盒子装全部信息」。
-     现在：站点名以满屏字号直接压在暗场上，信息细排在下半部 —— 不靠盒子，
-     靠「大 · 空 · 暗」制造压迫感（Prisma 的核心手法）。
-     ⚠ 此处改动了 PRD §4.2「毛玻璃卡片」这一条，需同步 PRD（待落笔）。
-     「关于」锚点仍在 #about：§4.2 要求点导航「关于」滚到这里并短暂高亮。 -->
+<!-- ============ 2. 首屏 hero（Prisma 式 · 保持 2026-09-29 重构后的形态）============
+     站点名以满屏字号压在暗场上，信息细排在下半部 —— 不靠盒子，靠「大 · 空 · 暗」。
+     底部信息排（副标题 / 自我介绍 / 数字 / 联系方式）留在首页；
+     更完整的「关于」已独立成 about.html（v1.11）。 -->
 <section class="hero" id="top">
   <div class="hero-bg"></div>
 
@@ -59,8 +54,8 @@
     </div>
     <div class="slogan" id="siteSlogan">to record myself</div>
 
-    <!-- 「关于」锚点：信息细排区（点导航「关于」会滚到这里并短暂高亮） -->
-    <div class="hero-meta" id="about">
+    <!-- 底部信息排 -->
+    <div class="hero-meta" id="heroMeta">
       <div class="subtitle" id="siteSubtitle">So you can look below.</div>
       <div class="intro" id="siteIntro"></div>
 
@@ -86,86 +81,23 @@
     </div>
   </div>
 
-  <!-- 头像：真实头像到位后把这段替换成 <img src="../public/assets/avatar.webp">
-       目前只保留占位元素节点，不显示"头像占位"字样（满屏 hero 里放文字占位会破功） -->
   <div class="avatar" hidden>头像</div>
 </section>
 
-<!-- ============ 3. 照片墙：错落两列 · 瀑布流（PRD §4.4）============ -->
-<section id="photos">
+<!-- ============ 3. 板块入口（v1.11 新增；卡片由 app.js 第 5b 节从 data.js 生成）============ -->
+<section id="entries">
   <div class="wrap">
     <div class="sec-head">
-      <span class="sec-no">01</span>
-      <h2>照片墙</h2>
-      <span class="count t-min" id="photoCount"></span>
+      <span class="sec-no">·</span>
+      <h2>去看看</h2>
+      <span class="count t-min">四个板块，各走各的门</span>
     </div>
 
-    <!-- 两列由 app.js 按「瀑布流」分列生成。
-         初始带 no-js：脚本没跑起来时这里会显示一句说明，而不是一块空白。 -->
-    <div class="photos no-js" id="photoWall"></div>
-
-    <noscript>
-      <p class="t-min" style="margin-top:12px">
-        当前浏览器没有执行脚本，照片墙无法显示。请开启 JavaScript 后刷新。
-      </p>
-    </noscript>
+    <div class="entries" id="entryGrid"></div>
   </div>
 </section>
 
-<!-- ============ 4. 记录卡片流：2 列 · 时间倒序（PRD §4.3）============ -->
-<section id="notes">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-no">02</span>
-      <h2>记录</h2>
-      <span class="count t-min" id="recordCount"></span>
-      <!-- Day 13：归档视图入口（第 3 个视图，导航四项不动，PRD 定的） -->
-      <a class="archive-link" href="archive.html">查看归档 →</a>
-    </div>
-
-    <p class="placeholder-note t-min">以下为占位示例内容 —— C2（3 篇笔记）/ C3（1 条感悟）素材到位后替换。</p>
-
-    <!-- 筛选条（Day 12）：类型按钮 + 关键字搜索，行为在 app.js 第 14 节；
-         三种状态（有结果 / 无结果 / 清空恢复）是验收硬标准 -->
-    <div class="filterbar" id="filterBar">
-      <div class="fgroup" role="group" aria-label="按类型筛选">
-        <button class="fbtn active" type="button" data-type="all" aria-pressed="true">全部</button>
-        <button class="fbtn" type="button" data-type="note" aria-pressed="false">笔记</button>
-        <button class="fbtn" type="button" data-type="moment" aria-pressed="false">感悟</button>
-      </div>
-      <input class="finput" id="filterInput" type="search" placeholder="搜标题或正文" aria-label="搜索标题或正文">
-      <button class="fclear" id="filterClear" type="button" hidden>清空</button>
-      <span class="fcount t-min" id="filterCount" aria-live="polite"></span>
-    </div>
-    <p class="fempty" id="filterEmpty" role="status" hidden>没有找到匹配的内容 —— 换个关键词，或点「清空」恢复全部。</p>
-
-    <!-- 四态占位（Day 13）：加载 / 空 / 错误。显隐由 #notes 的 state-* class 驱动 CSS
-         （见 app.js 第 8 节 loadFeed），正常态 state-done 时整块隐藏。
-         错误态可点「重试」重新取数；加载骨架对读屏隐藏（aria-hidden）。 -->
-    <div class="feed-states">
-      <div class="feed-skel" aria-hidden="true"><div></div><div></div><div></div></div>
-      <div class="feed-empty" role="status">还没有记录 —— 第一篇写好会出现在这里。</div>
-      <div class="feed-error" role="alert">
-        <p>记录没取出来，可能是网络问题。</p>
-        <button class="feed-retry" id="feedRetry" type="button">重试</button>
-      </div>
-    </div>
-
-    <!-- 卡片由 app.js 按时间倒序生成：笔记卡可点进详情页，感悟卡不可点 -->
-    <div class="cards" id="cardFlow"></div>
-  </div>
-</section>
-
-<!-- ============ 照片灯箱（PRD §4.4：页面内放大 · 左右切换 · 点任意处关闭）============ -->
-<div class="lightbox" id="lightbox" hidden>
-  <img class="lb-img" id="lbImg" src="" alt="">
-  <div class="lb-cap t-min" id="lbCap"></div>
-  <button class="lb-btn lb-prev" id="lbPrev" type="button" title="上一张">‹</button>
-  <button class="lb-btn lb-next" id="lbNext" type="button" title="下一张">›</button>
-  <button class="lb-btn lb-close" id="lbClose" type="button" title="关闭">×</button>
-</div>
-
-<!-- ============ 5. 页脚 ============ -->
+<!-- ============ 4. 页脚 ============ -->
 <footer>
   <div class="wrap">
     <span class="t-min" id="footInfo"></span>
@@ -182,7 +114,7 @@
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
 <!-- 渲染层：把数据写进页面 -->
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 
 </body>
 </html>

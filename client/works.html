@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作品集 · Rover</title>
+<!-- 字体：拉丁字符用 Instrument Serif（衬线斜体），中文用思源宋体；
+     加载失败会自动回退系统字体，不影响页面打开 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=13">
+<!--
+  ============================================================
+  作品集页（v1.11 新增，PRD §4.11）
+  ============================================================
+  内容：未来的作品 —— 比赛项目 / 课程作品 / 开源仓库等。
+    每张卡 = 截图 + 标题 + 简介 + 外链按钮（卡片网格，桌面 3 列）。
+  外链安全（硬规则）：target="_blank" + rel="noopener noreferrer"；
+    无外链的作品卡不可点。
+  数据：api/data.js 的 WORKS 数组（当前 2 条占位）。
+  ============================================================
+-->
+</head>
+<body>
+
+<!-- ============ 顶栏（吸顶 · 毛玻璃）============ -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
+    <nav id="nav">
+      <a href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a href="notes.html">记录</a>
+      <a class="active" href="works.html">作品集</a>
+      <a href="music.html">音乐</a>
+      <a href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ 作品集 ============ -->
+<section id="works">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-no">04</span>
+      <h2>作品集</h2>
+      <span class="count t-min" id="worksCount"></span>
+    </div>
+
+    <p class="placeholder-note t-min">以下为占位示例内容 —— 做完一个放一个，带截图和链接。</p>
+
+    <!-- 空态：WORKS 为空时显示（app.js 第 16 节控制） -->
+    <p class="ph-empty t-min" id="worksEmpty" role="status" hidden>还没有作品 —— 第一个做好后会出现在这里。</p>
+
+    <!-- 卡片网格由 app.js 第 16 节生成 -->
+    <div class="works-grid" id="worksGrid"></div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer>
+  <div class="wrap">
+    <span class="t-min" id="footInfo"></span>
+    <span class="t-min">Made by Jack</span>
+  </div>
+</footer>
+
+<noscript>
+  <p class="t-min" style="padding:14px 32px">
+    当前浏览器没有执行脚本，作品集无法显示。请开启 JavaScript 后刷新。
+  </p>
+</noscript>
+
+<!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
+<script src="api/data.js"></script>
+<!-- 渲染层：把数据写进页面 -->
+<script src="app.js?v=9"></script>
+
+</body>
+</html>

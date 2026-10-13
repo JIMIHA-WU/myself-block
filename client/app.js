@@ -70,9 +70,9 @@
   /* ---------- 5. 顶栏：点导航高亮 + 滚动时自动跟着高亮 ---------- */
   var navLinks = Array.prototype.slice.call(document.querySelectorAll('#nav a'));
 
-  function markActive(hash) {
+  function markActive(href) {
     navLinks.forEach(function (a) {
-      a.classList.toggle('active', a.getAttribute('href') === hash);
+      a.classList.toggle('active', a.getAttribute('href') === href);
     });
   }
 
@@ -83,7 +83,9 @@
   });
 
   /* 点「关于」时给信息卡一次短暂高亮
-     PRD §4.2：避免出现「点了没反应」的感觉 */
+     PRD §4.2：避免出现「点了没反应」的感觉。
+     【v1.11】「关于」已独立成 about.html —— 锚点高亮逻辑只在页面里
+     同时存在 #nav 的 #about 链接和 #about 元素时才生效（老页面兜底）。 */
   var aboutLink = document.querySelector('#nav a[href="#about"]');
   var card      = document.getElementById('about');
   if (aboutLink && card) {
@@ -94,11 +96,12 @@
   }
 
   /* 滚到哪个区块，顶栏就高亮哪一项。
-     #about 在 #top 里面，不单独观察，否则两个会互相抢。 */
+     【v1.11】导航项已是页面跳转（photos.html 等），只有以 '#' 开头的
+     锚点链接参与滚动高亮；页面跳转链接直接跳过。 */
   var sections = navLinks
-    .map(function (a) { return a.getAttribute('href').slice(1); })
-    .filter(function (id) { return id !== 'about'; })
-    .map(function (id) { return document.getElementById(id); })
+    .map(function (a) { return a.getAttribute('href') || ''; })
+    .filter(function (h) { return h.charAt(0) === '#' && h.slice(1) !== 'about'; })
+    .map(function (h) { return document.getElementById(h.slice(1)); })
     .filter(Boolean);
 
   if ('IntersectionObserver' in window && sections.length) {
@@ -108,6 +111,43 @@
       });
     }, { rootMargin: '-30% 0px -60% 0px' });
     sections.forEach(function (s) { io.observe(s); });
+  }
+
+  /* ============================================================
+     5b. 首页板块入口卡（PRD §4.2，v1.11 新增）
+     首页不再内嵌板块内容，改为四张入口卡（数据来自 D.ENTRIES）。
+     ============================================================ */
+  var entryGrid = document.getElementById('entryGrid');
+  if (entryGrid) {
+    var efrag = document.createDocumentFragment();
+    D.ENTRIES.forEach(function (it) {
+      var a = document.createElement('a');
+      a.className = 'entry-card';
+      a.setAttribute('href', it.href);
+
+      var no = document.createElement('span');
+      no.className = 'entry-no t-min';
+      no.textContent = it.no;
+
+      var h3 = document.createElement('h3');
+      h3.textContent = it.title;
+
+      var p = document.createElement('p');
+      p.className = 't-min';
+      p.textContent = it.desc;
+
+      var arrow = document.createElement('span');
+      arrow.className = 'entry-arrow';
+      arrow.textContent = '→';
+
+      a.appendChild(no);
+      a.appendChild(h3);
+      a.appendChild(p);
+      a.appendChild(arrow);
+      efrag.appendChild(a);
+    });
+    entryGrid.innerHTML = '';
+    entryGrid.appendChild(efrag);
   }
 
   /* ============================================================
@@ -160,19 +200,33 @@
   var wall = document.getElementById('photoWall');
 
   if (wall) {
-    var frag = document.createDocumentFragment();
+    if (!D.PHOTOS.length) {
+      /* 【v1.11】photos 数组为空（素材被删 / 尚未接入）—— 显示空态，
+         不是留白。样式与记录区空态同一套语言（.ph-empty）。 */
+      wall.innerHTML = '';
+      wall.classList.remove('no-js');
+      wall.classList.add('ph-empty');
+      var phEmpty = document.createElement('p');
+      phEmpty.className = 't-min';
+      phEmpty.setAttribute('role', 'status');
+      phEmpty.textContent = '照片墙还是空的 —— 新照片拍好后会出现在这里。';
+      wall.appendChild(phEmpty);
+      text('photoCount', '共 0 张');
+    } else {
+      var frag = document.createDocumentFragment();
 
-    splitColumns(D.PHOTOS).forEach(function (list) {
-      var col = document.createElement('div');
-      col.className = 'col';
-      list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
-      frag.appendChild(col);
-    });
+      splitColumns(D.PHOTOS).forEach(function (list) {
+        var col = document.createElement('div');
+        col.className = 'col';
+        list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
+        frag.appendChild(col);
+      });
 
-    wall.innerHTML = '';
-    wall.appendChild(frag);
-    wall.classList.remove('no-js');
-    text('photoCount', '共 ' + D.PHOTOS.length + ' 张　·　点击放大');
+      wall.innerHTML = '';
+      wall.appendChild(frag);
+      wall.classList.remove('no-js');
+      text('photoCount', '共 ' + D.PHOTOS.length + ' 张　·　点击放大');
+    }
   }
 
   /* ============================================================
@@ -1418,14 +1472,19 @@ void main() {
         home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.8 12 3.5l9 7.3"/><path d="M5.5 9.3V20h13V9.3"/><path d="M10 20v-5.5h4V20"/></svg>',
         photos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3.5 16.5 9 12l4 3.5 3-2.5 4.5 4"/></svg>',
         notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.5 12h6M9.5 15.5h6"/></svg>',
-        about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.2"/></svg>'
+        about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.2"/></svg>',
+        /* v1.11：作品集（网格/奖章感）与音乐（音符） */
+        works: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>',
+        music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>'
       };
       function pickIcon(href) {
         var h = href || '';
-        if (h.indexOf('#photos') >= 0) return ICONS.photos;
-        if (h.indexOf('#notes') >= 0) return ICONS.notes;
-        if (h.indexOf('#about') >= 0) return ICONS.about;
-        return ICONS.home;   /* #top 或首页裸链接 */
+        if (h.indexOf('photos') >= 0) return ICONS.photos;
+        if (h.indexOf('notes') >= 0)  return ICONS.notes;
+        if (h.indexOf('works') >= 0)  return ICONS.works;
+        if (h.indexOf('music') >= 0)  return ICONS.music;
+        if (h.indexOf('about') >= 0)  return ICONS.about;
+        return ICONS.home;   /* index.html / #top / 首页裸链接 */
       }
 
       /* ---- 构建 DOM：导航项从现有 #nav 读，dock 与顶栏永远同源 ---- */
@@ -1767,5 +1826,188 @@ void main() {
     if (retry) retry.addEventListener('click', load);
 
     load();
+  })();
+
+  /* ============================================================
+     16. 作品集（PRD §4.11，v1.11 新增）：卡片网格
+     ------------------------------------------------------------
+     对应 works.html。每张卡 = 截图 + 标题 + 简介 + 外链按钮。
+     外链安全（PRD §4.11 硬规则）：target=_blank + rel=noopener noreferrer；
+     无外链的卡不可点（不渲染链接，不给手型光标）。
+     ============================================================ */
+  (function () {
+    var grid = document.getElementById('worksGrid');
+    if (!grid) return;
+    var countEl = document.getElementById('worksCount');
+    var emptyEl = document.getElementById('worksEmpty');
+
+    var list = D.WORKS || [];
+
+    if (!list.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      if (countEl) countEl.textContent = '共 0 个';
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+
+    list.forEach(function (w) {
+      var card = document.createElement('article');
+      card.className = 'work-card';
+
+      if (w.cover) {
+        var cov = document.createElement('div');
+        cov.className = 'work-cover';
+        var img = document.createElement('img');
+        img.src = w.cover;
+        img.alt = w.title || '作品截图';
+        img.setAttribute('loading', 'lazy');
+        cov.appendChild(img);
+        card.appendChild(cov);
+      }
+
+      var bodyEl = document.createElement('div');
+      bodyEl.className = 'work-body';
+
+      var h3 = document.createElement('h3');
+      h3.textContent = w.title || '';
+      bodyEl.appendChild(h3);
+
+      if (w.desc) {
+        var p = document.createElement('p');
+        p.className = 't-min';
+        p.textContent = w.desc;
+        bodyEl.appendChild(p);
+      }
+
+      if (w.url) {   /* 有外链 → 新窗口打开；没外链 → 整卡不可点（PRD §4.11） */
+        var a = document.createElement('a');
+        a.className = 'work-link';
+        a.setAttribute('href', w.url);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+        a.textContent = '看作品 →';
+        bodyEl.appendChild(a);
+      }
+
+      card.appendChild(bodyEl);
+      frag.appendChild(card);
+    });
+
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+    if (countEl) countEl.textContent = '共 ' + list.length + ' 个';
+  })();
+
+  /* ============================================================
+     17. 音乐（PRD §4.12，v1.11 新增）：页内播放列表
+     ------------------------------------------------------------
+     对应 music.html。点某条 → 该条高亮并在页内播放（<audio>，手动触发，
+     不自动播放 —— PRD §5.2 验收项）。音频文件未就位（404）时显示一句
+     提示，不弹错误、不打断页面。
+     ============================================================ */
+  (function () {
+    var listEl = document.getElementById('musicList');
+    if (!listEl) return;
+    var countEl = document.getElementById('musicCount');
+    var emptyEl = document.getElementById('musicEmpty');
+    var tipEl = document.getElementById('musicTip');
+
+    var list = D.MUSIC || [];
+
+    if (!list.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      if (countEl) countEl.textContent = '共 0 首';
+      return;
+    }
+
+    var audio = document.createElement('audio');
+    audio.id = 'musicPlayer';
+    audio.preload = 'none';                       /* 不预载：打开页面不出声也不下载 */
+    audio.hidden = true;
+    /* 插到列表前面；检查台的最小 DOM 桩没有 insertBefore，用 appendChild 兜底 */
+    if (listEl.parentNode && listEl.parentNode.insertBefore) {
+      listEl.parentNode.insertBefore(audio, listEl);
+    } else {
+      listEl.appendChild(audio);
+    }
+
+    var items = [];
+    var current = -1;
+
+    function setTip(msg) {
+      if (tipEl) { tipEl.textContent = msg || ''; tipEl.hidden = !msg; }
+    }
+
+    function stopAll() {
+      items.forEach(function (it) { it.classList.remove('playing'); });
+    }
+
+    audio.addEventListener('ended', function () {
+      stopAll();
+      current = -1;
+    });
+    audio.addEventListener('error', function () {
+      stopAll();
+      setTip('音频文件还没放进来（素材待补）—— 先看到列表就说明播放列表通了。');
+    });
+
+    var frag = document.createDocumentFragment();
+
+    list.forEach(function (t, i) {
+      var row = document.createElement('button');
+      row.className = 'track';
+      row.setAttribute('type', 'button');
+      row.setAttribute('aria-pressed', 'false');
+
+      var no = document.createElement('span');
+      no.className = 'track-no t-min';
+      no.textContent = ('0' + (i + 1)).slice(-2);
+
+      var main = document.createElement('span');
+      main.className = 'track-main';
+      var title = document.createElement('span');
+      title.className = 'track-title';
+      title.textContent = t.title || ('曲目 ' + (i + 1));
+      var artist = document.createElement('span');
+      artist.className = 'track-artist t-min';
+      artist.textContent = t.artist || '';
+      main.appendChild(title);
+      main.appendChild(artist);
+
+      var dur = document.createElement('span');
+      dur.className = 'track-dur t-min';
+      dur.textContent = t.duration || '';
+
+      row.appendChild(no);
+      row.appendChild(main);
+      row.appendChild(dur);
+
+      row.addEventListener('click', function () {
+        if (current === i && !audio.paused) {     /* 再点一次 = 暂停 */
+          audio.pause();
+          row.classList.remove('playing');
+          row.setAttribute('aria-pressed', 'false');
+          return;
+        }
+        stopAll();
+        current = i;
+        setTip('');
+        row.classList.add('playing');
+        row.setAttribute('aria-pressed', 'true');
+        audio.src = t.src;
+        var p = (typeof audio.play === 'function') ? audio.play() : null;
+        if (p && p.catch) {
+          p.catch(function () { /* 文件未就位等 → 交给 error 事件统一提示 */ });
+        }
+      });
+
+      items.push(row);
+      frag.appendChild(row);
+    });
+
+    listEl.innerHTML = '';
+    listEl.appendChild(frag);
+    if (countEl) countEl.textContent = '共 ' + list.length + ' 首';
   })();
 })();
