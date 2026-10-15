@@ -70,19 +70,63 @@
   };
 
   /* ------------------------------------------------------------
-     2. 照片（PRD §4.4：纯图，无标题、无说明）
+     2. 照片（PRD §4.4：纯图，无标题、无说明；2026-10-13 起分三组）
 
-     【v1.11 · 2026-10-11 Jack 删除了 4 张照片】photo-01~04.webp
-       已从 public/assets/photos/ 删除（提交 88036aa 留痕）。
-       照片墙当前为空 —— 新素材到位后按下面格式补条目即可：
-         { id:'p1', added_at:'YYYY-MM-DD', alt:'照片 01', w:1600, h:900,
-           src: PHOTO_BASE + 'photo-01.webp' }
-       w / h 是原始宽高，用于瀑布流分列（不依赖图片加载完）。
+     【v1.12 · 2026-10-13】Jack 把照片整理成三个文件夹，照片墙随之
+       分成三组（EXPERIENCE / FUNNY / HANDSOME）。
+       规则：
+         · 原图（JPG/PNG）留在各自文件夹里当素材源，被 .gitignore
+           拦截、不入库（同旧口径）；
+         · 产物为组内 photo-NN.webp（两位序号 = 默认展示顺序，
+           由转换脚本按文件名排序生成），全部 ≤300KB（PRD §9.5）。
+       补一张新照片的流程：
+         ① 原图丢进对应文件夹 → ② 重跑转换脚本（按序生成 photo-NN.webp）
+         → ③ 在下面的组里加一条（复制上一行改序号/宽高）。
+       w / h 是产物真实宽高，用于瀑布流分列（不依赖图片加载完）。
        alt 按 PRD §3.3 隐私边界，只写中性描述，不含地点与人物身份。
      ------------------------------------------------------------ */
   var PHOTO_BASE = '../public/assets/photos/';
 
+  var PHOTO_GROUPS = [
+    {
+      id: 'experience', name: 'EXPERIENCE',
+      photos: [
+        { id: 'e1', src: PHOTO_BASE + 'Experience/photo-01.webp', w: 1078, h:  598, alt: 'EXPERIENCE 照片 01' },
+        { id: 'e2', src: PHOTO_BASE + 'Experience/photo-02.webp', w: 1170, h: 1525, alt: 'EXPERIENCE 照片 02' },
+        { id: 'e3', src: PHOTO_BASE + 'Experience/photo-03.webp', w: 1079, h:  609, alt: 'EXPERIENCE 照片 03' }
+      ]
+    },
+    {
+      id: 'funny', name: 'FUNNY',
+      photos: [
+        { id: 'f1', src: PHOTO_BASE + 'Funny/photo-01.webp', w: 1600, h: 1273, alt: 'FUNNY 照片 01' },
+        { id: 'f2', src: PHOTO_BASE + 'Funny/photo-02.webp', w:  784, h: 1055, alt: 'FUNNY 照片 02' },
+        { id: 'f3', src: PHOTO_BASE + 'Funny/photo-03.webp', w:  720, h: 1600, alt: 'FUNNY 照片 03' },
+        { id: 'f4', src: PHOTO_BASE + 'Funny/photo-04.webp', w: 1280, h:  960, alt: 'FUNNY 照片 04' },
+        { id: 'f5', src: PHOTO_BASE + 'Funny/photo-05.webp', w: 1600, h:  900, alt: 'FUNNY 照片 05' },
+        { id: 'f6', src: PHOTO_BASE + 'Funny/photo-06.webp', w: 1600, h:  900, alt: 'FUNNY 照片 06' },
+        { id: 'f7', src: PHOTO_BASE + 'Funny/photo-07.webp', w: 1600, h:  899, alt: 'FUNNY 照片 07' }
+      ]
+    },
+    {
+      id: 'handsome', name: 'HANDSOME',
+      photos: [
+        { id: 'h1', src: PHOTO_BASE + 'Handsome/photo-01.webp', w: 1600, h:  842, alt: 'HANDSOME 照片 01' },
+        { id: 'h2', src: PHOTO_BASE + 'Handsome/photo-02.webp', w: 1600, h:  882, alt: 'HANDSOME 照片 02' },
+        { id: 'h3', src: PHOTO_BASE + 'Handsome/photo-03.webp', w: 1600, h:  844, alt: 'HANDSOME 照片 03' },
+        { id: 'h4', src: PHOTO_BASE + 'Handsome/photo-04.webp', w: 1600, h:  900, alt: 'HANDSOME 照片 04' },
+        { id: 'h5', src: PHOTO_BASE + 'Handsome/photo-05.webp', w: 1600, h: 1132, alt: 'HANDSOME 照片 05' },
+        { id: 'h6', src: PHOTO_BASE + 'Handsome/photo-06.webp', w: 1600, h: 1067, alt: 'HANDSOME 照片 06' },
+        { id: 'h7', src: PHOTO_BASE + 'Handsome/photo-07.webp', w: 1600, h:  900, alt: 'HANDSOME 照片 07' }
+      ]
+    }
+  ];
+
+  /* 拍平一份（灯箱按它做上一张/下一张，跨组连续；顺序 = 组序 × 组内序） */
   var PHOTOS = [];
+  PHOTO_GROUPS.forEach(function (g) {
+    g.photos.forEach(function (p) { PHOTOS.push(p); });
+  });
 
   /* ------------------------------------------------------------
      3. 内容（笔记 + 感悟同一条流，PRD §4.3）
@@ -101,7 +145,20 @@
                    { img, alt } → 一张正文插图，统一按 4:3 显示（PRD §4.6）
                  每篇最多 3 张插图（PRD §4.3）。
      ------------------------------------------------------------ */
+  /* 真实封面图存放处（PRD §8：`YYYY-MM-DD-短名.webp`，短名用中性词）。
+     2026-10-14 起，第一条真实记录 n4 的封面已接入。 */
+  var COVER_BASE = '../public/assets/covers/';
+
   var POSTS = [
+    {
+      id: 'n4', type: 'note', date: '2026-10-14',
+      title: '布什各门，这是什么情况',
+      cover: COVER_BASE + '2026-10-14-note-a.webp',
+      summary: '这个React网站上面真的有很多的优秀作品集，照着代码使用ds v4 flash生成了一张，但是好像错位了。',
+      body: [
+        '之后要进入修改期，今天晚上的作业同时包括打卡，知识库搭建《田间智能传感器》'
+      ]
+    },
     {
       id: 'n1', type: 'note', date: '2026-09-26',
       title: '把卡片流的第一版做出来了',
@@ -333,12 +390,29 @@
     });
   }
 
+  /* 首页板块入口卡的模拟异步取数（Day 8）：
+     与 feedAsync 同规格，只是把「一条流」换成「四个板块」。
+     地址栏 ?demo=error / empty / slow 同样生效（index.html 上可直接演示四态）。 */
+  function entriesAsync(opts) {
+    var o = opts || {};
+    var demo = demoParam();
+    var delay = (typeof o.delay === 'number') ? o.delay : FAKE.delay;
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        if (demo === 'error') { reject(new Error('demo: 模拟取数失败')); return; }
+        if (demo === 'empty') { resolve([]); return; }
+        resolve(ENTRIES.slice());
+      }, demo === 'slow' ? SLOW_DELAY : delay);
+    });
+  }
+
   /* ------------------------------------------------------------
      5. 对外出口
      ------------------------------------------------------------ */
   global.JaData = {
     SITE:   SITE,
     PHOTOS: PHOTOS,
+    PHOTO_GROUPS: PHOTO_GROUPS,
     POSTS:  POSTS,
     WORKS:  WORKS,
     MUSIC:  MUSIC,
@@ -354,6 +428,8 @@
 
     /* Day 13：模拟异步取数（4c 节） */
     feedAsync:      feedAsync,
+    /* Day 8：首页板块入口卡的模拟异步取数（同 4c 节规格） */
+    entriesAsync:   entriesAsync,
     _fake:          FAKE        /* 检查台用：_fake.delay = 0 可跳过模拟延迟 */
   };
 

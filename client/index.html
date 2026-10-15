@@ -9,7 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
+<!-- 主题无闪烁脚本（Day 8）：在样式加载前把上次选的主题定好，避免先亮后暗 -->
+<script>
+try {
+  var t = localStorage.getItem('rover-theme');
+  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="styles.css?v=28">
 <!--
   ============================================================
   首页（v1.11 板块拆分后）—— 封面 + 板块入口
@@ -38,24 +45,43 @@
       <a href="music.html">音乐</a>
       <a href="about.html">关于</a>
     </nav>
+
+    <!-- 主题切换按钮（Day 8）：浅色 ↔ 深色；状态存 localStorage -->
+    <button class="theme-btn" id="themeBtn" type="button"
+            aria-label="切换深色 / 浅色主题" aria-pressed="false" title="切到深色">
+      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.4 14.2A8.4 8.4 0 0 1 9.8 3.6 8.4 8.4 0 1 0 20.4 14.2z"/>
+      </svg>
+      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/>
+      </svg>
+    </button>
   </div>
 </header>
 
-<!-- ============ 2. 首屏 hero（Prisma 式 · 保持 2026-09-29 重构后的形态）============
-     站点名以满屏字号压在暗场上，信息细排在下半部 —— 不靠盒子，靠「大 · 空 · 暗」。
-     底部信息排（副标题 / 自我介绍 / 数字 / 联系方式）留在首页；
-     更完整的「关于」已独立成 about.html（v1.11）。 -->
+<!-- ============ 2. 首屏 hero（2026-10-14 Jack：React Bits「Lightfall」样式前端）============
+     hero 底 = Lightfall 光坠效果（原生 WebGL2 移植，见 lightfall.js），
+     背景全黑（2026-10-14 晚 Jack：「整体换成全黑的」；原 #94a3b8）。
+     ⚠ 文字再次下屏（2026-10-14 晚第二次指示）——
+       标题 / 定位语 / 信息排三块的 hidden 属性就是开关：要加回来时删掉 hidden。 -->
 <section class="hero" id="top">
-  <div class="hero-bg"></div>
+  <!-- Lightfall 容器：铺满 hero；WebGL2 不可用时留纯黑底 -->
+  <div class="hero-lightfall" id="lightfall" aria-hidden="true"></div>
+
+  <!-- TechText 文字动画（React Bits TechText 原生移植，2026-10-15 Jack 指定）。
+       位置：hero 正中（绝对居中覆盖层）；光标掠过字母变虚线描边、
+       可拖拽字母、无鼠标时自动巡航播放。 -->
+  <div class="hero-techtext" id="techText" role="img" aria-label="Welcome To"></div>
 
   <div class="wrap hero-inner">
-    <div class="hero-title-wrap">
+    <div class="hero-title-wrap" hidden>
       <h1 class="title" id="siteName">Rover</h1>
     </div>
-    <div class="slogan" id="siteSlogan">to record myself</div>
+    <div class="slogan" id="siteSlogan" hidden>to record myself</div>
 
-    <!-- 底部信息排 -->
-    <div class="hero-meta" id="heroMeta">
+    <!-- 底部信息排（暂不上屏）-->
+    <div class="hero-meta" id="heroMeta" hidden>
       <div class="subtitle" id="siteSubtitle">So you can look below.</div>
       <div class="intro" id="siteIntro"></div>
 
@@ -84,13 +110,28 @@
   <div class="avatar" hidden>头像</div>
 </section>
 
-<!-- ============ 3. 板块入口（v1.11 新增；卡片由 app.js 第 5b 节从 data.js 生成）============ -->
-<section id="entries">
+<!-- ============ 3. 板块入口（v1.11 新增；Day 8 加四态）============
+     卡片由 app.js 第 5b 节从 data.js 生成，取数走 entriesAsync（模拟网络），
+     因此本区具备四种状态（骨架 / 成功 / 空 / 错误+重试），
+     与记录区同一套 .feed-states 机制。地址栏直达演示（截图用）：
+       index.html?demo=slow   → 加载中
+       index.html?demo=empty  → 空态
+       index.html?demo=error  → 错误态（可点重试） -->
+<section id="entriesRegion">
   <div class="wrap">
     <div class="sec-head">
       <span class="sec-no">·</span>
       <h2>去看看</h2>
       <span class="count t-min">四个板块，各走各的门</span>
+    </div>
+
+    <div class="feed-states">
+      <div class="feed-skel" aria-hidden="true"><div></div><div></div><div></div></div>
+      <div class="feed-empty" role="status">板块列表还没准备好 —— 稍后再来看看。</div>
+      <div class="feed-error" role="alert">
+        <p>板块没取出来，可能是网络问题。</p>
+        <button class="feed-retry" id="entriesRetry" type="button">重试</button>
+      </div>
     </div>
 
     <div class="entries" id="entryGrid"></div>
@@ -114,7 +155,11 @@
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
 <!-- 渲染层：把数据写进页面 -->
-<script src="app.js?v=9"></script>
+<script src="app.js?v=13"></script>
+<!-- Lightfall 光坠渲染层（React Bits Lightfall 原生移植，独立文件，仅首页引入） -->
+<script src="lightfall.js?v=3"></script>
+<!-- TechText 文字动画层（React Bits TechText 原生移植，独立文件，仅首页引入） -->
+<script src="tech-text.js?v=1"></script>
 
 </body>
 </html>

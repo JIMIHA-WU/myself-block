@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
+<link rel="stylesheet" href="styles.css?v=27">
 <!--
   ============================================================
   照片墙页（v1.11 新增，原首页 #photos 区块独立成页）
@@ -48,9 +48,9 @@
       <span class="count t-min" id="photoCount"></span>
     </div>
 
-    <!-- 两列由 app.js 按「瀑布流」分列生成；空数组时显示空态。
+    <!-- 三组瀑布流由 app.js 按「分组」生成（v1.12：EXPERIENCE / FUNNY / HANDSOME）。
          初始带 no-js：脚本没跑起来时这里会显示一句说明，而不是一块空白。 -->
-    <div class="photos no-js" id="photoWall"></div>
+    <div class="pw no-js" id="photoWall"></div>
 
     <noscript>
       <p class="t-min" style="margin-top:12px">
@@ -80,7 +80,7 @@
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
 <!-- 渲染层：把数据写进页面 -->
-<script src="app.js?v=9"></script>
+<script src="app.js?v=12"></script>
 
 </body>
 </html>

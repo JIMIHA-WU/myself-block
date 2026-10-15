@@ -162,7 +162,7 @@ nav a.active{color:var(--bg-2);background:var(--brand);box-shadow:none;letter-sp
   font-family:var(--f-serif);
   font-style:normal;
   font-size:clamp(68px,min(18vw,32vh),200px);
-  font-weight:400;letter-spacing:-0.02em;line-height:1.0;
+  font-weight:400;letter-spacing:-0.02em;line-height:1.0;text-transform:uppercase;
   text-shadow:0 8px 60px rgba(21,48,84,.14);
   white-space:nowrap;
 }
@@ -188,7 +188,7 @@ nav a.active{color:var(--bg-2);background:var(--brand);box-shadow:none;letter-sp
 .hero-meta.flash .subtitle,
 .hero-meta.flash .intro{color:var(--txt)}
 
-.subtitle{font-size:14px;color:var(--txt-2);letter-spacing:.06em}
+.subtitle{font-size:14px;color:var(--txt-2);letter-spacing:.06em;text-transform:uppercase}
 .intro{
   margin-top:var(--sp-4);
   font-size:15px;color:var(--txt-2);line-height:1.8;
@@ -674,7 +674,7 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 .entry-card{
   position:relative;display:flex;flex-direction:column;gap:var(--sp-2);
   padding:var(--sp-6);border:1px solid var(--line);border-radius:var(--r-card);
-  background:#fff;text-decoration:none;color:var(--txt);
+  background:var(--bg-2);text-decoration:none;color:var(--txt);
   transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .entry-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,20,24,.08);border-color:var(--brand)}
@@ -690,7 +690,7 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 .works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
 .work-card{
   display:flex;flex-direction:column;overflow:hidden;
-  border:1px solid var(--line);border-radius:var(--r-card);background:#fff;
+  border:1px solid var(--line);border-radius:var(--r-card);background:var(--bg-2);
 }
 .work-cover{aspect-ratio:16/9;overflow:hidden;background:var(--line)}
 .work-cover img{width:100%;height:100%;object-fit:cover;display:block}
@@ -712,7 +712,7 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 .music-list{
   display:flex;flex-direction:column;
   border:1px solid var(--line);border-radius:var(--r-card);
-  overflow:hidden;background:#fff;
+  overflow:hidden;background:var(--bg-2);
 }
 .track{
   display:flex;align-items:center;gap:var(--sp-4);width:100%;
@@ -748,3 +748,223 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 .about-box .subtitle{font-size:16px}
 .about-box .intro{margin-top:var(--sp-4)}
 .about-box .cardfoot{margin-top:var(--sp-10)}
+
+/* ============================================================
+   15. 主题切换（Day 8）：浅色（默认·天空）↔ 深色（夜云）
+   仅首页接入切换按钮；变量定义在此，其他页面沿用同一套 CSS
+   ============================================================ */
+
+/* ---- 顶栏主题按钮（放导航右侧；dock 模式下仍在品牌一侧）---- */
+.theme-btn{
+  width:34px;height:34px;flex:none;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:50%;
+  background:var(--glass);color:var(--txt-2);cursor:pointer;
+  transition:background .2s ease,color .2s ease,border-color .2s ease;
+}
+.theme-btn:hover{background:var(--brand-dim);border-color:var(--brand-line);color:var(--txt)}
+.theme-btn svg{width:16px;height:16px}
+.theme-btn .ico-sun{display:none}
+html[data-theme="dark"] .theme-btn .ico-moon{display:none}
+html[data-theme="dark"] .theme-btn .ico-sun{display:block}
+
+/* ---- 深色变量的值（同族换挡：底色换夜、文字变亮，橙不动）---- */
+html[data-theme="dark"]{
+  --bg:         #0F1720;          /* 夜空底 */
+  --bg-2:       #18222C;          /* 卡片表面：深灰蓝 */
+  --glass:      rgba(24,34,44,.72);
+  --glass-2:    rgba(24,34,44,.92);
+  --line:       rgba(255,255,255,.12);
+  --txt:        #F1F5F8;
+  --txt-2:      #A6B2BD;
+  --txt-3:      #8E9BA7;
+  --brand-ink:  #FFA06B;          /* 橙系小字在暗底上的可用档 */
+  --brand-dim:  rgba(244,88,28,.18);
+  --brand-line: rgba(244,88,28,.45);
+}
+/* 云层压暗成夜云（同构图，只换明度） */
+html[data-theme="dark"] .hero-bg{filter:brightness(.42) saturate(.7)}
+/* 滚动后的毛玻璃顶栏跟着变暗 */
+html[data-theme="dark"] body.scrolled .topbar{background:rgba(15,23,32,.97)}
+/* 大标题在夜底上的投影换深色 */
+html[data-theme="dark"] .title{text-shadow:0 8px 60px rgba(0,0,0,.4)}
+
+/* ---- 首页入口四态（复用 .feed-states 通用机制，只补容器细节）---- */
+#entriesRegion .feed-skel{grid-template-columns:repeat(3,1fr)}
+@media (max-width:900px){
+  #entriesRegion .feed-skel{grid-template-columns:1fr}
+}
+
+/* 主题按钮靠右停靠：dock 模式（.dock-on）下紧贴在 dock 左侧；
+   移动端/无 dock 时靠右，不与导航抢位 */
+.theme-btn{margin-left:auto;margin-right:var(--sp-3)}
+
+/* ============================================================
+   16. 顶栏导航右移（2026-10-13 Jack 指令：「导航栏总体往页面的右边移动」）
+   宽屏（≥1100px）时，Dock 与主题按钮整组越过 1040px 内容容器右缘，
+   右侧留白固定为 24px（24 = 512 - 50vw 的推导：容器右缘距视口
+   (100vw-1040)/2 + 32，要收到 24 → 需右移 (100vw-1040)/2 + 8
+   = 50vw - 512，取负 margin 即 512px - 50vw）。
+   说明：本规则只影响「dock-on（桌面 + 鼠标）」的顶栏，内容区与移动端不动。
+   如需调整右侧留白，只改这个 512px（大到 600px 留白更小）。
+   ============================================================ */
+@media (min-width:1100px){
+  body.dock-on #dock{margin-right:calc(512px - 50vw)}
+}
+
+/* 保险（2026-10-13）：万一 dock 未挂载（极少数环境），文本导航也同样右移，
+   保证「所有页面导航栏位置一致」在任何路径下都成立 */
+@media (min-width:1100px){
+  body:not(.dock-on) .topbar #nav{margin-right:calc(512px - 50vw)}
+}
+
+/* ============================================================
+   17. 作品集 / 音乐 / 关于 云层底幕配套（2026-10-13 Jack 指令：
+   三页背景换成与照片墙同款 shader）。规则与「记录区 / 照片墙」
+   两块同款：区块内小字与分隔线转白，卡片本体白底不受影响。
+   ============================================================ */
+#works .sec-no,
+#works .sec-head .count,
+#works .placeholder-note,
+#music .sec-no,
+#music .sec-head .count,
+#music .placeholder-note,
+#about .sec-no{color:rgba(255,255,255,.92)}
+#works .sec-head,
+#music .sec-head,
+#about .sec-head{border-bottom-color:rgba(255,255,255,.24)}
+
+/* 空态 / 提示（虚线框）在云层上的观感 */
+#works .ph-empty,
+#music .ph-empty{color:rgba(255,255,255,.92);border-color:rgba(255,255,255,.35)}
+
+/* 关于页：信息块直接坐在云层上（没有白卡片），文字全部转白 */
+#about .subtitle,
+#about .intro,
+#about .updated,
+#about .stats{color:rgba(255,255,255,.92)}
+#about .stats b{color:#fff}
+#about .icon-round{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.12)}
+#about .icon-round svg{fill:#fff}
+
+/* ============================================================
+   18. 页面切换过渡（2026-10-13 Jack 反馈：「跳转太快、太突然」）
+   ------------------------------------------------------------
+   方案：View Transitions API 的「跨文档」形态（CSS 一行启用），
+   点击站内链接跳转时，旧页与新页自动做一次交叉淡化。
+     · 零 JS、零依赖：浏览器原生能力，写在同一份 styles.css，
+       全部 8 个页面同时生效（同源 + 都引本文件 = 生效条件满足）。
+     · 不支持的老浏览器（旧 Firefox 等）：整段规则被忽略，
+       行为与现在完全一致（瞬间跳转），不影响可用性。
+     · prefers-reduced-motion：过渡直接禁用，不打扰敏感用户。
+   调参：下面的 .42s 是过渡时长（默认 0.25s，Jack 觉得太突然
+   所以略放慢）；想再慢/再快只改这一个数。
+   ============================================================ */
+@view-transition { navigation: auto; }
+
+::view-transition-old(root),
+::view-transition-new(root){
+  animation-duration:.42s;
+  animation-timing-function:cubic-bezier(.16,1,.3,1);   /* 与全站 --ease-out 同款 */
+}
+
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-old(root),
+  ::view-transition-new(root){ animation-duration:.001s; }
+}
+
+/* ============================================================
+   19. 照片墙三分组（2026-10-13 Jack：照片墙分三份，按文件夹分组）
+   结构：#photoWall.pw > .pgroup ×3 > .pgroup-head + .photos > .col ×2
+   每组仍用原「错落两列」瀑布流（PRD §4.4 的间距/圆角规则不变）。
+   ============================================================ */
+.pw{display:block}
+.pgroup + .pgroup{margin-top:var(--sp-24)}      /* 组与组之间的大间距 */
+.pgroup-head{
+  display:flex;align-items:baseline;gap:var(--sp-4);
+  margin-bottom:var(--sp-10);
+  padding-bottom:var(--sp-4);
+  border-bottom:1px solid var(--line);
+}
+.pgroup-head h3{
+  font-family:var(--f-serif);
+  font-weight:400;font-size:28px;letter-spacing:.06em;line-height:1;
+}
+.pgroup-head .count{margin-left:auto}           /* 张数靠右 */
+
+/* JS 未执行时的兜底说明（挂在 #photoWall 上） */
+.pw.no-js:empty::before{
+  content:"照片墙需要 JavaScript 才能显示。";
+  font-size:13px;color:var(--txt-3);line-height:1.8;
+}
+/* 照片墙区块在云层底幕上：兜底文字与组标题转白 */
+#photos .pw.no-js:empty::before{color:rgba(255,255,255,.92)}
+#photos .pgroup-head{border-bottom-color:rgba(255,255,255,.24)}
+#photos .pgroup-head h3{color:rgba(255,255,255,.95)}
+#photos .pgroup-head .count{color:rgba(255,255,255,.92)}
+
+/* ============================================================
+   20. 电光 Logo（2026-10-13 Jack：React Bits ElectricLogo 放首页中间）
+   位置：hero 正中央、最前层（z-index:5）→ 浮在标题与文案之上（Jack 指定）。
+   绝对定位居中；交互（悬停充能/点击脉冲）不受影响。
+   容器尺寸 = Jack 代码：width 100% × height 480px；想改只动这两行。
+   ============================================================ */
+.hero-logo{
+  position:absolute;
+  left:0;right:0;top:50%;
+  transform:translateY(-50%);
+  width:100%;height:480px;
+  z-index:5;
+}
+/* 保护信息排（GitHub / 邮箱图标）的可点性：meta 提到 logo 之上 */
+.hero-meta{position:relative;z-index:6}
+
+/* ============================================================
+   21. Lightfall 首页底幕（2026-10-14 Jack：首页改为此样式的前端）
+   结构：#lightfall.hero-lightfall（铺满 hero，z0）
+           └─ canvas.lightfall-canvas（脚本插入，绝对铺满）
+   背景色由容器承担（#000000 = 组件的 backgroundColor 参数；
+   2026-10-14 晚 Jack 指示由 #94a3b8 改全黑）；
+   WebGL2 不可用时容器仍是该纯色，不留白。
+   文字暂不上屏由 index.html 里的 hidden 属性控制，与本样式无关。
+   ============================================================ */
+.hero{background:#000000}          /* 兜底：万一容器异常，hero 不露天空底 */
+.hero-lightfall{
+  position:absolute;inset:0;z-index:0;
+  background:#000000;
+  overflow:hidden;
+}
+.lightfall-canvas{
+  position:absolute;inset:0;display:block;
+  width:100%;height:100%;
+}
+
+/* ============================================================
+   22. 首页「去看看」区云层配套（2026-10-14 Jack：首页背景换成
+   照片墙同款云层 shader；第一屏 hero = Lightfall 保持不动）。
+   规则同 17 节：区块内小字与分隔线转白；入口卡是白底卡片，不受影响。
+   ============================================================ */
+#entriesRegion .sec-no,
+#entriesRegion .sec-head .count{color:rgba(255,255,255,.92)}
+#entriesRegion .sec-head{border-bottom-color:rgba(255,255,255,.24)}
+
+/* ============================================================
+   23. TechText 文字动画层（2026-10-15 Jack：首页正中放「Welcome To」）
+   结构：#techText.hero-techtext（绝对居中，z3 —— 在 Lightfall 底幕之上、
+        信息排 z6 之下）；canvas 由 tech-text.js 插入并铺满。
+   容器尺寸 = Jack 用法代码：width 100% × height 480px。
+   touch-action / user-select 与官方 CSS 一致。
+   ============================================================ */
+.hero-techtext{
+  position:absolute;left:0;right:0;top:50%;
+  transform:translateY(-50%);
+  width:100%;height:480px;
+  z-index:3;
+  touch-action:pan-y;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.tech-text-canvas{
+  display:block;
+  width:100%;height:100%;
+}

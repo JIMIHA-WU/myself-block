@@ -114,40 +114,98 @@
   }
 
   /* ============================================================
-     5b. 首页板块入口卡（PRD §4.2，v1.11 新增）
+     5b. 首页板块入口卡（PRD §4.2，v1.11 新增；Day 8 改四态）
      首页不再内嵌板块内容，改为四张入口卡（数据来自 D.ENTRIES）。
+     取数走 entriesAsync（模拟网络），因此具备四种状态：
+       加载中（骨架）/ 成功（四张卡）/ 空（ENTRIES 为空）/ 错误（重试）
+     演示：index.html?demo=slow / empty / error（与记录区同一套开关）。
+     setRegionState 在本文件第 8 节定义（函数声明提升，先调用没问题）。
      ============================================================ */
-  var entryGrid = document.getElementById('entryGrid');
-  if (entryGrid) {
-    var efrag = document.createDocumentFragment();
-    D.ENTRIES.forEach(function (it) {
-      var a = document.createElement('a');
-      a.className = 'entry-card';
-      a.setAttribute('href', it.href);
+  var entriesRegion = document.getElementById('entriesRegion');
+  if (entriesRegion) {
+    var entryGrid = document.getElementById('entryGrid');
 
-      var no = document.createElement('span');
-      no.className = 'entry-no t-min';
-      no.textContent = it.no;
+    function renderEntryCards(list) {
+      var efrag = document.createDocumentFragment();
+      list.forEach(function (it) {
+        var a = document.createElement('a');
+        a.className = 'entry-card';
+        a.setAttribute('href', it.href);
 
-      var h3 = document.createElement('h3');
-      h3.textContent = it.title;
+        var no = document.createElement('span');
+        no.className = 'entry-no t-min';
+        no.textContent = it.no;
 
-      var p = document.createElement('p');
-      p.className = 't-min';
-      p.textContent = it.desc;
+        var h3 = document.createElement('h3');
+        h3.textContent = it.title;
 
-      var arrow = document.createElement('span');
-      arrow.className = 'entry-arrow';
-      arrow.textContent = '→';
+        var p = document.createElement('p');
+        p.className = 't-min';
+        p.textContent = it.desc;
 
-      a.appendChild(no);
-      a.appendChild(h3);
-      a.appendChild(p);
-      a.appendChild(arrow);
-      efrag.appendChild(a);
+        var arrow = document.createElement('span');
+        arrow.className = 'entry-arrow';
+        arrow.textContent = '→';
+
+        a.appendChild(no);
+        a.appendChild(h3);
+        a.appendChild(p);
+        a.appendChild(arrow);
+        efrag.appendChild(a);
+      });
+      entryGrid.innerHTML = '';
+      entryGrid.appendChild(efrag);
+    }
+
+    function loadEntries() {
+      setRegionState(entriesRegion, 'loading');
+      D.entriesAsync().then(function (list) {
+        if (!list || !list.length) { setRegionState(entriesRegion, 'empty'); return; }
+        renderEntryCards(list);
+        setRegionState(entriesRegion, 'done');
+      }).catch(function () {
+        setRegionState(entriesRegion, 'error');
+      });
+    }
+
+    var entriesRetry = document.getElementById('entriesRetry');
+    if (entriesRetry) entriesRetry.addEventListener('click', loadEntries);
+
+    loadEntries();
+  }
+
+  /* ============================================================
+     5c. 主题切换（Day 8）：首页顶栏按钮，浅色（天空）↔ 深色（夜云）
+     ------------------------------------------------------------
+     · 选择存 localStorage（键 rover-theme），index.html 的 <head> 里
+       有一段无闪烁脚本，先把 data-theme 设好再渲染首帧。
+     · 按钮只放在首页（其他页面未接，属下一轮可选扩展）。
+     · 无障碍：aria-pressed 表达当前是否深色；有 aria-label。
+     ============================================================ */
+  var themeBtn = document.getElementById('themeBtn');
+  if (themeBtn) {
+    var rootEl = document.documentElement || document.body;
+    var THEME_KEY = 'rover-theme';
+
+    function isDark() { return rootEl.getAttribute('data-theme') === 'dark'; }
+
+    function paintBtn() {
+      themeBtn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+      themeBtn.setAttribute('title', isDark() ? '切到浅色' : '切到深色');
+    }
+    paintBtn();
+
+    themeBtn.addEventListener('click', function () {
+      if (isDark()) {
+        /* 检查台的最小 DOM 桩没有 removeAttribute，兜底成清空属性 */
+        if (rootEl.removeAttribute) rootEl.removeAttribute('data-theme');
+        else rootEl.setAttribute('data-theme', '');
+      } else {
+        rootEl.setAttribute('data-theme', 'dark');
+      }
+      try { localStorage.setItem(THEME_KEY, isDark() ? 'dark' : 'light'); } catch (e) {}
+      paintBtn();
     });
-    entryGrid.innerHTML = '';
-    entryGrid.appendChild(efrag);
   }
 
   /* ============================================================
@@ -163,8 +221,10 @@
                  保留这个开关，只为万一你看过效果后更喜欢模板那种排法。 */
   var WATERFALL_BY_REAL_HEIGHT = true;
 
-  /* 谁矮放谁 —— 这就是「错落」的来源 */
-  function splitColumns(photos) {
+  /* 谁矮放谁 —— 这就是「错落」的来源。
+     offset：本组照片在「拍平表」里的起始序号（灯箱跨组翻页要用全局序号） */
+  function splitColumns(photos, offset) {
+    var base = offset || 0;
     var cols = [[], []];
     var acc  = [0, 0];                       // 两列累计高度（以"每单位列宽的高度"计）
 
@@ -172,7 +232,7 @@
       var ratio = (p.w && p.h) ? (p.w / p.h) : 1;
       var h     = WATERFALL_BY_REAL_HEIGHT ? (1 / ratio) : ratio;
       var c     = (acc[0] <= acc[1]) ? 0 : 1;
-      cols[c].push({ photo: p, index: i });
+      cols[c].push({ photo: p, index: base + i });
       acc[c] += h;
     });
 
@@ -201,8 +261,8 @@
 
   if (wall) {
     if (!D.PHOTOS.length) {
-      /* 【v1.11】photos 数组为空（素材被删 / 尚未接入）—— 显示空态，
-         不是留白。样式与记录区空态同一套语言（.ph-empty）。 */
+      /* photos 为空（素材被删 / 尚未接入）—— 显示空态，不是留白。
+         样式与记录区空态同一套语言（.ph-empty）。 */
       wall.innerHTML = '';
       wall.classList.remove('no-js');
       wall.classList.add('ph-empty');
@@ -213,13 +273,39 @@
       wall.appendChild(phEmpty);
       text('photoCount', '共 0 张');
     } else {
+      /* 【v1.12】三组渲染：每组 = 组标题（名称 + 张数）+ 一条独立瀑布流。
+         灯箱序号走「拍平表」（D.PHOTOS，组序 × 组内序），跨组连续翻页。 */
       var frag = document.createDocumentFragment();
+      var offset = 0;
 
-      splitColumns(D.PHOTOS).forEach(function (list) {
-        var col = document.createElement('div');
-        col.className = 'col';
-        list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
-        frag.appendChild(col);
+      D.PHOTO_GROUPS.forEach(function (g) {
+        var block = document.createElement('div');
+        block.className = 'pgroup';
+        block.setAttribute('data-group', g.id);
+
+        var head = document.createElement('div');
+        head.className = 'pgroup-head';
+        var h3 = document.createElement('h3');
+        h3.textContent = g.name;
+        var cnt = document.createElement('span');
+        cnt.className = 'count t-min';
+        cnt.textContent = g.photos.length + ' 张';
+        head.appendChild(h3);
+        head.appendChild(cnt);
+        block.appendChild(head);
+
+        var grid = document.createElement('div');
+        grid.className = 'photos';
+        splitColumns(g.photos, offset).forEach(function (list) {
+          var col = document.createElement('div');
+          col.className = 'col';
+          list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
+          grid.appendChild(col);
+        });
+        block.appendChild(grid);
+
+        offset += g.photos.length;
+        frag.appendChild(block);
       });
 
       wall.innerHTML = '';
@@ -486,7 +572,7 @@
     root.innerHTML = '';
     root.appendChild(frag);
 
-    if (typeof document.title === 'string') document.title = post.title + ' · Rover';
+    if (typeof document.title === 'string') document.title = post.title + ' · ' + S.name;
   }
 
   var postRoot = document.getElementById('postRoot');
@@ -1091,12 +1177,16 @@
 
   (function () {
     /* 2026-10-06 Jack 追加指令：照片墙也换成云层 shader
-       → 把单挂 #notes 的写法重构成 mount(section)，两个区块各挂一块 */
+       → 把单挂 #notes 的写法重构成 mount(section)，两个区块各挂一块
+       2026-10-13 Jack 指令：作品集 / 音乐 / 关于 三页背景也换成同款
+       2026-10-14 Jack 指令：首页下方"去看看"区也换成同款
+         （首页第一屏 hero = Lightfall，不在本列表里，保持不动）
+       → 目标列表扩为 6 个区块（每页最多命中一个） */
     var targets = [];
-    var ps = document.getElementById('photos');
-    var ns = document.getElementById('notes');
-    if (ps) targets.push(ps);
-    if (ns) targets.push(ns);
+    ['photos', 'notes', 'works', 'music', 'about', 'entriesRegion'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) targets.push(el);
+    });
     if (!targets.length) return;
 
     function mount(section) {
@@ -1337,7 +1427,7 @@ void main() {
       /* ---- 挂载：填满 section#notes，上下边缘渐隐防硬接缝 ---- */
       section.style.position = 'relative';
       section.style.isolation = 'isolate';
-      cv.id = 'notesShader';
+      cv.id = 'cloudShader-' + (section.id || 'x');   /* 按区块命名，避免同页多块时重复 id */
       cv.setAttribute('aria-hidden', 'true');
       var fade = 'linear-gradient(to bottom,transparent 0,#000 140px,#000 calc(100% - 120px),transparent 100%)';
       cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;'
