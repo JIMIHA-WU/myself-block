@@ -1,0 +1,11 @@
+{
+  "name": "health",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GET /api/health — CloudBase 云函数（Day 15）",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
