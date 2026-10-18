@@ -11,7 +11,7 @@
 
 | 项 | 约定 |
 | --- | --- |
-| Base URL | `https://<环境ID>.service.tcloudbase.com`（以控制台实际域名为准） |
+| Base URL | `https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com`（CloudBase HTTP 网关默认域名；接口路径以 `/api` 开头） |
 | 传输 | HTTPS，UTF-8，`Content-Type: application/json; charset=utf-8` |
 | 日期格式 | 日期 `YYYY-MM-DD`；时间戳 ISO 8601（如 `2026-10-17T13:00:00+08:00`） |
 | 成功响应 | HTTP 2xx + `{ "ok": true, "data": ... }` |
@@ -40,7 +40,7 @@
 | 方法 | `GET`（`HEAD` 同义） |
 | 请求参数 | 无 |
 | 成功响应 | `200` → `{ "ok": true, "service": "myself-block" }` |
-| 错误返回 | `405` → `{ "ok": false, "error": { "code": "METHOD_NOT_ALLOWED", "message": "Only GET is allowed" } }` |
+| 错误返回 | `405` → `{ "ok": false, "error": { "code": "METHOD_NOT_ALLOWED", "message": "Only GET is allowed" } }`；平台层异常（崩溃/超时）由网关返 `500/502`，无应用层 JSON |
 | 实现 | `server/cloudfunctions/health/index.js` |
 | 用途 | 证明「公网 → 云函数」链路；部署自检；后续可加版本号/环境 ID |
 
@@ -55,7 +55,7 @@
 | 路径 | `/api/site` |
 | 方法 | `GET` |
 | 请求参数 | 无 |
-| 成功响应 | 见下 |
+| 成功响应 | `200` → 见下 |
 | 错误返回 | `500` → `{ "ok": false, "error": { "code": "INTERNAL", "message": "..." } }` |
 
 ```json
@@ -87,8 +87,8 @@
 | 路径 | `/api/photos` |
 | 方法 | `GET` |
 | 请求参数 | `group`（可选，组 id：`experience` / `funny` / `handsome`；缺省返回全部） |
-| 成功响应 | 见下 |
-| 错误返回 | `400`（group 非法）→ `{ "ok": false, "error": { "code": "BAD_REQUEST", "message": "unknown group" } }` |
+| 成功响应 | `200` → 见下 |
+| 错误返回 | `400`（group 非法）→ `BAD_REQUEST`；`500` → `INTERNAL`（形状均见 §0 信封） |
 
 ```json
 {
@@ -121,8 +121,8 @@
 | 路径 | `/api/posts`（**不带 `id`** 时为列表） |
 | 方法 | `GET` |
 | 请求参数 | `type`（可选：`note` / `moment`）· `limit` · `offset` |
-| 成功响应 | 见下（列表项**不含正文**，正文走详情接口） |
-| 错误返回 | `400`（type 非法/limit 超限）· `500` |
+| 成功响应 | `200` → 见下（列表项**不含正文**，正文走详情接口） |
+| 错误返回 | `400`（type 非法/limit 超限）· `500`（形状均见 §0 信封） |
 
 ```json
 {
@@ -154,8 +154,8 @@
 | 路径 | `/api/posts?id=<记录 id>` |
 | 方法 | `GET` |
 | 请求参数 | `id`（必填） |
-| 成功响应 | 见下 |
-| 错误返回 | `400`（缺 id）→ `BAD_REQUEST`；`404` → `{ "ok": false, "error": { "code": "NOT_FOUND", "message": "post not found" } }` |
+| 成功响应 | `200` → 见下 |
+| 错误返回 | `400`（缺 id）→ `BAD_REQUEST`；`404` → `NOT_FOUND`；`500` → `INTERNAL`（形状均见 §0 信封） |
 
 ```json
 {
@@ -191,8 +191,8 @@
 | 路径 | `/api/archive` |
 | 方法 | `GET` |
 | 请求参数 | 无 |
-| 成功响应 | 见下 |
-| 错误返回 | `500` |
+| 成功响应 | `200` → 见下 |
+| 错误返回 | `500` → `INTERNAL`（信封见 §0） |
 
 ```json
 {
@@ -218,8 +218,8 @@
 | 路径 | `/api/works` |
 | 方法 | `GET` |
 | 请求参数 | `limit` · `offset`（可选） |
-| 成功响应 | 见下 |
-| 错误返回 | `500` |
+| 成功响应 | `200` → 见下 |
+| 错误返回 | `500` → `INTERNAL`（信封见 §0） |
 
 ```json
 {
@@ -246,8 +246,8 @@
 | 路径 | `/api/tracks` |
 | 方法 | `GET` |
 | 请求参数 | 无 |
-| 成功响应 | 见下 |
-| 错误返回 | `500` |
+| 成功响应 | `200` → 见下 |
+| 错误返回 | `500` → `INTERNAL`（信封见 §0） |
 
 ```json
 {

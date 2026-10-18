@@ -7,89 +7,83 @@
 
 ---
 
+## 0. 环境速查（2026-10-17 开通，Day 15 记录）
+
+| 项 | 值 |
+| --- | --- |
+| 环境名称 | `myself-demo` |
+| **环境 ID** | `myself-demo-d3gdb1m6x686e940f` |
+| 所属地域 | 上海 |
+| 套餐 | 体验版（免费） |
+| 到期时间 | **2027-04-17 23:59:59**（不支持自动续费；到期前 1 个月内可续 6 个月） |
+| 资源点额度 | **0.11 / 3000 点**（2026-10-18 截图时） |
+| 云函数 HTTP 域 | `https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com`（HTTP 网关默认域名，测试域名） |
+| **health 公网地址** | `https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com/api/health` ✅ 2026-10-18 验证 200 |
+| 路由配置 | HTTP 网关 → 路由管理：`/api/health` → 云函数 `health`；**路径透传=关**、身份认证=关、跨域=开 |
+| 静态托管域 | 以控制台「静态网站托管 → 默认域名」为准（形如 `https://<默认域名>/client/`） |
+
+---
+
 ## A. 云函数：GET /api/health
 
-### A1. 新建函数
+> 两种控制台模型，二选一（**返回契约完全一致**，见 `api-contract.md` §1）：
+> - **新版（当前界面）**：HTTP 云函数（Web 服务模式）→ 走 A1–A4，代码用 `index.js`；
+> - 旧版：事件函数 + HTTP 访问路径 → 走 A5，代码用 `handler.js`。
 
-1. 打开 CloudBase 控制台 → 选中环境（`rover-dev`）；
-2. 左侧「云函数」→「新建云函数」；
-3. 函数名称：**`health`**（必须叫这个，HTTP 路径与代码注释都按它写）；
-4. 运行环境：**Node.js 18**（Nodejs18.15）；地域跟随环境，不用改；
-5. 创建。
+### A1. 新建（新版：通过模板创建）
 
-### A2. 写入代码
+1. 控制台 → 左侧「云函数」→「创建云函数」；
+2. 页面进入「通过模板创建」；右侧模板列表选：
+   **HTTP 云函数 → Hello World（HTTP Node.js Hello World）**
+   （不要选 Python / Go / PHP / Java，也不必选 Express / Django 框架模板——多引依赖，没必要）；
+3. 底部「函数名称」改为 **`health`**；环境与地域不用改；
+4. 点「创建」，等 1–2 分钟初始化完成。
 
-1. 进入函数 →「函数代码」页；
-2. 用本目录 `index.js` 的**全部内容**覆盖编辑器里的 `index.js`；
-3. 点「保存并部署」。（无第三方依赖，不需要 npm install；若控制台提示安装依赖，直接部署即可。）
+### A2. 替换代码
 
-### A3. 控制台自测（函数层）
+1. 进入函数 →「函数代码」；
+2. 打开本机 `server/cloudfunctions/health/index.js`，全选复制，覆盖编辑器里的 `index.js`；
+3. 打开 `scf_bootstrap`，确认内容为两行（模板默认即如此）：
 
-1. 函数详情 →「测试」→ 事件模板选「空事件」`{}`；
-2. 执行 → 返回体应为：
-
-```json
-{"statusCode":200,"headers":{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"},"body":"{\"ok\":true,\"service\":\"myself-block\"}","isBase64Encoded":false}
+```bash
+#!/bin/bash
+node index.js
 ```
 
-注意 `body` 里是**转义后的 JSON 字符串**——这是正常形态（函数返回的是 HTTP 响应对象，body 需要是字符串）。
+4. 点「保存并部署」，等状态变为「部署完成」。
 
-### A4. 开 HTTP 访问路径（公网入口）
+### A3. 拿到公网地址并验证（Day 15 验收项）
 
-1. 函数详情 →「触发管理」或「HTTP 访问路径」（不同控制台版本名称略有差异）；
-2. 如首次使用，先按提示**开启 HTTP 访问服务**；
-3. 新增路径：**`/api/health`**，方法 `GET`（如可选 HEAD 一并勾上）；
-4. 保存后控制台会给出公网地址，形如：
-
-```
-https://<环境ID>.service.tcloudbase.com/api/health
-```
-
-（也可能带平台生成的随机子域，**以控制台显示为准**，记下来。）
-
-### A5. 公网验证（Day 15 验收项）
-
-**浏览器**：地址栏直接打开上面那个 URL →
-应看到一行 JSON：
+1. 函数详情页找「访问地址 / 公网地址 / 函数 URL」（新版控制台在概览或"访问"卡片）；
+2. 形如 `https://<环境ID>.service.tcloudbase.com`（有的环境带随机子域，以页面为准）；
+3. 浏览器打开 `地址 + /api/health`，应看到：
 
 ```json
 {"ok":true,"service":"myself-block"}
 ```
 
-再看 DevTools → Network：
-- 状态码 `200`；
-- `Content-Type: application/json; charset=utf-8`；
-- `Cache-Control: no-store`。
+4. 再验三点：
+   - DevTools → Network：`200`、`Content-Type: application/json; charset=utf-8`；
+   - 打开域名根 `/` 也返回同一 JSON（一眼确认服务活着）；
+   - 反例：`curl -i -X POST https://.../api/health` 应 `405` + `METHOD_NOT_ALLOWED`。
 
-**命令行（二选一）**：
-
-```bat
-curl -i https://<环境ID>.service.tcloudbase.com/api/health
-```
-
-```powershell
-Invoke-RestMethod -Uri "https://<环境ID>.service.tcloudbase.com/api/health"
-```
-
-**反例验证（证明方法限制生效）**：
-
-```bat
-curl -i -X POST https://<环境ID>.service.tcloudbase.com/api/health
-```
-
-应返回 `405` + `{"ok":false,"error":{"code":"METHOD_NOT_ALLOWED",...}}`。
-
-### A6. 常见故障对照
+### A4. 失败排查
 
 | 现象 | 最可能原因 | 处理 |
 | --- | --- | --- |
-| 访问返回 404 页面 | HTTP 访问路径没建，或路径拼写不是 `/api/health` | 回 A4 核对路径与方法 |
-| 502 / 500 | 函数代码报错（粘贴不完整） | 函数「日志」看报错；重贴 index.js 再部署 |
-| 405 | 用了 POST/PUT 访问 | 改用 GET（这是设计行为） |
-| 首次访问慢（几秒） | 冷启动 | 重试一次即正常，属预期 |
-| 返回 HTML 而不是 JSON | 命中了静态托管的兜底页而不是函数 | 核对域名：函数域是 `service.tcloudbase.com`，静态托管是 `tcloudbaseapp.com` |
+| 404 | 路径不是 `/api/health`；或函数没起来 | 核对路径；看日志 |
+| 502 / 500 | 代码没贴全 / `scf_bootstrap` 缺失 / 端口不对 | 看函数「日志」；确认 index.js 全文 + scf_bootstrap 两行 |
+| 405 | 用了 POST/PUT 访问 | 改 GET（设计行为） |
+| 首次访问慢（几秒） | 冷启动 | 重试一次，属预期 |
+| 返回 HTML 而非 JSON | 命中了静态托管兜底页 | 核对域名：函数域是 `service.tcloudbase.com` |
 
----
+### A5. 旧版控制台（事件函数）备选
+
+若界面没有「HTTP 云函数」模板，而是「事件函数」：
+1. 新建函数 `health`（Node.js 18）；
+2. 用 **`handler.js`**（`exports.main` 形态）覆盖 `index.js`；
+3. 「HTTP 访问路径 / 触发管理」新增路径 `/api/health`，方法 GET；
+4. 公网验证同 A3。
 
 ## B. 前端：静态托管（上传现有页面）
 
@@ -111,7 +105,7 @@ curl -i -X POST https://<环境ID>.service.tcloudbase.com/api/health
 
 1. 控制台 →「静态网站托管」→ 开通（免费额度内）；
 2. 方式一（最稳）：网页上传，按 B1 的结构把文件夹整包拖进去；
-3. 方式二：装 `@cloudbase/cli` 后 `tcb hosting deploy ./client -e <环境ID>`（需先在本机登录）；
+3. 方式二：装 `@cloudbase/cli` 后 `tcb hosting deploy ./client -e myself-demo-d3gdb1m6x686e940f`（需先在本机登录）；
    注意 CLI 单次只能传一个目录，`public/` 与 `logo.webp` 要分别再传一次。
 4. 若控制台支持「默认首页」设置，指向 `client/index.html`；否则直接访问带路径的地址。
 

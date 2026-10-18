@@ -1,47 +1,68 @@
 'use strict';
 
 /**
- * CloudBase 云函数：health
+ * CloudBase 云函数：health —— 【HTTP 云函数版 / Web 服务模式，新版控制台】
  * ------------------------------------------------------------------
- * 唯一职责：响应 GET /api/health，证明「公网 → 云函数」链路已打通。
- * 不连数据库、不读环境变量之外的任何资源、无第三方依赖。
+ * 对应界面：控制台「云函数 → 创建云函数 → 通过模板创建 → HTTP 云函数 →
+ *   Hello World (HTTP Node.js Hello World)」生成的函数。
+ * 用法：创建后，用本文件覆盖函数里的 index.js，部署即可。
+ *   scf_bootstrap 保持模板默认（内容应为两行：#!/bin/bash + node index.js）。
  *
- * 部署位置：CloudBase 控制台 → 云函数 → 新建 health（Node.js 18）
- * HTTP 访问路径：/api/health（在函数详情里新增）
+ * 与事件函数版的区别：
+ *   本版本自己起 HTTP 服务、监听端口（CloudBase 注入 PORT，本地缺省 9000），
+ *   因此不需要在控制台另配「HTTP 访问路径」——函数详情会直接给公网地址。
  *
- * 返回契约（api-contract.md §1）：
- *   200 → {"ok":true,"service":"myself-block"}
- *   405 → {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED","message":"Only GET is allowed"}}
+ * 路由（契约见 api-contract.md §1）：
+ *   GET|HEAD /            → 200  {"ok":true,"service":"myself-block"}   便于直接打开域名
+ *   GET|HEAD /api/health  → 200  同上
+ *   其他方法              → 405  {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED",...}}
+ *   其他路径              → 404  {"ok":false,"error":{"code":"NOT_FOUND",...}}
  *
- * 说明：CloudBase「HTTP 访问服务」会把 API 网关事件传进来（httpMethod 等字段）；
- * 在控制台点「测试」直接执行时没有 httpMethod —— 按 GET 处理，方便自测。
+ * 零依赖：只用 Node 内置模块，不连数据库、不发外部请求。
  */
 
-function respond(statusCode, body) {
-  return {
-    statusCode: statusCode,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff'
-    },
-    body: body,
-    isBase64Encoded: false
-  };
+const http = require('node:http');
+
+const PORT = process.env.PORT || 9000;
+const HEALTH = { ok: true, service: 'myself-block' };
+
+function sendJson(res, status, body, method) {
+  const text = JSON.stringify(body);
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(text),
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.end(method === 'HEAD' ? undefined : text);
 }
 
-exports.main = async function main(event) {
-  var method = String((event && (event.httpMethod || event.method)) || 'GET').toUpperCase();
+function normalizePath(url) {
+  const raw = String(url || '/').split('?')[0];
+  const trimmed = raw.replace(/\/+$/, '');
+  return trimmed || '/';
+}
+
+const server = http.createServer(function (req, res) {
+  const method = String(req.method || 'GET').toUpperCase();
+  const path = normalizePath(req.url);
+
+  if (path !== '/' && path !== '/api/health') {
+    return sendJson(res, 404, { ok: false, error: { code: 'NOT_FOUND', message: 'not found' } }, method);
+  }
 
   if (method !== 'GET' && method !== 'HEAD') {
-    return respond(
+    return sendJson(
+      res,
       405,
-      JSON.stringify({
-        ok: false,
-        error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' }
-      })
+      { ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' } },
+      method
     );
   }
 
-  return respond(200, JSON.stringify({ ok: true, service: 'myself-block' }));
-};
+  return sendJson(res, 200, HEALTH, method);
+});
+
+server.listen(PORT, function () {
+  console.log('health service listening on port ' + PORT);
+});
