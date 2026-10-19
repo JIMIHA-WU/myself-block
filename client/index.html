@@ -9,14 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<!-- 主题无闪烁脚本（Day 8）：在样式加载前把上次选的主题定好，避免先亮后暗 -->
-<script>
-try {
-  var t = localStorage.getItem('rover-theme');
-  if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-} catch (e) {}
-</script>
-<link rel="stylesheet" href="styles.css?v=28">
+<!-- 主题无闪烁脚本已于 2026-10-19 移除（深/浅色切换功能下线，站点固定浅色）-->
+<link rel="stylesheet" href="styles.css?v=33">
 <!--
   ============================================================
   首页（v1.11 板块拆分后）—— 封面 + 板块入口
@@ -46,17 +40,7 @@ try {
       <a href="about.html">关于</a>
     </nav>
 
-    <!-- 主题切换按钮（Day 8）：浅色 ↔ 深色；状态存 localStorage -->
-    <button class="theme-btn" id="themeBtn" type="button"
-            aria-label="切换深色 / 浅色主题" aria-pressed="false" title="切到深色">
-      <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
-        <path d="M20.4 14.2A8.4 8.4 0 0 1 9.8 3.6 8.4 8.4 0 1 0 20.4 14.2z"/>
-      </svg>
-      <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="4.2"/>
-        <path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/>
-      </svg>
-    </button>
+    <!-- 主题切换按钮已于 2026-10-19 按 Jack 要求移除（深/浅色切换下线）-->
   </div>
 </header>
 
@@ -69,10 +53,14 @@ try {
   <!-- Lightfall 容器：铺满 hero；WebGL2 不可用时留纯黑底 -->
   <div class="hero-lightfall" id="lightfall" aria-hidden="true"></div>
 
-  <!-- TechText 文字动画（React Bits TechText 原生移植，2026-10-15 Jack 指定）。
-       位置：hero 正中（绝对居中覆盖层）；光标掠过字母变虚线描边、
-       可拖拽字母、无鼠标时自动巡航播放。 -->
-  <div class="hero-techtext" id="techText" role="img" aria-label="Welcome To"></div>
+  <!-- TechText 文字动画（React Bits TechText 原生移植）。
+       2026-10-18 晚 Jack：首屏两行 —— 上「Welcome To」、下「ROVER」，水平居中对齐；
+       ROVER 的文本由 app.js 从 data.js 的 SITE.name 转大写写入（保持单一来源）。
+       每行高度由 CSS 控制，TechText 按容器自适应字号；光标掠过字母变虚线、可拖拽。 -->
+  <div class="hero-techtext" id="techText">
+    <div class="tt-line" id="ttWelcome" data-techtext data-text="Welcome To" role="img" aria-label="Welcome To"></div>
+    <div class="tt-line" id="ttBrand" data-techtext data-text="ROVER" role="img" aria-label="ROVER"></div>
+  </div>
 
   <div class="wrap hero-inner">
     <div class="hero-title-wrap" hidden>
@@ -108,6 +96,36 @@ try {
   </div>
 
   <div class="avatar" hidden>头像</div>
+</section>
+
+<!-- ============ 2b. 地形等高线板块（2026-10-19 Jack 指定）============
+     位置：hero 之下、「去看看」之上；100% × 600px 横幅，纯视觉效果，无任何文案。
+     实现：原生 WebGL2 移植自 React Bits 的 Topography，见 client/topography.js。
+     参数与 Jack 提供的 React 代码逐项对应；唯一偏差是 lightMode=true：
+     该组件默认走加色混合（为深色背景设计），在白底上会完全不可见。 -->
+<section id="intro" class="intro-white" aria-label="地形等高线">
+  <div
+    class="intro-topo"
+    data-topography
+    data-color="#4f7cff"
+    data-line-count="22"
+    data-line-width="1.2"
+    data-elevation="1"
+    data-foreground="0.2"
+    data-tilt="32"
+    data-speed="0.25"
+    data-direction="forward"
+    data-glow="0.6"
+    data-depth-of-field="0.4"
+    data-fog="0.35"
+    data-hover-effect="lift"
+    data-click-effect="pulse"
+    data-major-lines="true"
+    data-brightness="1"
+    data-mouse-interaction="false"
+    data-light-mode="true"
+    aria-hidden="true"
+  ></div>
 </section>
 
 <!-- ============ 3. 板块入口（v1.11 新增；Day 8 加四态）============
@@ -154,12 +172,14 @@ try {
 
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
+<!-- 地形等高线背景（原生 WebGL2，无依赖；有 data-topography 的容器自动初始化）-->
+<script src="topography.js?v=1"></script>
 <!-- 渲染层：把数据写进页面 -->
-<script src="app.js?v=13"></script>
+<script src="app.js?v=15"></script>
 <!-- Lightfall 光坠渲染层（React Bits Lightfall 原生移植，独立文件，仅首页引入） -->
 <script src="lightfall.js?v=3"></script>
 <!-- TechText 文字动画层（React Bits TechText 原生移植，独立文件，仅首页引入） -->
-<script src="tech-text.js?v=1"></script>
+<script src="tech-text.js?v=2"></script>
 
 </body>
 </html>

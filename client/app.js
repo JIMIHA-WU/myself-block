@@ -46,6 +46,22 @@
     }).join('');
   }
 
+  /* 2026-10-18 新增：纯白简介板块（#intro）——与 hero 同一文案来源，改 data.js 即同步 */
+  text('introName',     S.name);
+  text('introSlogan',   S.slogan);
+  text('introSubtitle', S.subtitle);
+  var introWhite = document.getElementById('introText');
+  if (introWhite) {
+    introWhite.innerHTML = S.intro.map(function (line) {
+      return '<p>' + line + '</p>';
+    }).join('');
+  }
+
+  /* 2026-10-18：首屏 TechText 第二行「ROVER」——文本取自 SITE.name 转大写，
+     与站点名保持单一来源（tech-text.js 在 app.js 之后加载，读的就是这里写入的值） */
+  var ttBrand = document.getElementById('ttBrand');
+  if (ttBrand) ttBrand.setAttribute('data-text', String(S.name || 'Rover').toUpperCase());
+
   /* ---------- 2. 三个数字 + 最后更新于（PRD §4.2） ----------
      数字来自 api/data.js 的 stats()，是按数组实际条数算的，不是写死的 */
   var statsBox = document.getElementById('stats');
@@ -175,38 +191,14 @@
   }
 
   /* ============================================================
-     5c. 主题切换（Day 8）：首页顶栏按钮，浅色（天空）↔ 深色（夜云）
+     5c. 主题切换已下线（2026-10-19 Jack 要求删除按钮与相关逻辑）
      ------------------------------------------------------------
-     · 选择存 localStorage（键 rover-theme），index.html 的 <head> 里
-       有一段无闪烁脚本，先把 data-theme 设好再渲染首帧。
-     · 按钮只放在首页（其他页面未接，属下一轮可选扩展）。
-     · 无障碍：aria-pressed 表达当前是否深色；有 aria-label。
+     · 原「浅色（天空）↔ 深色（夜云）」按钮已从 index.html 移除；
+     · index.html <head> 里的无闪烁脚本同步删除；
+     · 站点固定浅色，styles.css 中 .theme-btn 规则已清理。
+     · html[data-theme="dark"] 的变量块暂留（不影响浅色渲染），
+       如确定永不再用可一并删除。
      ============================================================ */
-  var themeBtn = document.getElementById('themeBtn');
-  if (themeBtn) {
-    var rootEl = document.documentElement || document.body;
-    var THEME_KEY = 'rover-theme';
-
-    function isDark() { return rootEl.getAttribute('data-theme') === 'dark'; }
-
-    function paintBtn() {
-      themeBtn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
-      themeBtn.setAttribute('title', isDark() ? '切到浅色' : '切到深色');
-    }
-    paintBtn();
-
-    themeBtn.addEventListener('click', function () {
-      if (isDark()) {
-        /* 检查台的最小 DOM 桩没有 removeAttribute，兜底成清空属性 */
-        if (rootEl.removeAttribute) rootEl.removeAttribute('data-theme');
-        else rootEl.setAttribute('data-theme', '');
-      } else {
-        rootEl.setAttribute('data-theme', 'dark');
-      }
-      try { localStorage.setItem(THEME_KEY, isDark() ? 'dark' : 'light'); } catch (e) {}
-      paintBtn();
-    });
-  }
 
   /* ============================================================
      6. 照片墙：瀑布流分列（PRD §4.4）

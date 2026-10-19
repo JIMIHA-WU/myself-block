@@ -750,23 +750,11 @@ a.aitem-main:hover .aitem-title{color:var(--brand)}
 .about-box .cardfoot{margin-top:var(--sp-10)}
 
 /* ============================================================
-   15. 主题切换（Day 8）：浅色（默认·天空）↔ 深色（夜云）
-   仅首页接入切换按钮；变量定义在此，其他页面沿用同一套 CSS
+   15. 主题（Day 8）——2026-10-19 起切换功能下线
+   顶栏切换按钮与 .theme-btn 样式已移除，站点固定浅色。
+   下方 html[data-theme="dark"] 变量块保留但不再被触发
+   （需重启该功能时恢复按钮 + index.html <head> 的预置脚本即可）。
    ============================================================ */
-
-/* ---- 顶栏主题按钮（放导航右侧；dock 模式下仍在品牌一侧）---- */
-.theme-btn{
-  width:34px;height:34px;flex:none;
-  display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid var(--line);border-radius:50%;
-  background:var(--glass);color:var(--txt-2);cursor:pointer;
-  transition:background .2s ease,color .2s ease,border-color .2s ease;
-}
-.theme-btn:hover{background:var(--brand-dim);border-color:var(--brand-line);color:var(--txt)}
-.theme-btn svg{width:16px;height:16px}
-.theme-btn .ico-sun{display:none}
-html[data-theme="dark"] .theme-btn .ico-moon{display:none}
-html[data-theme="dark"] .theme-btn .ico-sun{display:block}
 
 /* ---- 深色变量的值（同族换挡：底色换夜、文字变亮，橙不动）---- */
 html[data-theme="dark"]{
@@ -795,9 +783,9 @@ html[data-theme="dark"] .title{text-shadow:0 8px 60px rgba(0,0,0,.4)}
   #entriesRegion .feed-skel{grid-template-columns:1fr}
 }
 
-/* 主题按钮靠右停靠：dock 模式（.dock-on）下紧贴在 dock 左侧；
-   移动端/无 dock 时靠右，不与导航抢位 */
-.theme-btn{margin-left:auto;margin-right:var(--sp-3)}
+/* 主题按钮已移除（2026-10-19）：原先靠 .theme-btn 的 margin-left:auto
+   把右侧图标组推向右边，现由 .topbar .wrap 的 justify-content:space-between 承担，
+   无需再补规则。若日后新增元素导致右侧错位，给 #dock 加 margin-left:auto 即可。 */
 
 /* ============================================================
    16. 顶栏导航右移（2026-10-13 Jack 指令：「导航栏总体往页面的右边移动」）
@@ -949,22 +937,98 @@ html[data-theme="dark"] .title{text-shadow:0 8px 60px rgba(0,0,0,.4)}
 #entriesRegion .sec-head{border-bottom-color:rgba(255,255,255,.24)}
 
 /* ============================================================
-   23. TechText 文字动画层（2026-10-15 Jack：首页正中放「Welcome To」）
-   结构：#techText.hero-techtext（绝对居中，z3 —— 在 Lightfall 底幕之上、
-        信息排 z6 之下）；canvas 由 tech-text.js 插入并铺满。
-   容器尺寸 = Jack 用法代码：width 100% × height 480px。
+   23. TechText 文字动画层（2026-10-15 首版；2026-10-18 晚改双行）
+   结构：#techText.hero-techtext（绝对定位，z3）+ 两个 .tt-line：
+         上「Welcome To」、下「ROVER」（先后顺序由 index.html 决定）。
+   两行同高 → TechText 自适应出的字号相同；水平居中、间距 6px。
+   整体 top 38% → 46%：Welcome 的视觉高度保持原样，ROVER 落在其正下方。
    touch-action / user-select 与官方 CSS 一致。
    ============================================================ */
 .hero-techtext{
-  position:absolute;left:0;right:0;top:50%;
+  position:absolute;left:0;right:0;
+  top:46%;
   transform:translateY(-50%);
-  width:100%;height:480px;
+  width:100%;
   z-index:3;
+  display:flex;flex-direction:column;gap:6px;
   touch-action:pan-y;
   user-select:none;
   -webkit-user-select:none;
+}
+.hero-techtext .tt-line{
+  position:relative;
+  width:100%;
+  height:clamp(120px, 16vh, 190px);
 }
 .tech-text-canvas{
   display:block;
   width:100%;height:100%;
 }
+
+/* ============================================================
+   24. 首页纯白简介板块（2026-10-18 Jack：首屏之下新增界面）
+   位置：hero（黑底光坠）之下、「去看看」（云层）之上。
+   背景：#FFFFFF 纯白、与 hero 硬切（无渐变、无分割线）。
+   颜色写死不随主题翻转 —— 黑白对比是本区的版面语言。
+   文案来源：data.js 的 SITE（与 hero 同源，改一处两边同步）。
+   ============================================================ */
+.intro-white{
+  background:#ffffff;
+  color:#101418;
+  /* 2026-10-19 Jack：改为 100% × 600px 的地形等高线横幅（纯视觉，无文案） */
+  height:600px;
+  padding:0;
+  display:block;
+  position:relative;
+  overflow:hidden;
+}
+.intro-white .wrap{width:100%;position:relative;z-index:1}
+
+/* ---- 地形等高线背景（Day 16 追加；组件样式见 topography.js） ---- */
+/* 通用容器样式必须写在 .intro-topo 之前：两者同为单类选择器，
+   后写者优先，否则 position:relative 会覆盖掉下面的 absolute 定位 */
+.topography-container{position:relative;width:100%;height:100%;overflow:hidden}
+.topography-canvas{display:block;width:100%;height:100%}
+
+.intro-topo{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  /* 淡出遮罩：居中，四周渐隐，避免线条在板块边缘硬切 */
+  -webkit-mask-image:radial-gradient(130% 100% at 50% 50%, #000 52%, rgba(0,0,0,.45) 78%, transparent 100%);
+  mask-image:radial-gradient(130% 100% at 50% 50%, #000 52%, rgba(0,0,0,.45) 78%, transparent 100%);
+}
+.iw-name{
+  margin:0;
+  font-family:var(--f-serif);
+  font-weight:400;
+  font-size:clamp(56px, 9vw, 112px);
+  line-height:1;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#101418;
+}
+.iw-slogan{
+  margin-top:18px;
+  font-size:12px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--brand-ink, #9a330c);
+}
+.iw-sub{
+  margin-top:6px;
+  font-size:12px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:#5b6470;
+}
+.iw-body{
+  margin-top:clamp(28px, 5vh, 48px);
+  max-width:640px;
+  font-size:15.5px;
+  line-height:1.95;
+  color:#2a2f36;
+}
+.iw-body p{margin:0 0 .9em}
+.iw-body p:last-child{margin-bottom:0}
