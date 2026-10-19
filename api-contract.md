@@ -1,7 +1,7 @@
 # API 契约（api-contract.md）
 
-> 项目：**myself-block**（站点名 ROVER）· 版本 **v0.1（占位稿）** · 日期 **2026-10-17（Day 15）**
-> 状态：**只登记，不实现**。本文件是第 3 周（Day 16–20）建表、写接口的**唯一依据**。
+> 项目：**myself-block**（站点名 ROVER）· 版本 **v0.2（表结构已落库）** · 日期 **2026-10-19（Day 16）**
+> 状态：**Day 15 登记接口，Day 16 落地两张核心表**。本文件是第 3 周（Day 16–20）建表、写接口的**唯一依据**。
 > 前端现状：`client/api/data.js` 为 mock 数据版；接口上线后，`data.js` 改为 HTTP 取数，
 > **页面与字段形状保持不变**（字段名以本契约为准）。
 
@@ -265,18 +265,56 @@
 
 ---
 
-## 9. 数据表映射（Day 16 建表依据，占位）
+## 9. 数据表（Day 16 已落地）
 
-> 仅登记表与字段的对应关系，**今日不建表**。命名遵循 `TECH_DESIGN.md`（阶段二 PostgreSQL）。
+> 依据 §3 的字段形状建表，**不另造字段**。
+> Day 16 只建两张**有外键关系**的核心表：`photo_groups`（1）→ `photos`（N）。
+> 其余四张（`site_meta` / `posts` / `works` / `tracks`）相互孤立、无外键，随各自接口上线补建（Day 18 起）。
+>
+> - 建表脚本：`db/schema.sql`（开头 DROP，可整体重建）
+> - 开发期种子：`db/seed.sql`（先删后插，可重复执行）
+> - **第 20 天上线后禁止执行以上两个脚本**，数据变更一律用增量 SQL。
 
-| 表 | 主要字段 | 对应接口 |
-| --- | --- | --- |
-| `site_meta`（单行） | `name` `slogan` `subtitle` `intro`(jsonb) `email` `github` `first_online` | `/api/site` |
-| `photo_groups` | `id` `name` `sort` | `/api/photos` |
-| `photos` | `id` `group_id` `src` `w` `h` `alt` `sort` `added_at` | `/api/photos` |
-| `posts` | `id` `type` `title` `date` `summary` `cover` `body`(jsonb) | `/api/posts`（列表/详情）、`/api/archive`（聚合） |
-| `works` | `id` `date` `title` `desc` `cover` `url` `sort` | `/api/works` |
-| `tracks` | `id` `title` `artist` `duration` `src` `sort` | `/api/tracks` |
+### 9.1 已建表（2 张）
+
+**`photo_groups`** — 照片分组，对应 `GET /api/photos` 的 `data.groups[]`
+
+| 字段 | 类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `id` | TEXT | PK | 组标识，与前端 `group id` 一致（`experience` / `funny` / `handsome`） |
+| `name` | TEXT | NOT NULL · UNIQUE | 显示名，全大写英文 |
+| `sort` | SMALLINT | NOT NULL DEFAULT 0 | 分组顺序，从 1 开始 |
+| `created_at` | TIMESTAMPTZ | NOT NULL DEFAULT now() | 创建时间 |
+
+**`photos`** — 照片，对应 `GET /api/photos` 的 `data.groups[].photos[]`
+
+| 字段 | 类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `id` | TEXT | PK | 与前端一致（`e1` / `f1` / `h1` …） |
+| `group_id` | TEXT | NOT NULL · FK → `photo_groups.id` · ON DELETE RESTRICT | **两张表唯一的关联字段** |
+| `src` | TEXT | NOT NULL | 站点根相对路径，如 `/public/assets/photos/Funny/photo-01.webp` |
+| `w` | INTEGER | NOT NULL · CHECK > 0 | 像素宽（瀑布流分列用） |
+| `h` | INTEGER | NOT NULL · CHECK > 0 | 像素高（瀑布流分列用） |
+| `alt` | TEXT | NOT NULL DEFAULT '' | 中性描述，不含地点与人物身份（PRD §3.3） |
+| `sort` | SMALLINT | NOT NULL DEFAULT 0 | 组内顺序，从 1 开始 |
+| `added_at` | DATE | NOT NULL DEFAULT CURRENT_DATE | 入库日期，页面不直接展示 |
+
+索引：`idx_photos_group_sort (group_id, sort)` —— 覆盖「按组过滤 + 组内排序」的典型查询。
+业务唯一：`UNIQUE (group_id, src)` —— 同一分组内同一张图只登记一次。
+
+**两条字段约定（与 §3 示例的差异，Day 17 写接口时按此实现）**
+
+1. `id` 用 TEXT 而不用自增整数：前端 id 已是 `e1` / `f1` 这类短串，自增会逼接口做一层映射。
+2. `src` 存**站点根相对路径**，不存完整 URL：域名由接口层拼接（§10 要求的绝对地址在响应里体现），换域名时不必改库。
+
+### 9.2 待建表（4 张，Day 18 起）
+
+| 表 | 主要字段 | 对应接口 | 状态 |
+| --- | --- | --- | --- |
+| `site_meta`（单行） | `name` `slogan` `subtitle` `intro`(jsonb) `email` `github` `first_online` | `/api/site` | 待建 |
+| `posts` | `id` `type` `title` `date` `summary` `cover` `body`(jsonb) | `/api/posts`（列表/详情）、`/api/archive`（聚合） | 待建 |
+| `works` | `id` `date` `title` `desc` `cover` `url` `sort` | `/api/works` | 待建 |
+| `tracks` | `id` `title` `artist` `duration` `src` `sort` | `/api/tracks` | 待建 |
 
 ## 10. 前端接线点（Day 16–20 才做）
 
