@@ -98,34 +98,22 @@
   <div class="avatar" hidden>头像</div>
 </section>
 
-<!-- ============ 2b. 地形等高线板块（2026-10-19 Jack 指定）============
-     位置：hero 之下、「去看看」之上；100% × 600px 横幅，纯视觉效果，无任何文案。
-     实现：原生 WebGL2 移植自 React Bits 的 Topography，见 client/topography.js。
-     参数与 Jack 提供的 React 代码逐项对应；唯一偏差是 lightMode=true：
-     该组件默认走加色混合（为深色背景设计），在白底上会完全不可见。 -->
-<section id="intro" class="intro-white" aria-label="地形等高线">
-  <div
-    class="intro-topo"
-    data-topography
-    data-color="#4f7cff"
-    data-line-count="22"
-    data-line-width="1.2"
-    data-elevation="1"
-    data-foreground="0.2"
-    data-tilt="32"
-    data-speed="0.25"
-    data-direction="forward"
-    data-glow="0.6"
-    data-depth-of-field="0.4"
-    data-fog="0.35"
-    data-hover-effect="lift"
-    data-click-effect="pulse"
-    data-major-lines="true"
-    data-brightness="1"
-    data-mouse-interaction="false"
-    data-light-mode="true"
-    aria-hidden="true"
-  ></div>
+<!-- ============ 2b. 纯白简介板块（2026-10-18 Jack 指定）============
+     位置：hero 之下、「去看看」之上；背景纯白 #FFFFFF（硬切，无渐变无分割线）。
+     文案与 hero 同源（data.js 的 SITE），由 app.js 第 1 节点亮：
+       #introName / #introSlogan / #introSubtitle / #introText
+     本区块不含数字行（Jack 2026-10-18 明确不要）。
+     2026-10-19：曾短暂改为地形等高线纯视觉版，按 Jack 要求已恢复为原版。 -->
+<section id="intro" class="intro-white">
+  <div class="wrap">
+    <h2 class="iw-name" id="introName">Rover</h2>
+    <div class="iw-slogan" id="introSlogan">to record myself</div>
+    <div class="iw-sub" id="introSubtitle">So you can look below.</div>
+    <div class="iw-body" id="introText">
+      <p>大二在读，方向是导航与电子信息，平时折腾代码和一些自己想做的小工具。</p>
+      <p>这里放我拍的照片和随手记下的东西。</p>
+    </div>
+  </div>
 </section>
 
 <!-- ============ 3. 板块入口（v1.11 新增；Day 8 加四态）============
@@ -172,8 +160,6 @@
 
 <!-- 数据层：全站数据集中在此（TECH_DESIGN.md §12）-->
 <script src="api/data.js"></script>
-<!-- 地形等高线背景（原生 WebGL2，无依赖；有 data-topography 的容器自动初始化）-->
-<script src="topography.js?v=1"></script>
 <!-- 渲染层：把数据写进页面 -->
 <script src="app.js?v=15"></script>
 <!-- Lightfall 光坠渲染层（React Bits Lightfall 原生移植，独立文件，仅首页引入） -->

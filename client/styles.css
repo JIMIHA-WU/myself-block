@@ -975,30 +975,18 @@ html[data-theme="dark"] .title{text-shadow:0 8px 60px rgba(0,0,0,.4)}
 .intro-white{
   background:#ffffff;
   color:#101418;
-  /* 2026-10-19 Jack：改为 100% × 600px 的地形等高线横幅（纯视觉，无文案） */
-  height:600px;
-  padding:0;
-  display:block;
-  position:relative;
-  overflow:hidden;
+  padding:clamp(72px, 12vh, 132px) 0;
+  /* 2026-10-18 Jack：与首屏（hero）等长 —— 整屏高；内容垂直居中 */
+  min-height:100vh;
+  min-height:100svh;
+  display:flex;
+  align-items:center;
 }
-.intro-white .wrap{width:100%;position:relative;z-index:1}
+.intro-white .wrap{width:100%}
 
-/* ---- 地形等高线背景（Day 16 追加；组件样式见 topography.js） ---- */
-/* 通用容器样式必须写在 .intro-topo 之前：两者同为单类选择器，
-   后写者优先，否则 position:relative 会覆盖掉下面的 absolute 定位 */
-.topography-container{position:relative;width:100%;height:100%;overflow:hidden}
-.topography-canvas{display:block;width:100%;height:100%}
-
-.intro-topo{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
-  /* 淡出遮罩：居中，四周渐隐，避免线条在板块边缘硬切 */
-  -webkit-mask-image:radial-gradient(130% 100% at 50% 50%, #000 52%, rgba(0,0,0,.45) 78%, transparent 100%);
-  mask-image:radial-gradient(130% 100% at 50% 50%, #000 52%, rgba(0,0,0,.45) 78%, transparent 100%);
-}
+/* 2026-10-19：地形等高线版本已撤回（Jack 要求恢复纯白简介板块），
+   .intro-topo / .topography-* / .theme-btn 的相关规则均已移除。
+   client/topography.js 保留在仓库中不再被引用，需要时可重新挂载。 */
 .iw-name{
   margin:0;
   font-family:var(--f-serif);

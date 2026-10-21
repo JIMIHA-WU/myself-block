@@ -629,15 +629,26 @@
     };
   }
 
-  /* ---------------- 自动挂载 ---------------- */
+  /* ---------------- 自动挂载（支持多实例） ----------------
+     2026-10-18：首屏需要两行（Welcome To / ROVER）→ 改为扫描 [data-techtext]，
+     每个容器一个实例，文本取容器的 data-text；没有标记时回退旧的 #techText。 */
   function init() {
-    var box = document.getElementById('techText');
-    if (!box) return;
-    try {
-      mount(box, {});
-    } catch (err) {
-      /* 失败不打扰页面 */
+    var boxes = [];
+    var marked = document.querySelectorAll('[data-techtext]');
+    if (marked && marked.length) {
+      for (var i = 0; i < marked.length; i++) boxes.push(marked[i]);
+    } else {
+      var legacy = document.getElementById('techText');
+      if (legacy) boxes.push(legacy);
     }
+    boxes.forEach(function (box) {
+      var text = box.getAttribute('data-text') || PROPS.text;
+      try {
+        mount(box, { text: text });
+      } catch (err) {
+        /* 单个实例失败不影响其它实例 */
+      }
+    });
   }
 
   if (document.readyState === 'loading') {
