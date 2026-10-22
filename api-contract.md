@@ -328,9 +328,11 @@
 
 ---
 
-## 11. `POST /api/photos` — 新增一张照片（Day 18）
+## 11. `POST /api/photos` — 新增一张照片（Day 18）— ✅ **已实现并公网验证（2026-10-22）**
 
-> 状态：**代码已实现**（`server/cloudfunctions/photos-api/index.js`），部署后公网验证。
+> 实现：`server/cloudfunctions/photos-api/index.js`（走平台 REST / PostgREST）。
+> 验证记录：正常写入 `201`（`p_5705fa`，`sort` 自动为 1）→ 重复提交 `409` → 缺字段 `400` → `GET /api/photos?group=screenshots` 读回同一条，`total` 17→18。
+> 注意：HTTP 网关「路径透传=关」时，函数收到的 URL 是 `/`（不是 `/api/photos`），代码已按此适配。
 > 只做「新增」，不提供修改/删除（阶段二后台上线时另定）。
 
 | 项 | 内容 |

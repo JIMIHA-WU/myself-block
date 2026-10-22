@@ -325,8 +325,10 @@ async function insertPhoto(p, id, sort) {
 /* ---------------- 诊断路由（不泄露密钥） ---------------- */
 function handleDiag(req, res, method) {
   const info = {
-    version: '0.2.0',
+    version: '0.2.1',
     channel: 'rest',
+    method: String(req.method || ''),
+    url: String(req.url || ''),
     envIdSet: !!ENV_ID,
     apiKeySet: !!API_KEY,
     siteOriginSet: !!SITE_ORIGIN,
@@ -438,6 +440,9 @@ function handleCreate(req, res, method) {
 
 const server = http.createServer(function (req, res) {
   const method = String(req.method || 'GET').toUpperCase();
+  /* 调试回显：网关可能改写方法/路径，先在响应头里留证据（不含敏感信息） */
+  res.setHeader('X-Debug-Method', method);
+  res.setHeader('X-Debug-Url', String(req.url || '/').slice(0, 120));
 
   if (method === 'OPTIONS') {
     res.writeHead(204, {
@@ -451,6 +456,9 @@ const server = http.createServer(function (req, res) {
   }
 
   const path = normalizePath(req.url);
+  if (String(req.url || '').indexOf('diag=1') >= 0 && method !== 'OPTIONS') {
+    return handleDiag(req, res, method);
+  }
   if (path !== '/' && path !== '/api/photos') {
     return fail(res, 404, 'NOT_FOUND', '接口不存在', method);
   }
@@ -458,7 +466,9 @@ const server = http.createServer(function (req, res) {
   if (method === 'GET' || method === 'HEAD') {
     return handleList(req, res, method);
   }
-  if (method === 'POST' && path === '/api/photos') {
+  /* 注意：HTTP 网关「路径透传」关闭时，POST 到达函数可能是 "/" 而不是 "/api/photos"，
+     所以这里不再要求精确路径（前面的路由守卫已把非法路径挡掉） */
+  if (method === 'POST') {
     return handleCreate(req, res, method);
   }
   return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET 和 POST 请求', method);

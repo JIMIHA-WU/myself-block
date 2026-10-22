@@ -102,6 +102,8 @@ update photo_groups set name = 'FUNNY' where id = 'funny';
 | 连接超时 | 用了公网地址但网络不通 | 换内网地址（同环境云函数应走内网） |
 | 图片 404（`src` 打不开） | `SITE_ORIGIN` 没配或配错 | 检查该变量，末尾不要带斜杠 |
 | `Cannot find module 'pg'` | 部署时没带 package.json | 确认上传了含 `pg` 依赖的 `package.json` 并重新部署 |
+| POST 返回 `400 请求体不是合法 JSON`，但 body 看着没问题 | **PowerShell 5.1 调用 `curl.exe` 会吞掉 JSON 里的双引号**（不是接口问题） | 用 Node 发请求，或 `curl.exe --data-binary "@body.json"`（把 JSON 存文件），或 `Invoke-RestMethod -Body ([Text.Encoding]::UTF8.GetBytes($json))` |
+| POST 返回 `405 只支持 GET 和 POST 请求` | 网关「路径透传=关」时函数收到 URL `/`，旧代码按 `/api/photos` 精确匹配 | 已在 2026-10-22 修复：POST 不再校验路径 |
 
 ---
 
