@@ -13,7 +13,7 @@
  *   因此不需要在控制台另配「HTTP 访问路径」——函数详情会直接给公网地址。
  *
  * 路由（契约见 api-contract.md §1）：
- *   GET|HEAD /            → 200  {"ok":true,"service":"myself-block"}   便于直接打开域名
+ *   GET|HEAD /            → 200  {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}   便于直接打开域名
  *   GET|HEAD /api/health  → 200  同上
  *   其他方法              → 405  {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED",...}}
  *   其他路径              → 404  {"ok":false,"error":{"code":"NOT_FOUND",...}}
@@ -24,7 +24,12 @@
 const http = require('node:http');
 
 const PORT = process.env.PORT || 9000;
-const HEALTH = { ok: true, service: 'myself-block' };
+/* 2026-10-21：统一信封 —— 补 data；顶层 service 保留以兼容 Day 15 的验收与监控 */
+const HEALTH = {
+  ok: true,
+  service: 'myself-block',
+  data: { service: 'myself-block', status: 'ok' }
+};
 
 function sendJson(res, status, body, method) {
   const text = JSON.stringify(body);
@@ -48,14 +53,14 @@ const server = http.createServer(function (req, res) {
   const path = normalizePath(req.url);
 
   if (path !== '/' && path !== '/api/health') {
-    return sendJson(res, 404, { ok: false, error: { code: 'NOT_FOUND', message: 'not found' } }, method);
+    return sendJson(res, 404, { ok: false, error: { code: 'NOT_FOUND', message: '接口不存在' } }, method);
   }
 
   if (method !== 'GET' && method !== 'HEAD') {
     return sendJson(
       res,
       405,
-      { ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' } },
+      { ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: '只支持 GET 请求' } },
       method
     );
   }

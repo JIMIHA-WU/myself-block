@@ -14,7 +14,7 @@
  * 不连数据库、无第三方依赖、无外部请求。
  *
  * 返回契约（api-contract.md §1）：
- *   200 → {"ok":true,"service":"myself-block"}
+ *   200 → {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}
  *   405 → {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED","message":"Only GET is allowed"}}
  */
 
@@ -44,5 +44,8 @@ exports.main = async function main(event) {
     );
   }
 
-  return respond(200, JSON.stringify({ ok: true, service: 'myself-block' }));
+  return respond(
+    200,
+    JSON.stringify({ ok: true, service: 'myself-block', data: { service: 'myself-block', status: 'ok' } })
+  );
 };

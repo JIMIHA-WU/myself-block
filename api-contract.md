@@ -14,20 +14,21 @@
 | Base URL | `https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com`（CloudBase HTTP 网关默认域名；接口路径以 `/api` 开头） |
 | 传输 | HTTPS，UTF-8，`Content-Type: application/json; charset=utf-8` |
 | 日期格式 | 日期 `YYYY-MM-DD`；时间戳 ISO 8601（如 `2026-10-17T13:00:00+08:00`） |
-| 成功响应 | HTTP 2xx + `{ "ok": true, "data": ... }` |
+| 成功响应 | HTTP 2xx + `{ "ok": true, "data": ... }`（**data 必有**，可为对象/数组/null） |
 | 失败响应 | HTTP 4xx/5xx + `{ "ok": false, "error": { "code": "...", "message": "..." } }` |
-| 错误码 | `BAD_REQUEST`(400) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `INTERNAL`(500) |
+| **错误文案（2026-10-21 定）** | `error.message` **必须是中文、人能看懂**（说明"哪里不对、怎么改"）；`error.code` 保留英文机器码供前端分支判断。前端**只认这一种形状**，所有接口不得例外。 |
+| 错误码 | `BAD_REQUEST`(400) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL`(500) |
 | 分页 | 查询参数 `limit`（默认 20，最大 50）+ `offset`（默认 0）；响应带 `total` |
 | 缓存 | 读接口 `Cache-Control: no-store`（阶段一从简） |
-| 方法限制 | 除 `GET`/`HEAD` 外一律 `405` |
-| **跨域（CORS）** | **本日不处理**。静态托管域与函数域不同源，Day 16 接接口时在函数响应头加 `Access-Control-Allow-Origin`；今天接口未接线，前端不受影响。 |
+| 方法限制 | 除 `GET`/`HEAD`（写接口另有 `POST`）外一律 `405` |
+| **跨域（CORS）** | 云函数响应头已带 `Access-Control-Allow-Origin`（默认 `*`，可用 `CORS_ORIGIN` 收窄）；`OPTIONS` 预检返 `204` |
 
-### 0.1 唯一例外：health 是扁平结构
+### 0.1 health 也走统一信封（保留兼容字段）
 
-`GET /api/health` 按课程要求返回**扁平 JSON**（不使用 `data` 信封）：
+`GET /api/health` 早期是扁平结构，自 2026-10-21 起同样返回 `data`；`service` 顶层字段**保留**，不破坏 Day 15 的验收与监控脚本：
 
 ```json
-{ "ok": true, "service": "myself-block" }
+{ "ok": true, "service": "myself-block", "data": { "service": "myself-block", "status": "ok" } }
 ```
 
 ---
@@ -39,7 +40,7 @@
 | 路径 | `/api/health` |
 | 方法 | `GET`（`HEAD` 同义） |
 | 请求参数 | 无 |
-| 成功响应 | `200` → `{ "ok": true, "service": "myself-block" }` |
+| 成功响应 | `200` → `{ "ok": true, "service": "myself-block", "data": { "service": "myself-block", "status": "ok" } }`（`service` 为 Day 15 兼容字段，`data` 为统一信封） |
 | 错误返回 | `405` → `{ "ok": false, "error": { "code": "METHOD_NOT_ALLOWED", "message": "Only GET is allowed" } }`；平台层异常（崩溃/超时）由网关返 `500/502`，无应用层 JSON |
 | 实现 | `server/cloudfunctions/health/index.js` |
 | 用途 | 证明「公网 → 云函数」链路；部署自检；后续可加版本号/环境 ID |
@@ -78,17 +79,19 @@
 
 ---
 
-## 3. `GET /api/photos` — 照片墙（三组，占位）
+## 3. `GET /api/photos` — 照片墙（三组）— ✅ **已实现（Day 17）**
 
 对应前端 `data.js` 的 `PHOTO_GROUPS`（v1.12 三分组：EXPERIENCE / FUNNY / HANDSOME）。
 
 | 项 | 内容 |
 | --- | --- |
-| 路径 | `/api/photos` |
-| 方法 | `GET` |
-| 请求参数 | `group`（可选，组 id：`experience` / `funny` / `handsome`；缺省返回全部） |
+| 路径 | `/api/photos`（云函数根路径 `/` 等价，便于自检） |
+| 方法 | `GET`（`HEAD` 同义；`OPTIONS` 返 204 预检） |
+| 请求参数 | `group`（可选，组 id：`experience` / `funny` / `handsome` / 预留组；缺省返回全部）· `limit`（可选，1–100，**每组最多返回张数**） |
 | 成功响应 | `200` → 见下 |
-| 错误返回 | `400`（group 非法）→ `BAD_REQUEST`；`500` → `INTERNAL`（形状均见 §0 信封） |
+| 错误返回 | `400`（group 非法 / limit 越界）→ `BAD_REQUEST`；`405` → `METHOD_NOT_ALLOWED`；`500` → `INTERNAL`（形状均见 §0 信封） |
+| 实现 | `server/cloudfunctions/photos-api/index.js`（HTTP 云函数，**走平台 REST / PostgREST + API Key**；免费共享集群不支持 PG 直连，故不直连数据库） |
+| 行为说明 | ① **空组过滤**：没有照片的分组不返回（`PLACES` / `SCREENSHOTS` 这类预留组因此不可见）；② `src` = `SITE_ORIGIN`（静态托管域名）+ 表内 `/public/assets/...` 路径；③ `total` = 本次响应里的照片总数（受 `group`/`limit` 影响）；④ 读接口带 `Cache-Control: no-store` |
 
 ```json
 {
@@ -321,4 +324,60 @@
 - `client/api/data.js` 的 `SITE` / `PHOTO_GROUPS` / `POSTS` / `WORKS` / `MUSIC` 改为 `fetch` 上述接口；
 - **字段名与形状不变**，页面渲染代码（`app.js`）不改；
 - 静态资源域名：接口返回的 `src`/`cover` 用**静态托管域的绝对地址**（前端不再依赖 `../public/...` 相对路径）；
-- CORS：在函数响应头加 `Access-Control-Allow-Origin: https://<静态托管域>`（Day 16 与本契约同步落）。
+- CORS：云函数响应头已加 `Access-Control-Allow-Origin`（默认 `*`，可用环境变量 `CORS_ORIGIN` 收窄到静态托管域）
+
+---
+
+## 11. `POST /api/photos` — 新增一张照片（Day 18）
+
+> 状态：**代码已实现**（`server/cloudfunctions/photos-api/index.js`），部署后公网验证。
+> 只做「新增」，不提供修改/删除（阶段二后台上线时另定）。
+
+| 项 | 内容 |
+| --- | --- |
+| 路径 | `/api/photos` |
+| 方法 | `POST` |
+| 请求头 | `Content-Type: application/json`（其他类型 → 400） |
+| 请求体上限 | 8 KB |
+
+**请求体字段**
+
+| 字段 | 必填 | 规则 | 缺省 |
+| --- | --- | --- | --- |
+| `group_id` | ✅ | `^[a-z0-9_-]{1,32}$`，且**必须已存在**于 `photo_groups` | — |
+| `src` | ✅ | 必须以 `/public/assets/` 开头，扩展名 `webp/jpg/jpeg/png`，长度 ≤ 300 | — |
+| `w` / `h` | ✅ | 整数，1–100000 | — |
+| `alt` | — | 字符串 ≤ 200 | `''` |
+| `sort` | — | 整数 1–32767 | 组内 `max(sort) + 1` |
+| `added_at` | — | `YYYY-MM-DD` | `CURRENT_DATE` |
+| `id` | — | `^[a-z0-9_-]{1,16}$` | 服务端生成 `p_` + 6 位十六进制 |
+
+**成功响应** `201`
+
+```json
+{
+  "ok": true,
+  "data": {
+    "photo": {
+      "id": "p_9f3a1c",
+      "group_id": "funny",
+      "src": "/public/assets/photos/Funny/photo-99.webp",
+      "w": 1600, "h": 900, "alt": "新增测试照片", "sort": 8,
+      "added_at": "2026-10-21"
+    }
+  }
+}
+```
+
+**错误返回**
+
+| 状态 | code | 触发条件 |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | 缺必填字段 / 字段格式不对 / `group_id` 不存在（message 会写明字段名） |
+| 409 | `CONFLICT` | `id` 已存在，或 `(group_id, src)` 已登记过 |
+| 405 | `METHOD_NOT_ALLOWED` | 非 GET/POST/HEAD/OPTIONS |
+| 500 | `INTERNAL` | 数据库错误（message 不含内部细节） |
+
+**鉴权**：本接口**暂未鉴权**（Day 18 范围内）；上线前（Day 19–20）必须加管理端 Token 或仅内网可达，否则任何人都能写库。
+
+**它如何影响读取接口**：写入成功后，`GET /api/photos` 会立刻返回新行——这就是 Day 18 要验证的「读写闭环」。

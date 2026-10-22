@@ -59,7 +59,7 @@ node index.js
 3. 浏览器打开 `地址 + /api/health`，应看到：
 
 ```json
-{"ok":true,"service":"myself-block"}
+{"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}
 ```
 
 4. 再验三点：
@@ -137,7 +137,7 @@ https://<环境ID>.tcloudbaseapp.com/client/
 
 ## C. 收尾检查清单（Day 15）
 
-- [ ] `/api/health` 公网 200，返回 `{"ok":true,"service":"myself-block"}`
+- [ ] `/api/health` 公网 200，返回 `{"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}`
 - [ ] POST 返回 405（证明方法限制生效）
 - [ ] 前端公网页面在**手机蜂窝网络**能打开
 - [ ] `api-contract.md` 已入库（本日另交付）
