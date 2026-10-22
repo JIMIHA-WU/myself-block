@@ -1,7 +1,36 @@
-# Day 17 部署手册：photos-api（GET /api/photos）
+# photos-api 部署与维护手册（GET/POST /api/photos）
 
-> 本文件只讲**这一个接口**怎么上线与验证；环境速查见本文件 §0，health 云函数见 §A。
+> 本文件讲**这一个接口**怎么上线与验证；环境速查见本文件 §0，health 云函数见 §A。
 > 前置：Day 16 已完成（`photo_groups` 5 行、`photos` 17 行）。
+
+---
+
+## 分层结构（Day 19 重构后）
+
+```
+浏览器 / 前端
+   │  HTTP
+   ▼
+index.js  ── HTTP 服务、路由、参数校验、响应组装（buildPayload / validatePhotoInput）
+   │  函数调用
+   ▼
+db.js     ── 数据访问层：平台 REST（PostgREST）、认证头、超时、SQL 语义的查询与插入
+   │  HTTPS
+   ▼
+CloudBase 平台网关  /v1/rdb/rest/*
+   │
+   ▼
+PostgreSQL（photo_groups / photos）
+```
+
+拆分原则：
+
+| 层 | 只允许做什么 | 不允许做什么 |
+| --- | --- | --- |
+| `index.js` | 收请求、校验字段、拼响应、决定状态码 | 直接拼 REST 地址、处理认证头 |
+| `db.js` | 认证、请求平台网关、解析结果、抛结构化错误 | 读 `req`、写 `res`、判断业务字段是否合法 |
+
+> 「查数据库」这段代码从 `index.js` 移到了 **`db.js`**：函数名从原来的 `restFetch/loadRows/groupExists/nextSort/insertPhoto` 改为 `db.restFetch / db.listRows / …`，行为与返回形状不变。
 
 ---
 
@@ -10,8 +39,9 @@
 1. 控制台 → 云函数 → 创建云函数 → 通过模板创建；
 2. 模板选 **HTTP 云函数 → Hello World（HTTP Node.js Hello World）**；
 3. 函数名称：**`photos-api`**（必须叫这个，代码注释与路由都按它写）；
-4. 创建后进入「函数代码」，覆盖两个文件：
+4. 创建后进入「函数代码」，覆盖三个文件：
    - `index.js` ← 本目录 `index.js` 全文；
+   - `db.js` ← 本目录 `db.js` 全文（Day 19 拆出的数据访问层，**必须新建**）；
    - `package.json` ← 本目录 `package.json`（**0.2.0 起无第三方依赖**，不用装包）；
    - `scf_bootstrap` 保持模板默认（`#!/bin/bash` + `node index.js`）；
 5. **先配环境变量再部署**（见 B），否则函数首次请求会连库失败。
