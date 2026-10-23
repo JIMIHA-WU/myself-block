@@ -16,7 +16,7 @@
 
 按顺序做四个动作，全程不切换代码：
 
-1. **看库**（SQL 编辑器）：`select count(*) from photos;` → 报出当前行数（如 18）。
+1. **看库**（SQL 编辑器）：`select count(*) from photos;` → 报出当前行数（当前 17）。
 2. **看接口**（浏览器）：`…ap-shanghai.app.tcloudbase.com/api/photos` → 指出 `ok:true`、`total` 与刚才一致，说明每张图带 `w/h`（瀑布流要用）。
 3. **写入一次**（检查台）：`…/client/check.html` → 点「写一条测试记录」→ 显示 `201 OK` 与返回的 `id`。
 4. **刷新证明持久化**：打开 `…/client/photos.html` 并刷新 → 页面张数比第 1 步 **多 1**，并出现 `SCREENSHOTS` 分组 → 「刚写的那条，已经存在数据库里了，所以刷新还在。」

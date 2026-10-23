@@ -76,7 +76,7 @@
 | Day | 证据项 | 现场复现方式 | 证据状态 |
 | --- | --- | --- | --- |
 | 15 | 公网健康接口 | 打开 `/api/health` → `200` + `data` | **可现场复现**；截图待确认 |
-| 16 | 两张表与种子行数 | SQL：`select count(*) from photo_groups; select count(*) from photos;` → 5 / 17（当前 17 + 2 行测试 = 19） | **可现场复现**；截图待确认 |
+| 16 | 两张表与种子行数 | SQL：`select count(*) from photo_groups; select count(*) from photos;` → 5 / 17（测试行已于 20:44 清理） | **可现场复现**；截图待确认 |
 | 17 | 真库对比 | SQL 改 `photo_groups.name` → 刷新接口看变化（当前值 `FUNNY-Y` 即为证据） | **可现场复现**（当前仍留痕）；截图待确认 |
 | 18 | 写入闭环 | `POST /api/photos` → `201`；重复 → `409`；缺字段 → `400`；`GET ?group=screenshots` 读回 | **可现场复现**；截图待确认 |
 | 19 | 分层回归 | 打开 `/api/photos?diag=1` → `version 0.3.0`、`layer "index.js + db.js"`；再跑 7 用例 | **可现场复现**；截图待确认 |

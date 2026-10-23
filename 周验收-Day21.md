@@ -11,18 +11,18 @@
 | A1 `db/schema.sql` 可独立建表 | 在空库执行全文；或查看建表与约束语句 | 文件 89 行，含 `CREATE TABLE photo_groups`、`CREATE TABLE photos`；三条约束：`photo_groups_name_uniq`、`photos_size_positive CHECK (w>0 AND h>0)`、`photos_group_src_uniq UNIQUE (group_id, src)` | **PASS** |
 | A2 `db/seed.sql` 幂等重灌 | 执行 `seed.sql`（两条 INSERT，文件 70 行）→ 查行数 | `photo_groups` 5 行、`photos` 17 行（Day 16 记录；当前接口 `total:18` 含 1 行写入测试，见 A4） | **PASS** |
 | A3 唯一约束真的生效 | 对同 `(group_id, src)` 再 `INSERT` 或再 `POST` 一次 | 数据库返回 23505 → 接口映射为 `409 "这张图已在该分组登记过"`（实测） | **PASS** |
-| A4 数据当前是干净状态 | `select count(*) from photos;` 与 `select name from photo_groups where id='funny';` | 当前 `19` 行（含 2 行写入测试）、`FUNNY-Y`（改名验证残留） | **FAIL**（收尾 SQL 见文末） |
+| A4 数据当前是干净状态 | `select count(*) from photos;` 与 `select name from photo_groups where id='funny';` | 2026-10-23 20:44 执行收尾：`photos=17`、`groups=5`；接口复核 `total:17`、`funnyName:FUNNY` | **PASS** |
 
 ## B. 公网接口（GET / POST）
 
 | 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
 | B1 健康接口 | 浏览器打开 `/api/health` | `200 {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}` | **PASS** |
-| B2 读接口总览 | 打开 `/api/photos` | `200`，`total:19`，`groups: experience:3 / funny:7 / handsome:7 / screenshots:2`（同伴独立写入后 +1） | **PASS** |
+| B2 读接口总览 | 打开 `/api/photos` | `200`，`total:17`，`groups: experience:3 / funny:7 / handsome:7`（清理测试行后；同伴写入期间曾为 19） | **PASS** |
 | B3 单分组过滤 | 打开 `/api/photos?group=funny` | `200`，`total:7` | **PASS** |
 | B4 非法分组 | 打开 `/api/photos?group=BAD!` | `400 {"ok":false,"error":{"code":"BAD_REQUEST","message":"分组参数不合法"}}` | **PASS** |
 | B5 写入成功 | `POST /api/photos`（可用检查台按钮） | `201`，返回 `p_5705fa`、`sort=1`、`added_at=2026-10-22`；库中可见 | **PASS** |
-| B6 重复写入被拒 | 同一 payload 再 `POST` 一次 | `409`，`"这张图已在该分组登记过"`；行数不增（18→18） | **PASS** |
+| B6 重复写入被拒 | 同一 payload 再 `POST` 一次 | `409`，`"这张图已在该分组登记过"`；行数不增（写入后停在同一数字） | **PASS** |
 | B7 缺必填字段被拒 | 只发 `{"group_id":"funny"}` | `400`，`"src 必填：需以 /public/assets/ 开头…"` | **PASS** |
 | B8 方法限制 | `PUT /api/photos` | `405`，`"只支持 GET 和 POST 请求"` | **PASS** |
 | B9 跨域只允自有域、禁 `*` | `curl -H "Origin: <静态域>"` 与 `Origin: <外来域>` 对比响应头 | 静态域 → 回显静态域；localhost → 回显 localhost；外来域 → health 无 ACAO、photos-api 回第一个来源 | **PASS** |
@@ -43,7 +43,7 @@
 | --- | --- | --- | --- |
 | D1 可打开 | 打开 `…/client/check.html` | `200`（4,647 字节） | **PASS** |
 | D2 展示健康状态 | 看第 1 块 | 显示 `{"ok":true,"service":"myself-block","data":{…}}` | **PASS** |
-| D3 展示核心表真实数据 | 看第 2 块 | `19 张 / 4 组`，逐组列出，`funny / FUNNY-Y: 7 张`（同伴写入后 +1） | **PASS** |
+| D3 展示核心表真实数据 | 看第 2 块 | `17 张 / 3 组`，逐组列出（清理后；演示写入时会变 18 并出现 `SCREENSHOTS` 组） | **PASS** |
 | D4 一次写入测试入口 | 点「写一条测试记录」两次 | 第一次 `201 OK`；第二次 `被拒绝（CONFLICT）这张图已在该分组登记过` | **PASS** |
 | D5 入口是否受控 | 未登录用户直接访问该页 | 任何人都能点写入 | **FAIL**（与 B10 同源） |
 
@@ -86,11 +86,11 @@
 
 | 结论 | 数量 | 条目 |
 | --- | --- | --- |
-| **PASS** | 19 | A1–A3、B1–B9、C1–C4、D1–D4、E1–E3、F1 |
-| **FAIL** | 4 | A4（数据未清理）、B10（写接口无鉴权）、D5（检查台写入开放）、E4（调试接口未登记） |
+| **PASS** | 20 | A1–A4、B1–B9、C1–C4、D1–D4、E1–E3、F1 |
+| **FAIL** | 3 | B10（写接口无鉴权）、D5（检查台写入开放）、E4（调试接口未登记） |
 | **未执行** | 0 | —（同伴验证已回收） |
 
-## 收尾 SQL（执行后 A4 转 PASS）
+## 收尾 SQL（已于 2026-10-23 20:44 执行：photos=17、groups=5）
 
 ```sql
 delete from photos where id like 'p_%';
