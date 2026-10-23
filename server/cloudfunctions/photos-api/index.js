@@ -13,7 +13,7 @@
  * 环境变量：
  *   TCB_ENV_ID / TCB_API_KEY   由 db.js 读取（数据通道凭证）
  *   SITE_ORIGIN                静态托管域名（拼完整图片 URL）
- *   CORS_ORIGIN                可选，默认 *
+ *   CORS_ORIGIN                白名单，逗号分隔（如 https://a.com,http://localhost:8000）；禁止 *
  */
 
 const http = require('node:http');
@@ -22,7 +22,19 @@ const db = require('./db');
 
 const PORT = process.env.PORT || 9000;
 const SITE_ORIGIN = String(process.env.SITE_ORIGIN || '').replace(/\/+$/, '');
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+/* CORS 白名单（2026-10-22 Day 20）：环境变量 CORS_ORIGIN 支持逗号分隔多个来源，
+   绝不使用 *。浏览器 Origin 不在白名单内时，只回第一个来源（浏览器会拦下）。 */
+const CORS_ENV = String(process.env.CORS_ORIGIN || '').trim();
+const CORS_LIST = CORS_ENV
+  ? CORS_ENV.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+  : [];
+
+function pickOrigin(req) {
+  const origin = String((req.headers && req.headers.origin) || '');
+  if (origin && CORS_LIST.indexOf(origin) >= 0) return origin;
+  if (!CORS_LIST.length) return '*';
+  return CORS_LIST[0];
+}
 const BODY_LIMIT = 8 * 1024;
 
 /* ---------------- 响应组装（纯函数，便于本地测试） ---------------- */
@@ -131,7 +143,7 @@ function sendJson(res, status, body, method) {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
     'Cache-Control': 'no-store',
-    'Access-Control-Allow-Origin': CORS_ORIGIN,
+    'Access-Control-Allow-Origin': res.corsOrigin || CORS_LIST[0] || '*',
     'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'X-Content-Type-Options': 'nosniff'
@@ -288,12 +300,13 @@ function handleCreate(req, res, method) {
 /* ---------------- 路由 ---------------- */
 const server = http.createServer(function (req, res) {
   const method = String(req.method || 'GET').toUpperCase();
+  res.corsOrigin = pickOrigin(req);
   res.setHeader('X-Debug-Method', method);
   res.setHeader('X-Debug-Url', String(req.url || '/').slice(0, 120));
 
   if (method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': CORS_ORIGIN,
+      'Access-Control-Allow-Origin': res.corsOrigin || CORS_LIST[0] || '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400'

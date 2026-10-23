@@ -56,7 +56,7 @@ PostgreSQL（photo_groups / photos）
 | `TCB_ENV_ID` | `myself-demo-d3gdb1m6x686e940f` | 环境 ID |
 | `TCB_API_KEY` | 控制台生成的 **API Key**（service_role） | **只填在云函数环境变量里，绝不放前端、不进代码库** |
 | `SITE_ORIGIN` | `https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com` | 用于把表里的 `/public/assets/...` 拼成完整图片 URL |
-| `CORS_ORIGIN` | 可留空（默认 `*`） | 想收紧就填静态托管域 |
+| `CORS_ORIGIN` | `https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com,http://localhost:8000` | **白名单**（逗号分隔，禁止 `*`）；上线前删掉 localhost 项。网关路由的「跨域」必须关闭，否则头会重复。 |
 
 > 旧的 `PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD` 可以留也可以删——新代码不读它们，删掉更干净。
 

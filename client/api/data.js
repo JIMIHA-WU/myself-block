@@ -407,6 +407,38 @@
   }
 
   /* ------------------------------------------------------------
+     4d. 真实数据（Day 20）：从 GET /api/photos 取照片墙数据
+     成功：原地替换 PHOTO_GROUPS / PHOTOS（保持数组引用，app.js 无需改数据层）
+     失败：reject，调用方回退到本文件的 mock（页面不白屏）
+     ------------------------------------------------------------ */
+  function loadPhotos() {
+    if (!global.ApiClient || typeof global.ApiClient.get !== 'function') {
+      return Promise.reject(new Error('ApiClient 未加载'));
+    }
+
+    return global.ApiClient.get('/api/photos').then(function (data) {
+      var groups = (data && data.groups) || [];
+      if (!groups.length) throw new Error('接口返回空数据');
+
+      PHOTO_GROUPS.length = 0;
+      PHOTOS.length = 0;
+
+      groups.forEach(function (g) {
+        var group = { id: g.id, name: g.name, photos: [] };
+        (g.photos || []).forEach(function (p) {
+          var photo = { id: p.id, src: p.src, w: p.w, h: p.h, alt: p.alt };
+          group.photos.push(photo);
+          PHOTOS.push(photo);
+        });
+        PHOTO_GROUPS.push(group);
+      });
+
+      global.__DATA_SOURCE__ = 'api';
+      return { groups: PHOTO_GROUPS.length, photos: PHOTOS.length };
+    });
+  }
+
+  /* ------------------------------------------------------------
      5. 对外出口
      ------------------------------------------------------------ */
   global.JaData = {
@@ -430,6 +462,8 @@
     feedAsync:      feedAsync,
     /* Day 8：首页板块入口卡的模拟异步取数（同 4c 节规格） */
     entriesAsync:   entriesAsync,
+    /* Day 20：照片墙真实数据（GET /api/photos） */
+    loadPhotos:     loadPhotos,
     _fake:          FAKE        /* 检查台用：_fake.delay = 0 可跳过模拟延迟 */
   };
 

@@ -250,11 +250,18 @@
   }
 
   var wall = document.getElementById('photoWall');
+  var lb = document.getElementById('lightbox');
 
-  if (wall) {
+  /* ============================================================
+     6. 照片墙渲染（三组瀑布流）
+     2026-10-22 Day 20：数据可能来自 mock（data.js）或接口（D.loadPhotos）；
+     本函数只负责「拿到数据之后怎么画」，不关心数据从哪来。
+     ============================================================ */
+  function paintPhotos() {
+    if (!wall) return;
+
     if (!D.PHOTOS.length) {
-      /* photos 为空（素材被删 / 尚未接入）—— 显示空态，不是留白。
-         样式与记录区空态同一套语言（.ph-empty）。 */
+      /* photos 为空 —— 显示空态，不是留白 */
       wall.innerHTML = '';
       wall.classList.remove('no-js');
       wall.classList.add('ph-empty');
@@ -264,55 +271,55 @@
       phEmpty.textContent = '照片墙还是空的 —— 新照片拍好后会出现在这里。';
       wall.appendChild(phEmpty);
       text('photoCount', '共 0 张');
-    } else {
-      /* 【v1.12】三组渲染：每组 = 组标题（名称 + 张数）+ 一条独立瀑布流。
-         灯箱序号走「拍平表」（D.PHOTOS，组序 × 组内序），跨组连续翻页。 */
-      var frag = document.createDocumentFragment();
-      var offset = 0;
-
-      D.PHOTO_GROUPS.forEach(function (g) {
-        var block = document.createElement('div');
-        block.className = 'pgroup';
-        block.setAttribute('data-group', g.id);
-
-        var head = document.createElement('div');
-        head.className = 'pgroup-head';
-        var h3 = document.createElement('h3');
-        h3.textContent = g.name;
-        var cnt = document.createElement('span');
-        cnt.className = 'count t-min';
-        cnt.textContent = g.photos.length + ' 张';
-        head.appendChild(h3);
-        head.appendChild(cnt);
-        block.appendChild(head);
-
-        var grid = document.createElement('div');
-        grid.className = 'photos';
-        splitColumns(g.photos, offset).forEach(function (list) {
-          var col = document.createElement('div');
-          col.className = 'col';
-          list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
-          grid.appendChild(col);
-        });
-        block.appendChild(grid);
-
-        offset += g.photos.length;
-        frag.appendChild(block);
-      });
-
-      wall.innerHTML = '';
-      wall.appendChild(frag);
-      wall.classList.remove('no-js');
-      text('photoCount', '共 ' + D.PHOTOS.length + ' 张　·　点击放大');
+      return;
     }
+
+    /* 三组渲染：每组 = 组标题（名称 + 张数）+ 一条独立瀑布流。 */
+    var frag = document.createDocumentFragment();
+    var offset = 0;
+
+    D.PHOTO_GROUPS.forEach(function (g) {
+      var block = document.createElement('div');
+      block.className = 'pgroup';
+      block.setAttribute('data-group', g.id);
+
+      var head = document.createElement('div');
+      head.className = 'pgroup-head';
+      var h3 = document.createElement('h3');
+      h3.textContent = g.name;
+      var cnt = document.createElement('span');
+      cnt.className = 'count t-min';
+      cnt.textContent = g.photos.length + ' 张';
+      head.appendChild(h3);
+      head.appendChild(cnt);
+      block.appendChild(head);
+
+      var grid = document.createElement('div');
+      grid.className = 'photos';
+      splitColumns(g.photos, offset).forEach(function (list) {
+        var col = document.createElement('div');
+        col.className = 'col';
+        list.forEach(function (item) { col.appendChild(buildPhotoItem(item)); });
+        grid.appendChild(col);
+      });
+      block.appendChild(grid);
+
+      offset += g.photos.length;
+      frag.appendChild(block);
+    });
+
+    wall.innerHTML = '';
+    wall.appendChild(frag);
+    wall.classList.remove('no-js');
+    text('photoCount', '共 ' + D.PHOTOS.length + ' 张　·　点击放大');
   }
 
   /* ============================================================
      7. 照片灯箱（PRD §4.4：页面内放大 · 左右切换 · 点任意处关闭）
      ============================================================ */
-  var lb = document.getElementById('lightbox');
+  function initLightbox() {
+    if (!lb || !wall || !D.PHOTOS.length) return;
 
-  if (lb && wall && D.PHOTOS.length) {
     var lbImg = document.getElementById('lbImg');
     var lbCap = document.getElementById('lbCap');
     var total = D.PHOTOS.length;
@@ -362,6 +369,20 @@
       if (e.key === 'ArrowLeft')  showPhoto(cur - 1);
       if (e.key === 'ArrowRight') showPhoto(cur + 1);
     });
+  }
+
+  /* 启动：优先调接口，失败回退 mock（mock 数据仍在 data.js 里） */
+  if (wall) {
+    var bootPhotos = function () { paintPhotos(); initLightbox(); };
+    if (typeof D.loadPhotos === 'function') {
+      D.loadPhotos().then(bootPhotos).catch(function (err) {
+        if (window.console) console.warn('[photos] 接口取数失败，回退 mock：', err && err.message);
+        window.__DATA_SOURCE__ = 'mock';
+        bootPhotos();
+      });
+    } else {
+      bootPhotos();
+    }
   }
 
   /* ============================================================

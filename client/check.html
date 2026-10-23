@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>检查台 · Ja的小屋</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=33">
+<style>
+  .check-main{padding:64px 0 96px}
+  .check-main h1{font-family:var(--f-serif);font-size:44px;letter-spacing:.03em;margin:0 0 8px}
+  .check-block{margin-top:40px;padding-top:24px;border-top:1px solid var(--line)}
+  .check-block h2{font-size:15px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px;color:#5b6470}
+  .check-line{font-size:14px;line-height:1.9}
+  .check-line b{font-weight:500}
+  .check-groups{margin-top:8px;font-size:14px;line-height:1.9}
+  .check-btn{margin-top:10px;padding:10px 18px;border:1px solid var(--line);border-radius:999px;background:transparent;font:inherit;cursor:pointer}
+  .check-btn:hover{border-color:var(--brand);color:var(--brand-ink)}
+  .check-pre{margin-top:14px;padding:14px;background:#f6f4f0;border-radius:10px;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-all;max-height:320px;overflow:auto}
+  .check-ok{color:#1d7a4d}
+  .check-bad{color:#b3261e}
+  .check-note{font-size:12.5px;color:#5b6470;line-height:1.8}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="dot"></span><span id="brandName">Rover</span></a>
+    <nav id="nav">
+      <a href="index.html">首页</a>
+      <a href="photos.html">照片墙</a>
+      <a href="notes.html">记录</a>
+      <a href="works.html">作品集</a>
+      <a href="music.html">音乐</a>
+      <a href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap check-main">
+  <h1>检查台</h1>
+  <p class="check-note">这一页直接调用公网接口，用来确认「健康状态 / 核心表数据 / 写入链路」三件事。
+    它不参与站点导航，仅供自检与演示。</p>
+
+  <section class="check-block">
+    <h2>1. 健康状态</h2>
+    <div class="check-line" id="health">检查中…</div>
+  </section>
+
+  <section class="check-block">
+    <h2>2. 核心表真实数据（photo_groups + photos）</h2>
+    <div class="check-line" id="stats">检查中…</div>
+    <div class="check-groups" id="groups"></div>
+  </section>
+
+  <section class="check-block">
+    <h2>3. 写入测试（POST /api/photos）</h2>
+    <p class="check-note">按钮会向 <code>screenshots</code> 组写一条测试记录；<b>连点两次</b>，第二次应返回 409「这张图已在该分组登记过」——这就是防重复的证据。</p>
+    <button class="check-btn" id="postBtn" type="button">写一条测试记录</button>
+    <pre class="check-pre" id="postOut">（尚未执行）</pre>
+  </section>
+</main>
+
+<script src="api/api-client.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+
+  var base = window.ApiClient && window.ApiClient.base;
+  var healthEl = document.getElementById('health');
+  var statsEl = document.getElementById('stats');
+  var groupsEl = document.getElementById('groups');
+  var outEl = document.getElementById('postOut');
+
+  function setText(el, text, ok) {
+    el.textContent = text;
+    el.className = 'check-line ' + (ok ? 'check-ok' : 'check-bad');
+  }
+
+  /* 1. health：用原生 fetch（health 是扁平+data 混合结构，不走 ApiClient 的 data 解包） */
+  fetch(base + '/api/health', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      var ok = j && j.ok === true;
+      setText(healthEl, (ok ? '● 正常' : '● 异常') + ' · ' + JSON.stringify(j), ok);
+    })
+    .catch(function (e) { setText(healthEl, '● 请求失败：' + e.message, false); });
+
+  /* 2. 核心表数据 */
+  window.ApiClient.get('/api/photos')
+    .then(function (data) {
+      setText(statsEl, '● 接口正常 · 照片 ' + data.total + ' 张 · 分组 ' + data.groups.length + ' 个', true);
+      groupsEl.innerHTML = '';
+      data.groups.forEach(function (g) {
+        var row = document.createElement('div');
+        row.textContent = g.id + ' / ' + g.name + '：' + g.photos.length + ' 张';
+        groupsEl.appendChild(row);
+      });
+    })
+    .catch(function (e) { setText(statsEl, '● ' + e.message, false); });
+
+  /* 3. 写入测试 */
+  document.getElementById('postBtn').addEventListener('click', function () {
+    outEl.textContent = '请求中…';
+    window.ApiClient.post('/api/photos', {
+      group_id: 'screenshots',
+      src: '/public/assets/photos/Test/checkboard.webp',
+      w: 800,
+      h: 600,
+      alt: '检查台写入测试'
+    })
+      .then(function (data) { outEl.textContent = '201 OK\n' + JSON.stringify(data, null, 2); })
+      .catch(function (e) {
+        outEl.textContent = '被拒绝（' + (e.code || 'ERROR') + '）\n' + e.message;
+      });
+  });
+})();
+</script>
+</body>
+</html>

@@ -24,6 +24,15 @@
 const http = require('node:http');
 
 const PORT = process.env.PORT || 9000;
+/* 2026-10-22 Day 20：CORS 白名单（逗号分隔），禁止 *；未配置时不发该头（浏览器会拦） */
+const CORS_LIST = String(process.env.CORS_ORIGIN || '').trim()
+  ? String(process.env.CORS_ORIGIN).split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+  : [];
+function pickOrigin(req) {
+  const origin = String((req.headers && req.headers.origin) || '');
+  if (origin && CORS_LIST.indexOf(origin) >= 0) return origin;
+  return CORS_LIST[0] || '';
+}
 /* 2026-10-21：统一信封 —— 补 data；顶层 service 保留以兼容 Day 15 的验收与监控 */
 const HEALTH = {
   ok: true,
@@ -37,6 +46,7 @@ function sendJson(res, status, body, method) {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
     'Cache-Control': 'no-store',
+    'Access-Control-Allow-Origin': res.corsOrigin || '',
     'X-Content-Type-Options': 'nosniff'
   });
   res.end(method === 'HEAD' ? undefined : text);
@@ -50,7 +60,19 @@ function normalizePath(url) {
 
 const server = http.createServer(function (req, res) {
   const method = String(req.method || 'GET').toUpperCase();
+  res.corsOrigin = pickOrigin(req);
   const path = normalizePath(req.url);
+
+  if (method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': res.corsOrigin || '',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    });
+    res.end();
+    return;
+  }
 
   if (path !== '/' && path !== '/api/health') {
     return sendJson(res, 404, { ok: false, error: { code: 'NOT_FOUND', message: '接口不存在' } }, method);

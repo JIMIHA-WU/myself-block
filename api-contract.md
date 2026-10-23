@@ -21,7 +21,7 @@
 | 分页 | 查询参数 `limit`（默认 20，最大 50）+ `offset`（默认 0）；响应带 `total` |
 | 缓存 | 读接口 `Cache-Control: no-store`（阶段一从简） |
 | 方法限制 | 除 `GET`/`HEAD`（写接口另有 `POST`）外一律 `405` |
-| **跨域（CORS）** | 云函数响应头已带 `Access-Control-Allow-Origin`（默认 `*`，可用 `CORS_ORIGIN` 收窄）；`OPTIONS` 预检返 `204` |
+| **跨域（CORS）** | **白名单**：`CORS_ORIGIN` 逗号分隔（如 `https://站点域,http://localhost:8000`），**禁止 `*`**；仅当请求 `Origin` 在白名单内才原样回显，否则回第一个来源（浏览器拦截）。`OPTIONS` 预检返 `204`。**网关路由的"跨域"开关必须关闭**，否则响应头会出现两个值导致浏览器拒收。 |
 
 ### 0.1 health 也走统一信封（保留兼容字段）
 
@@ -324,7 +324,7 @@
 - `client/api/data.js` 的 `SITE` / `PHOTO_GROUPS` / `POSTS` / `WORKS` / `MUSIC` 改为 `fetch` 上述接口；
 - **字段名与形状不变**，页面渲染代码（`app.js`）不改；
 - 静态资源域名：接口返回的 `src`/`cover` 用**静态托管域的绝对地址**（前端不再依赖 `../public/...` 相对路径）；
-- CORS：云函数响应头已加 `Access-Control-Allow-Origin`（默认 `*`，可用环境变量 `CORS_ORIGIN` 收窄到静态托管域）
+- CORS：**白名单**（`CORS_ORIGIN` 逗号分隔，禁止 `*`）；网关路由的「跨域」需关闭，只保留函数自身的头
 
 ---
 
