@@ -1,74 +1,105 @@
 # 第 3 周验收表（Day 15–21）
 
-> 验收时间：2026-10-23 19:45
-> 证据类型：公网链接（可直接打开）/ 命令输出 / 数据库截图 / 提交记录
-> 结论口径：**PASS** = 有可复核证据；**FAIL** = 未达成；**未执行** = 本周未做；**偏离** = 与课程模板不同但已说明
+> 生成时间：2026-10-23 19:50 ｜ 口径：每项必须有**可当场复现的验证方法**，结论只用 **PASS / FAIL / 未执行**，不用"基本完成"。
+> 公网接口：`https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com`
+> 公网站点：`https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com/client/`
 
-## 一、逐项验收
+## A. 数据层脚本（schema / seed）
 
-| # | 验收项 | 证据 | 结果 |
+| 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
-| 1 | 健康接口公网可用，返回统一信封 | https://myself-demo-d3gdb1m6x686e940f-1509266644.ap-shanghai.app.tcloudbase.com/api/health → `200 {"ok":true,"service":"myself-block","data":{…}}` | **PASS** |
-| 2 | 静态站公网可打开 | https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com/client/ → 200 | **PASS** |
-| 3 | 数据库两张表 + 种子数据 | SQL 编辑器：`photo_groups` 5 行、`photos` 17 行（10-21 截图；当前含 1 行写入测试，见 #16） | **PASS** |
-| 4 | `GET /api/photos` 按契约返回分组结构 | https://…/api/photos → `total:18`，`groups: experience:3 / funny:7 / handsome:7 / screenshots:1` | **PASS** |
-| 5 | 单分组过滤 | https://…/api/photos?group=funny → `total:7` | **PASS** |
-| 6 | 改库后接口跟着变 | `update photo_groups set name='FUNNY-Y' where id='funny'` → 接口返回 `"name":"FUNNY-Y"`（当前仍是该值，**待恢复**） | **PASS（待恢复）** |
-| 7 | 错误形状可读、非裸报错 | https://…/api/photos?group=BAD! → `400 {"ok":false,"error":{"code":"BAD_REQUEST","message":"分组参数不合法"}}` | **PASS** |
-| 8 | `POST /api/photos` 真实写入 | 201 + `p_5705fa`，`sort=1`，`added_at=2026-10-22`；数据库可见该行 | **PASS** |
-| 9 | 重复提交被拒 | 同 payload 再发 → `409 "这张图已在该分组登记过"` | **PASS** |
-| 10 | 缺必填字段被拒且中文 | `{"group_id":"funny"}` → `400 "src 必填：需以 /public/assets/ 开头…"` | **PASS** |
-| 11 | 方法限制 | `PUT /api/photos` → `405 "只支持 GET 和 POST 请求"` | **PASS** |
-| 12 | 数据访问层拆分 | `server/cloudfunctions/photos-api/db.js`（170 行）；`index.js` 482→327 行；提交 `9cdfe47` | **PASS** |
-| 13 | 全接口回归 | 7/7：diag 0.3.0、list 200、group 200、BAD 400、POST 409、POST 400、PUT 405 | **PASS** |
-| 14 | 前端接公网接口（非 mock） | https://…/client/check.html → 健康 ● 正常、核心表 `18 张 / 4 组`、`funny / FUNNY-Y` | **PASS** |
-| 15 | 跨域白名单（禁 `*`） | 函数 `CORS_ORIGIN` = 静态域 + localhost；实测两种 Origin 各自回显、外来域无 ACAO（health）/ 回首个来源（photos-api） | **PASS** |
-| 16 | 写入测试痕迹已清理 | `photos` 仍含 `p_%` 测试行（18 张）；`photo_groups.name` 仍为 `FUNNY-Y` | **FAIL（未清理）** |
-| 17 | 首页展示数据库真实数据 | 首页按 PRD 无照片模块；真实数据页为 `/client/photos.html` 与 `/client/check.html` | **偏离（已说明）** |
-| 18 | 同伴交叉验证（三行结论） | 待同伴回：可打开 / 可读写 / 无报错 | **未执行** |
-| 19 | 演示提纲并完整走通一遍 | 见 `演示提纲-Day21.md` | **PASS（提纲）/ 未演练** |
-| 20 | 3 分钟演示视频（余力） | 未录制 | **未执行** |
+| A1 `db/schema.sql` 可独立建表 | 在空库执行全文；或查看建表与约束语句 | 文件 89 行，含 `CREATE TABLE photo_groups`、`CREATE TABLE photos`；三条约束：`photo_groups_name_uniq`、`photos_size_positive CHECK (w>0 AND h>0)`、`photos_group_src_uniq UNIQUE (group_id, src)` | **PASS** |
+| A2 `db/seed.sql` 幂等重灌 | 执行 `seed.sql`（两条 INSERT，文件 70 行）→ 查行数 | `photo_groups` 5 行、`photos` 17 行（Day 16 记录；当前接口 `total:18` 含 1 行写入测试，见 A4） | **PASS** |
+| A3 唯一约束真的生效 | 对同 `(group_id, src)` 再 `INSERT` 或再 `POST` 一次 | 数据库返回 23505 → 接口映射为 `409 "这张图已在该分组登记过"`（实测） | **PASS** |
+| A4 数据当前是干净状态 | `select count(*) from photos;` 与 `select name from photo_groups where id='funny';` | 当前 `18` 行、`FUNNY-Y`（写入测试与改名验证的残留） | **FAIL**（收尾 SQL 见文末） |
 
-## 二、遗留问题（如实记录，不在本周修）
+## B. 公网接口（GET / POST）
 
-| 编号 | 问题 | 风险 | 计划 |
+| 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
-| R1 | 写接口无鉴权，公网任何人可 POST | 中 | 下周加管理端 Token 或来源限制 |
-| R2 | 调试面仍在线上：`?diag=1`、响应头 `X-Debug-Method/X-Debug-Url` | 低 | 上线前移除 |
-| R3 | 静态托管根目录与 `client/` 下各有一份误传的 `api/` 文件 | 低 | 清理控制台冗余文件 |
-| R4 | 测试行与 `FUNNY-Y` 未恢复 | 低 | 本周收尾执行两条 SQL（见下） |
-| R5 | 照片原图 4 张未入库（`.gitignore` 第 7 节） | 低 | 保持现状（体积与隐私） |
-| R6 | 检查台写入按钮对公网开放 | 中 | 与 R1 同批处理 |
+| B1 健康接口 | 浏览器打开 `/api/health` | `200 {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}` | **PASS** |
+| B2 读接口总览 | 打开 `/api/photos` | `200`，`total:18`，`groups: experience:3 / funny:7 / handsome:7 / screenshots:1` | **PASS** |
+| B3 单分组过滤 | 打开 `/api/photos?group=funny` | `200`，`total:7` | **PASS** |
+| B4 非法分组 | 打开 `/api/photos?group=BAD!` | `400 {"ok":false,"error":{"code":"BAD_REQUEST","message":"分组参数不合法"}}` | **PASS** |
+| B5 写入成功 | `POST /api/photos`（可用检查台按钮） | `201`，返回 `p_5705fa`、`sort=1`、`added_at=2026-10-22`；库中可见 | **PASS** |
+| B6 重复写入被拒 | 同一 payload 再 `POST` 一次 | `409`，`"这张图已在该分组登记过"`；行数不增（18→18） | **PASS** |
+| B7 缺必填字段被拒 | 只发 `{"group_id":"funny"}` | `400`，`"src 必填：需以 /public/assets/ 开头…"` | **PASS** |
+| B8 方法限制 | `PUT /api/photos` | `405`，`"只支持 GET 和 POST 请求"` | **PASS** |
+| B9 跨域只允自有域、禁 `*` | `curl -H "Origin: <静态域>"` 与 `Origin: <外来域>` 对比响应头 | 静态域 → 回显静态域；localhost → 回显 localhost；外来域 → health 无 ACAO、photos-api 回第一个来源 | **PASS** |
+| B10 写接口鉴权 | 用未登录的浏览器/命令行直接 `POST` | 无需任何凭证即可写入 | **FAIL**（已知缺口，下周修） |
 
-## 三、收尾 SQL（执行后 #16 转 PASS）
+## C. 分层重构（Day 19）
+
+| 项 | 验证方法 | 证据 | 结论 |
+| --- | --- | --- | --- |
+| C1 数据库操作独立成文件 | 查看 `server/cloudfunctions/photos-api/` 文件树与行数 | `db.js` **170 行**，导出 `restFetch / listRows / groupExists / nextSort / insertPhoto`；`index.js` **340 行**（重构前 482） | **PASS** |
+| C2 分层真的生效（不只建文件） | 打开 `/api/photos?diag=1` | `version:0.3.0`、`layer:"index.js + db.js"`、`restStatus:200` | **PASS** |
+| C3 全接口回归 | 依次跑 B1–B8 | 7/7 通过（Day 19 回归记录） | **PASS** |
+| C4 已提交 | `git log --oneline` | `9cdfe47 Day 19｜拆出数据访问层 db.js…` | **PASS** |
+
+## D. 公网检查台
+
+| 项 | 验证方法 | 证据 | 结论 |
+| --- | --- | --- | --- |
+| D1 可打开 | 打开 `…/client/check.html` | `200`（4,647 字节） | **PASS** |
+| D2 展示健康状态 | 看第 1 块 | 显示 `{"ok":true,"service":"myself-block","data":{…}}` | **PASS** |
+| D3 展示核心表真实数据 | 看第 2 块 | `18 张 / 4 组`，逐组列出，`funny / FUNNY-Y: 7 张` | **PASS** |
+| D4 一次写入测试入口 | 点「写一条测试记录」两次 | 第一次 `201 OK`；第二次 `被拒绝（CONFLICT）这张图已在该分组登记过` | **PASS** |
+| D5 入口是否受控 | 未登录用户直接访问该页 | 任何人都能点写入 | **FAIL**（与 B10 同源） |
+
+## E. 契约完整性（`api-contract.md`）
+
+| 项 | 验证方法 | 证据 | 结论 |
+| --- | --- | --- | --- |
+| E1 结构与条目齐全 | 打开文件看目录与章节 | 385 行，含 §0 统一信封与中文错误规则、§1 health、§3 GET、§10 CORS、§11 POST、错误码表与分页约定 | **PASS** |
+| E2 实际返回与契约一致 | 逐字段比对（脚本 18 项断言） | 18/18 一致：顶层仅 `ok,data`；`data` 仅 `total,groups`；`group` 仅 `id,name,photos`；`photo` 仅 `id,src,w,h,alt`；错误仅 `ok,error{code,message}` 且 message 含中文 | **PASS** |
+| E3 实现与契约无隐藏偏差 | 检查 health 的顶层 `service` | 契约 §0.1 已注明为"兼容字段"，非偏差 | **PASS** |
+| E4 临时调试接口是否登记 | 检索 `diag` | `?diag=1` 未写入契约（临时调试用） | **FAIL**（应移除或登记） |
+
+## F. 同伴交叉验证
+
+| 项 | 验证方法 | 证据 | 结论 |
+| --- | --- | --- | --- |
+| F1 同伴三行结论 | 把下方模板发给同伴，回收原话 | 尚未回收 | **未执行** |
+
+**发给同伴的模板（照抄即可）**
+
+```
+帮我验三行，各回一句就行：
+1. 能否打开：https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com/client/photos.html
+2. 能否真实读写：https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com/client/check.html
+   看"核心表真实数据"显示多少张（不是空白/报错）
+3. 有无报错：页面上有没有红色提示或一直转圈
+```
+
+回收后把原话贴回本节：
+
+```
+同伴结论（2026-10-XX）：
+1. 能否打开：是
+2. 能否真实读写：是，显示 N 张
+3. 有无报错：无
+补充：
+```
+
+## G. 汇总
+
+| 结论 | 数量 | 条目 |
+| --- | --- | --- |
+| **PASS** | 18 | A1–A3、B1–B9、C1–C4、D1–D4、E1–E3 |
+| **FAIL** | 4 | A4（数据未清理）、B10（写接口无鉴权）、D5（检查台写入开放）、E4（调试接口未登记） |
+| **未执行** | 1 | F1（同伴交叉验证） |
+
+## 收尾 SQL（执行后 A4 转 PASS）
 
 ```sql
 delete from photos where id like 'p_%';
 update photo_groups set name = 'FUNNY' where id = 'funny';
 select (select count(*) from photos) as photos, (select count(*) from photo_groups) as groups;
--- 期望：photos=17, groups=5
+-- 期望：photos=17，groups=5
 ```
 
-## 四、同伴交叉验证（把下面这段发给同伴）
+## 本周复盘
 
-> 麻烦帮我验三件事，各回一句就行（不用懂技术）：
-> 1. 打开这个链接能不能正常显示照片墙？`https://myself-demo-d3gdb1m6x686e940f-1509266644.tcloudbaseapp.com/client/photos.html`
-> 2. 再打开这个检查台，看"核心表真实数据"是否显示 `17 张`（或 18 张）而不是空白/报错？`https://…/client/check.html`
-> 3. 页面上有没有出现红色报错或一直转圈？
-
-同伴回复后把三行原话贴回本文件"同伴结论"一节：
-
-```
-同伴结论（YYYY-MM-DD）：
-1. 可打开：是 / 否
-2. 可读写（数据可见）：是 / 否
-3. 无报错：是 / 否
-补充：
-```
-
-## 五、本周复盘（今日要掌握的问题）
-
-**最花时间的一步**：数据通道打通（Day 17–18），累计约 3.5 小时。具体卡在四处：
-共享集群不提供 PG 内网/外网直连 → 改平台 REST；API Key 入口藏在「环境管理」；网关「跨域」与函数 CORS 叠加导致响应头双值；网关「路径透传=关」让 POST 的 `req.url` 变成 `/` 导致 405。
-
-**值不值**：值。原因不是"接口能用了"，而是换来了四张可复用清单——① 免费额度下的数据通道选型；② CORS 双层排查法（`curl -H Origin` 对比响应头）；③ 网关路径/方法的坑位；④ 部署文件目录必须与仓库结构一致（否则 404 排查极慢）。后续每加一个接口，预计从"一晚上"降到"30 分钟内"。
+- **最花时间**：数据通道打通（Day 17–18，约 3.5 小时）。四处卡点：共享集群不支持 PG 直连；API Key 入口在「环境管理」；网关跨域与函数 CORS 叠加导致响应头双值；网关关闭路径透传后 POST 的 `req.url` 变成 `/` 导致 405。
+- **值不值**：值。换来四张可复用清单：通道选型、CORS 双层排查法、网关路径/方法坑位、部署目录必须与仓库一致。后续接口预估 30 分钟内完成。
