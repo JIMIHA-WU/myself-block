@@ -52,7 +52,7 @@
 | 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
 | E1 结构与条目齐全 | 打开文件看目录与章节 | 385 行，含 §0 统一信封与中文错误规则、§1 health、§3 GET、§10 CORS、§11 POST、错误码表与分页约定 | **PASS** |
-| E2 实际返回与契约一致 | 逐字段比对（脚本 18 项断言） | 18/18 一致：顶层仅 `ok,data`；`data` 仅 `total,groups`；`group` 仅 `id,name,photos`；`photo` 仅 `id,src,w,h,alt`；错误仅 `ok,error{code,message}` 且 message 含中文 | **PASS** |
+| E2 实际返回与契约一致 | 现场重跑断言脚本（2026-10-23 19:50，`spot.js`） | **15 项断言 15/15 一致**：顶层键、`ok`、`data{total,groups}`、`group{id,name,photos}`、`photo{id,src,w,h,alt}`、`src` 为 https、`w/h` 正整数、错误 `400`、错误键 `ok,error`、`code` 机器码、`message` 含中文。**注：此前写"18 项"是旧脚本口径，与本次实跑不符，已按实跑修正。** | **PASS**（口径已修正） |
 | E3 实现与契约无隐藏偏差 | 检查 health 的顶层 `service` | 契约 §0.1 已注明为"兼容字段"，非偏差 | **PASS** |
 | E4 临时调试接口是否登记 | 检索 `diag` | `?diag=1` 未写入契约（临时调试用） | **FAIL**（应移除或登记） |
 
