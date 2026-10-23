@@ -11,14 +11,14 @@
 | A1 `db/schema.sql` 可独立建表 | 在空库执行全文；或查看建表与约束语句 | 文件 89 行，含 `CREATE TABLE photo_groups`、`CREATE TABLE photos`；三条约束：`photo_groups_name_uniq`、`photos_size_positive CHECK (w>0 AND h>0)`、`photos_group_src_uniq UNIQUE (group_id, src)` | **PASS** |
 | A2 `db/seed.sql` 幂等重灌 | 执行 `seed.sql`（两条 INSERT，文件 70 行）→ 查行数 | `photo_groups` 5 行、`photos` 17 行（Day 16 记录；当前接口 `total:18` 含 1 行写入测试，见 A4） | **PASS** |
 | A3 唯一约束真的生效 | 对同 `(group_id, src)` 再 `INSERT` 或再 `POST` 一次 | 数据库返回 23505 → 接口映射为 `409 "这张图已在该分组登记过"`（实测） | **PASS** |
-| A4 数据当前是干净状态 | `select count(*) from photos;` 与 `select name from photo_groups where id='funny';` | 当前 `18` 行、`FUNNY-Y`（写入测试与改名验证的残留） | **FAIL**（收尾 SQL 见文末） |
+| A4 数据当前是干净状态 | `select count(*) from photos;` 与 `select name from photo_groups where id='funny';` | 当前 `19` 行（含 2 行写入测试）、`FUNNY-Y`（改名验证残留） | **FAIL**（收尾 SQL 见文末） |
 
 ## B. 公网接口（GET / POST）
 
 | 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
 | B1 健康接口 | 浏览器打开 `/api/health` | `200 {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}` | **PASS** |
-| B2 读接口总览 | 打开 `/api/photos` | `200`，`total:18`，`groups: experience:3 / funny:7 / handsome:7 / screenshots:1` | **PASS** |
+| B2 读接口总览 | 打开 `/api/photos` | `200`，`total:19`，`groups: experience:3 / funny:7 / handsome:7 / screenshots:2`（同伴独立写入后 +1） | **PASS** |
 | B3 单分组过滤 | 打开 `/api/photos?group=funny` | `200`，`total:7` | **PASS** |
 | B4 非法分组 | 打开 `/api/photos?group=BAD!` | `400 {"ok":false,"error":{"code":"BAD_REQUEST","message":"分组参数不合法"}}` | **PASS** |
 | B5 写入成功 | `POST /api/photos`（可用检查台按钮） | `201`，返回 `p_5705fa`、`sort=1`、`added_at=2026-10-22`；库中可见 | **PASS** |
@@ -43,7 +43,7 @@
 | --- | --- | --- | --- |
 | D1 可打开 | 打开 `…/client/check.html` | `200`（4,647 字节） | **PASS** |
 | D2 展示健康状态 | 看第 1 块 | 显示 `{"ok":true,"service":"myself-block","data":{…}}` | **PASS** |
-| D3 展示核心表真实数据 | 看第 2 块 | `18 张 / 4 组`，逐组列出，`funny / FUNNY-Y: 7 张` | **PASS** |
+| D3 展示核心表真实数据 | 看第 2 块 | `19 张 / 4 组`，逐组列出，`funny / FUNNY-Y: 7 张`（同伴写入后 +1） | **PASS** |
 | D4 一次写入测试入口 | 点「写一条测试记录」两次 | 第一次 `201 OK`；第二次 `被拒绝（CONFLICT）这张图已在该分组登记过` | **PASS** |
 | D5 入口是否受控 | 未登录用户直接访问该页 | 任何人都能点写入 | **FAIL**（与 B10 同源） |
 
@@ -60,7 +60,7 @@
 
 | 项 | 验证方法 | 证据 | 结论 |
 | --- | --- | --- | --- |
-| F1 同伴三行结论 | 把下方模板发给同伴，回收原话 | 尚未回收 | **未执行** |
+| F1 同伴三行结论 | 同伴用自己设备打开两个公网链接并点一次写入 | 三行均有明确结果：①能打开（照片墙正常、控制台无报错）②能真实读写（写入后 18→19，第二次 409 不再增行）③无红色提示/无转圈/无控制台报错 | **PASS** |
 
 **发给同伴的模板（照抄即可）**
 
@@ -86,9 +86,9 @@
 
 | 结论 | 数量 | 条目 |
 | --- | --- | --- |
-| **PASS** | 18 | A1–A3、B1–B9、C1–C4、D1–D4、E1–E3 |
+| **PASS** | 19 | A1–A3、B1–B9、C1–C4、D1–D4、E1–E3、F1 |
 | **FAIL** | 4 | A4（数据未清理）、B10（写接口无鉴权）、D5（检查台写入开放）、E4（调试接口未登记） |
-| **未执行** | 1 | F1（同伴交叉验证） |
+| **未执行** | 0 | —（同伴验证已回收） |
 
 ## 收尾 SQL（执行后 A4 转 PASS）
 
@@ -101,5 +101,6 @@ select (select count(*) from photos) as photos, (select count(*) from photo_grou
 
 ## 本周复盘
 
+- **同伴验证补充**：对方第二次点写入得到 409，是 `(group_id, src)` 唯一约束生效，不是故障；测试行因此停在 19 行。
 - **最花时间**：数据通道打通（Day 17–18，约 3.5 小时）。四处卡点：共享集群不支持 PG 直连；API Key 入口在「环境管理」；网关跨域与函数 CORS 叠加导致响应头双值；网关关闭路径透传后 POST 的 `req.url` 变成 `/` 导致 405。
 - **值不值**：值。换来四张可复用清单：通道选型、CORS 双层排查法、网关路径/方法坑位、部署目录必须与仓库一致。后续接口预估 30 分钟内完成。
