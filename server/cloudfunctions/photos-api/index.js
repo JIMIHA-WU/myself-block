@@ -136,6 +136,63 @@ function validatePhotoInput(input) {
   };
 }
 
+/* ---------------- PATCH 参数校验（Day 22） ---------------- */
+function validatePhotoPatch(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { error: '请求体必须是 JSON 对象' };
+  }
+
+  const out = {};
+  let count = 0;
+
+  if (input.alt !== undefined) {
+    if (typeof input.alt !== 'string' || input.alt.length > 200) {
+      return { error: 'alt 必须是不超过 200 字的字符串' };
+    }
+    out.alt = input.alt;
+    count++;
+  }
+
+  if (input.sort !== undefined) {
+    const s = toInt(input.sort);
+    if (!(s >= 1 && s <= 32767)) return { error: 'sort 必须是 1–32767 的整数' };
+    out.sort = s;
+    count++;
+  }
+
+  if (input.group_id !== undefined) {
+    if (typeof input.group_id !== 'string' || !/^[a-z0-9_-]{1,32}$/.test(input.group_id)) {
+      return { error: 'group_id 只允许小写字母、数字、下划线、连字符（1–32 位）' };
+    }
+    out.group_id = input.group_id;
+    count++;
+  }
+
+  if (input.w !== undefined) {
+    const w = toInt(input.w);
+    if (!(w >= 1 && w <= 100000)) return { error: 'w 必须是 1–100000 的整数' };
+    out.w = w;
+    count++;
+  }
+
+  if (input.h !== undefined) {
+    const h = toInt(input.h);
+    if (!(h >= 1 && h <= 100000)) return { error: 'h 必须是 1–100000 的整数' };
+    out.h = h;
+    count++;
+  }
+
+  if (input.id !== undefined || input.src !== undefined || input.added_at !== undefined) {
+    return { error: 'id、src、added_at 不允许修改' };
+  }
+
+  if (count === 0) {
+    return { error: '至少提供一个要修改的字段：alt / sort / group_id / w / h' };
+  }
+
+  return { value: out };
+}
+
 /* ---------------- HTTP 工具 ---------------- */
 function sendJson(res, status, body, method) {
   const text = JSON.stringify(body);
@@ -144,7 +201,7 @@ function sendJson(res, status, body, method) {
     'Content-Length': Buffer.byteLength(text),
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': res.corsOrigin || CORS_LIST[0] || '*',
-    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'X-Content-Type-Options': 'nosniff'
   });
@@ -297,6 +354,98 @@ function handleCreate(req, res, method) {
     });
 }
 
+/* ---------------- 修改接口（Day 22） ---------------- */
+function handleUpdate(req, res, method) {
+  let query;
+  try {
+    query = new URL('http://x' + (req.url || '/')).searchParams;
+  } catch (e) {
+    return fail(res, 400, 'BAD_REQUEST', '查询参数不合法', method);
+  }
+
+  const id = query.get('id');
+  if (!id || !/^[a-z0-9_-]{1,16}$/.test(id)) {
+    return fail(res, 400, 'BAD_REQUEST', 'id 必填：只允许小写字母、数字、下划线、连字符（1–16 位）', method);
+  }
+
+  const type = String(req.headers['content-type'] || '');
+  if (type.indexOf('application/json') < 0) {
+    return fail(res, 400, 'BAD_REQUEST', '请求头必须是 application/json', method);
+  }
+
+  readBody(req)
+    .then(function (raw) {
+      let body;
+      try {
+        body = JSON.parse(raw || '{}');
+      } catch (e) {
+        return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON', method);
+      }
+
+      const checked = validatePhotoPatch(body);
+      if (checked.error) {
+        return fail(res, 400, 'BAD_REQUEST', checked.error, method);
+      }
+      const fields = checked.value;
+
+      const ensureGroup = fields.group_id
+        ? db.groupExists(fields.group_id)
+        : Promise.resolve(true);
+
+      return ensureGroup
+        .then(function (groupOk) {
+          if (!groupOk) {
+            return fail(res, 400, 'BAD_REQUEST', '分组不存在：' + fields.group_id, method);
+          }
+          return db.updatePhoto(id, fields).then(function (photo) {
+            if (!photo) {
+              return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id, method);
+            }
+            sendJson(res, 200, { ok: true, data: { photo: photo } }, method);
+          });
+        });
+    })
+    .catch(function (err) {
+      if (err && err.message === 'body too large') {
+        return fail(res, 400, 'BAD_REQUEST', '请求体过大（最多 8 KB）', method);
+      }
+      console.error('update failed:', err && err.message);
+      if (!res.writableEnded) {
+        const msg = err && err.code === 'CONFLICT' ? '该分组下已有同一张图，无法移动' :
+          (err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败');
+        fail(res, err && err.code === 'CONFLICT' ? 409 : 500, err && err.code === 'CONFLICT' ? 'CONFLICT' : 'INTERNAL', msg, method);
+      }
+    });
+}
+
+/* ---------------- 删除接口（Day 22） ---------------- */
+function handleDelete(req, res, method) {
+  let query;
+  try {
+    query = new URL('http://x' + (req.url || '/')).searchParams;
+  } catch (e) {
+    return fail(res, 400, 'BAD_REQUEST', '查询参数不合法', method);
+  }
+
+  const id = query.get('id');
+  if (!id || !/^[a-z0-9_-]{1,16}$/.test(id)) {
+    return fail(res, 400, 'BAD_REQUEST', 'id 必填：只允许小写字母、数字、下划线、连字符（1–16 位）', method);
+  }
+
+  db.deletePhoto(id)
+    .then(function (row) {
+      if (!row) {
+        return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id, method);
+      }
+      sendJson(res, 200, { ok: true, data: { deleted: row } }, method);
+    })
+    .catch(function (err) {
+      console.error('delete failed:', err && err.message);
+      const msg = err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败';
+      fail(res, 500, 'INTERNAL', msg, method);
+    });
+}
+
 /* ---------------- 路由 ---------------- */
 const server = http.createServer(function (req, res) {
   const method = String(req.method || 'GET').toUpperCase();
@@ -307,7 +456,7 @@ const server = http.createServer(function (req, res) {
   if (method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': res.corsOrigin || CORS_LIST[0] || '*',
-      'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, HEAD, POST, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400'
     });
@@ -330,7 +479,13 @@ const server = http.createServer(function (req, res) {
   if (method === 'POST') {
     return handleCreate(req, res, method);
   }
-  return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET 和 POST 请求', method);
+  if (method === 'PATCH') {
+    return handleUpdate(req, res, method);
+  }
+  if (method === 'DELETE') {
+    return handleDelete(req, res, method);
+  }
+  return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET、POST、PATCH、DELETE 请求', method);
 });
 
 server.listen(PORT, function () {

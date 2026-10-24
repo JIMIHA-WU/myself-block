@@ -44,6 +44,8 @@
   global.ApiClient = {
     base: BASE,
     get: function (path) { return request('GET', path); },
-    post: function (path, body) { return request('POST', path, body); }
+    post: function (path, body) { return request('POST', path, body); },
+    patch: function (path, body) { return request('PATCH', path, body); },
+    del: function (path) { return request('DELETE', path); }
   };
 })(window);

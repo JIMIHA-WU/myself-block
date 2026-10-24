@@ -22,8 +22,12 @@ const ENV_ID = String(process.env.TCB_ENV_ID || '').trim();
 const API_KEY = String(process.env.TCB_API_KEY || '').trim();
 const REST_TIMEOUT_MS = 8000;
 
+/* 2026-10-24：允许用 REST_BASE 覆盖网关地址（仅用于本地/测试替身，生产仍走平台网关） */
+const REST_BASE = String(process.env.REST_BASE || '').replace(/\/+$/, '') ||
+  (ENV_ID ? 'https://' + ENV_ID + '.api.tcloudbasegateway.com' : '');
+
 function restUrl(path) {
-  return 'https://' + ENV_ID + '.api.tcloudbasegateway.com/v1/rdb/rest/' + path;
+  return REST_BASE + '/v1/rdb/rest/' + path;
 }
 
 /** 统一封装平台 REST：带认证头、超时、JSON 解析 */
@@ -161,10 +165,55 @@ async function insertPhoto(photo, id, sort) {
   };
 }
 
+/* ---------------- 更新 / 删除（Day 22） ---------------- */
+async function updatePhoto(id, fields) {
+  const r = await restFetch(
+    'photos?id=eq.' + encodeURIComponent(id) + '&select=*',
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(fields)
+    }
+  );
+
+  if (r.status === 409 || (r.body && r.body.code === '23505')) {
+    const err = new Error('conflict');
+    err.code = 'CONFLICT';
+    err.detail = r.text;
+    throw err;
+  }
+  assertOk(r, 'update');
+
+  const row = Array.isArray(r.body) ? r.body[0] : r.body;
+  if (!row) return null;
+  return {
+    id: row.id,
+    group_id: row.group_id,
+    src: row.src,
+    w: row.w,
+    h: row.h,
+    alt: row.alt,
+    sort: row.sort,
+    added_at: row.added_at
+  };
+}
+
+async function deletePhoto(id) {
+  const r = await restFetch(
+    'photos?id=eq.' + encodeURIComponent(id) + '&select=*',
+    { method: 'DELETE', headers: { Prefer: 'return=representation' } }
+  );
+  assertOk(r, 'delete');
+  const row = Array.isArray(r.body) ? r.body[0] : r.body;
+  return row ? { id: row.id } : null;
+}
+
 module.exports = {
   restFetch: restFetch,
   listRows: listRows,
   groupExists: groupExists,
   nextSort: nextSort,
-  insertPhoto: insertPhoto
+  insertPhoto: insertPhoto,
+  updatePhoto: updatePhoto,
+  deletePhoto: deletePhoto
 };

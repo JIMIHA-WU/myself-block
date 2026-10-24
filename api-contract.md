@@ -383,3 +383,109 @@
 **鉴权**：本接口**暂未鉴权**（Day 18 范围内）；上线前（Day 19–20）必须加管理端 Token 或仅内网可达，否则任何人都能写库。
 
 **它如何影响读取接口**：写入成功后，`GET /api/photos` 会立刻返回新行——这就是 Day 18 要验证的「读写闭环」。
+
+---
+
+## 12. `PATCH /api/photos?id=<照片 id>` — 修改一张照片（Day 22）
+
+> 状态：**✅ 已实现（代码 + 本地全链路验证，2026-10-24）；公网部署后转为「已验证」**。
+
+| 项 | 内容 |
+| --- | --- |
+| 路径 | `/api/photos` |
+| 方法 | `PATCH` |
+| 定位方式 | 查询参数 `id`（必填，`^[a-z0-9_-]{1,16}$`） |
+| 请求头 | `Content-Type: application/json` |
+
+**可改字段**（至少提供一个；`id` 与 `src` 不可改）
+
+| 字段 | 规则 |
+| --- | --- |
+| `alt` | 字符串 ≤ 200（可为空串） |
+| `sort` | 整数 1–32767 |
+| `group_id` | `^[a-z0-9_-]{1,32}$`，且必须已存在 |
+| `w` / `h` | 整数 1–100000 |
+
+**成功响应** `200`
+
+```json
+{
+  "ok": true,
+  "data": {
+    "photo": {
+      "id": "p_9f3a1c", "group_id": "funny",
+      "src": "/public/assets/photos/Funny/photo-99.webp",
+      "w": 1600, "h": 900, "alt": "改过的说明", "sort": 3,
+      "added_at": "2026-10-21"
+    }
+  }
+}
+```
+
+**错误返回**
+
+| 状态 | code | 触发条件 |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | 缺 `id` / `id` 格式错 / 请求体不是 JSON / 没提供可改字段 / 字段值非法 / `group_id` 不存在（message 写明字段） |
+| 404 | `NOT_FOUND` | 该 `id` 不存在 |
+| 409 | `CONFLICT` | 改 `group_id` 后与同组已有 `src` 冲突 |
+| 405 | `METHOD_NOT_ALLOWED` | 方法不在 GET/POST/PATCH/DELETE/HEAD/OPTIONS 内 |
+
+---
+
+## 13. `DELETE /api/photos?id=<照片 id>` — 删除一张照片（Day 22）
+
+> 状态：**✅ 已实现（代码 + 本地全链路验证，2026-10-24）；公网部署后转为「已验证」**。当前为**物理删除**；软删除（`is_deleted`）列为 Day 22 余力项，未实施。
+
+| 项 | 内容 |
+| --- | --- |
+| 路径 | `/api/photos` |
+| 方法 | `DELETE` |
+| 定位方式 | 查询参数 `id`（必填） |
+
+**成功响应** `200`
+
+```json
+{ "ok": true, "data": { "deleted": { "id": "p_9f3a1c" } } }
+```
+
+**错误返回**
+
+| 状态 | code | 触发条件 |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | 缺 `id` / 格式错 |
+| 404 | `NOT_FOUND` | 该 `id` 不存在（删除已删的也返回 404） |
+| 405 | `METHOD_NOT_ALLOWED` | 方法不允许 |
+
+**为什么删除比新增更容易出事**（实现约定）：
+1. 新增只影响自己，删除影响**别人是否能再看到**——不可逆；
+2. 因此删除必须**先确认存在**（404 而非静默成功）、**必须带精确定位**（不允许无 `id` 批量删）、**必须只删一条**（`id` 唯一）；
+3. 前端调用删除前必须二次确认；批量删除不在本周范围。
+### 12/13 验证记录（2026-10-24，本地全链路）
+
+用内存版 PostgREST 替身跑「增→查→改→查→删→查」，结果：
+
+| 步骤 | 结果 |
+| --- | --- |
+| ① `POST /api/photos` | `201`，返回 `id=p_e6ba63`、`alt="原始说明"`、`sort=1` |
+| ② `GET ?group=screenshots` | `200`，`total:1`，含该 id |
+| ③ `PATCH ?id=…`（`alt`、`sort`） | `200`，返回 `alt="改过的说明"`、`sort=9` |
+| ④ `GET` 再读 | `200`，值已变为改后 |
+| ⑤ `DELETE ?id=…` | `200`，`{"deleted":{"id":"p_e6ba63"}}` |
+| ⑥ `GET` 删除后 | `200`，`total:0`、`groups:[]`（该 id 不再返回） |
+| ⑦ 再 `DELETE` 同 id | `404`，`"照片不存在：p_e6ba63"` |
+| ⑧ `PATCH` 不存在 id | `404`，`"照片不存在：p_nope"` |
+
+**数据库前后对比方法（公网部署后用 SQL 复核）**
+
+```sql
+-- 改之前
+select id, alt, sort from photos where id = 'p_xxxxxx';
+-- PATCH 之后再查：alt / sort 应变为新值
+select id, alt, sort from photos where id = 'p_xxxxxx';
+-- DELETE 之后再查：0 行
+select id, alt from photos where id = 'p_xxxxxx';
+```
+
+**前端二次确认位置**：`client/check.html` 第 4 块「修改 / 删除」的删除按钮里
+`window.confirm('删除后不可恢复。\n\n记录：' + p.id + '\n确定删除这条吗？')`，点取消直接 `return`，不发请求。

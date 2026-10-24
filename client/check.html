@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=34">
 <style>
   .check-main{padding:64px 0 96px}
   .check-main h1{font-family:var(--f-serif);font-size:44px;letter-spacing:.03em;margin:0 0 8px}
@@ -62,6 +62,14 @@
     <button class="check-btn" id="postBtn" type="button">写一条测试记录</button>
     <pre class="check-pre" id="postOut">（尚未执行）</pre>
   </section>
+  <section class="check-block">
+    <h2>4. 修改 / 删除（带二次确认）</h2>
+    <p class="check-note">只列出 <code>screenshots</code> 组的测试记录，避免误动正式照片。
+      删除会先弹确认框，点「确定」后才发请求；点「取消」不会删任何东西。</p>
+    <div class="check-groups" id="manageList">加载中…</div>
+    <pre class="check-pre" id="manageOut">（尚未执行）</pre>
+  </section>
+
 </main>
 
 <script src="api/api-client.js?v=1"></script>
@@ -117,6 +125,86 @@
         outEl.textContent = '被拒绝（' + (e.code || 'ERROR') + '）\n' + e.message;
       });
   });
+
+  /* 4. 修改 / 删除：列表 + 二次确认 */
+  var manageList = document.getElementById('manageList');
+  var manageOut = document.getElementById('manageOut');
+
+  function row(text) {
+    var d = document.createElement('div');
+    d.textContent = text;
+    return d;
+  }
+
+  function loadManage() {
+    manageList.textContent = '加载中…';
+    window.ApiClient.get('/api/photos?group=screenshots')
+      .then(function (data) {
+        manageList.innerHTML = '';
+        if (!data.groups.length || !data.groups[0].photos.length) {
+          manageList.appendChild(row('（没有测试记录。先在上面点一次「写一条测试记录」）'));
+          return;
+        }
+        data.groups[0].photos.forEach(function (p) {
+          var line = document.createElement('div');
+          line.style.margin = '10px 0';
+
+          var label = document.createElement('span');
+          label.textContent = p.id + ' ｜ alt：' + (p.alt || '（空）');
+          label.style.marginRight = '10px';
+
+          var edit = document.createElement('button');
+          edit.className = 'check-btn';
+          edit.type = 'button';
+          edit.textContent = '改说明';
+          edit.style.marginTop = '0';
+          edit.style.padding = '6px 12px';
+          edit.addEventListener('click', function () {
+            var next = window.prompt('新的说明（alt）：', p.alt || '');
+            if (next === null) return;                 /* 点了取消：什么都不做 */
+            manageOut.textContent = '修改中…';
+            window.ApiClient.patch('/api/photos?id=' + encodeURIComponent(p.id), { alt: next })
+              .then(function (d) {
+                manageOut.textContent = '200 OK\n' + JSON.stringify(d, null, 2);
+                loadManage();
+              })
+              .catch(function (e) {
+                manageOut.textContent = '被拒绝（' + (e.code || 'ERROR') + '）\n' + e.message;
+              });
+          });
+
+          var del = document.createElement('button');
+          del.className = 'check-btn';
+          del.type = 'button';
+          del.textContent = '删除';
+          del.style.marginTop = '0';
+          del.style.padding = '6px 12px';
+          del.addEventListener('click', function () {
+            var sure = window.confirm('删除后不可恢复。\n\n记录：' + p.id + '\n确定删除这条吗？');
+            if (!sure) { manageOut.textContent = '已取消删除（未发请求）'; return; }
+            manageOut.textContent = '删除中…';
+            window.ApiClient.del('/api/photos?id=' + encodeURIComponent(p.id))
+              .then(function (d) {
+                manageOut.textContent = '200 OK\n' + JSON.stringify(d, null, 2);
+                loadManage();
+              })
+              .catch(function (e) {
+                manageOut.textContent = '被拒绝（' + (e.code || 'ERROR') + '）\n' + e.message;
+              });
+          });
+
+          line.appendChild(label);
+          line.appendChild(edit);
+          line.appendChild(del);
+          manageList.appendChild(line);
+        });
+      })
+      .catch(function (e) {
+        manageList.textContent = '加载失败：' + e.message;
+      });
+  }
+
+  loadManage();
 })();
 </script>
 </body>
