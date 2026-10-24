@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <!-- 主题无闪烁脚本已于 2026-10-19 移除（深/浅色切换功能下线，站点固定浅色）-->
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=34">
 <!--
   ============================================================
   首页（v1.11 板块拆分后）—— 封面 + 板块入口
@@ -105,6 +105,8 @@
      本区块不含数字行（Jack 2026-10-18 明确不要）。
      2026-10-19：曾短暂改为地形等高线纯视觉版，按 Jack 要求已恢复为原版。 -->
 <section id="intro" class="intro-white">
+  <!-- AeroShards 玻璃碎片背景（2026-10-24 Jack 指定；React 组件本地构建为单文件，见 vendor/aero-shards.js） -->
+  <div class="intro-aero" id="aeroShards" aria-hidden="true"></div>
   <div class="wrap">
     <h2 class="iw-name" id="introName">Rover</h2>
     <div class="iw-slogan" id="introSlogan">to record myself</div>
@@ -166,6 +168,8 @@
 <script src="lightfall.js?v=3"></script>
 <!-- TechText 文字动画层（React Bits TechText 原生移植，独立文件，仅首页引入） -->
 <script src="tech-text.js?v=2"></script>
+<!-- AeroShards（仅首页；WebGPU 不可用时由 onError 触发 .aero-fallback 静态回退） -->
+<script src="vendor/aero-shards.js?v=1" defer></script>
 
 </body>
 </html>

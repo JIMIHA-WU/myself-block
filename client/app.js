@@ -2114,3 +2114,47 @@ void main() {
     if (countEl) countEl.textContent = '共 ' + list.length + ' 首';
   })();
 })();
+
+
+/* ============================================================
+   27. AeroShards 简介板块背景（2026-10-24 Jack 指定）
+   目的：减少静态上传文件数——容器与样式在此动态注入，
+        渲染产物放 api/aero-shards.js（与 data.js 同目录，免新建文件夹）。
+   若 WebGPU 不可用：组件触发 onError -> html.aero-fallback 静态渐变。
+   ============================================================ */
+(function () {
+  var sec = document.getElementById('intro');
+  if (!sec) return;
+
+  var host = document.getElementById('aeroShards');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'intro-aero';
+    host.id = 'aeroShards';
+    host.setAttribute('aria-hidden', 'true');
+    sec.insertBefore(host, sec.firstChild);
+  }
+
+  if (!document.getElementById('aeroShardsStyle')) {
+    var st = document.createElement('style');
+    st.id = 'aeroShardsStyle';
+    st.textContent =
+      '.intro-white{position:relative;overflow:hidden;background:#f5f8fc}' +
+      '#aeroShards{position:absolute;inset:0;z-index:0;pointer-events:none}' +
+      '#aeroShards>div{position:relative;width:100%;height:100%;overflow:hidden}' +
+      '#aeroShards canvas{position:absolute;inset:0;display:block;width:100%;height:100%}' +
+      '#intro .wrap{position:relative;z-index:1}' +
+      'html.aero-fallback .intro-white{background:linear-gradient(120deg,#f7fbff 0%,#e6f1ff 45%,#cfdff5 100%)}' +
+      '@media (prefers-reduced-motion: reduce){#aeroShards{display:none}}';
+    document.head.appendChild(st);
+  }
+
+  if (!window.__aeroLoaded) {
+    window.__aeroLoaded = true;
+    var sc = document.createElement('script');
+    sc.src = 'api/aero-shards.js?v=1';
+    sc.defer = true;
+    sc.onerror = function () { document.documentElement.classList.add('aero-fallback'); };
+    document.body.appendChild(sc);
+  }
+})();

@@ -1020,3 +1020,24 @@ html[data-theme="dark"] .title{text-shadow:0 8px 60px rgba(0,0,0,.4)}
 }
 .iw-body p{margin:0 0 .9em}
 .iw-body p:last-child{margin-bottom:0}
+
+
+/* ============================================================
+   26. 首页简介板块：AeroShards 玻璃碎片背景（2026-10-24 Jack 指定）
+   - 组件为 React + WebGPU（vgpu），已在本地构建为单文件 vendor/aero-shards.js
+   - 参数：shardColor #9cc9ff / accentColor #94a3b8 / placement right
+           count 1300 / spread 1.2 / speed 0.8 / depthOfField 0.75 / vignette 0.3
+   - 文本层 z1 压在画布 z0 之上；画布不吃鼠标事件（mouseInteraction 已关）
+   ============================================================ */
+.intro-white{position:relative;overflow:hidden;background:#f5f8fc}
+.intro-aero{position:absolute;inset:0;z-index:0;pointer-events:none}
+.intro-aero>div{position:relative;width:100%;height:100%;overflow:hidden}
+.intro-aero canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+#intro .wrap{position:relative;z-index:1}
+/* WebGPU 不可用时的静态回退：浅蓝玻璃感渐变，不白屏 */
+html.aero-fallback .intro-white{
+  background:linear-gradient(120deg,#f7fbff 0%,#e6f1ff 45%,#cfdff5 100%);
+}
+@media (prefers-reduced-motion: reduce){
+  .intro-aero{display:none}
+}
