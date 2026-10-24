@@ -218,6 +218,14 @@ function normalizePath(url) {
   return trimmed || '/';
 }
 
+/* 路径参数解析（Day 22）：支持 /api/photos/p_xxx 与 /p_xxx 两种透传形态 */
+function pathPhotoId(path) {
+  const m = /^\/(?:api\/photos\/)?([a-z0-9_-]{1,16})$/.exec(String(path || ''));
+  if (!m) return null;
+  if (m[1] === 'photos' || m[1] === 'health') return null;
+  return m[1];
+}
+
 function readBody(req) {
   return new Promise(function (resolve, reject) {
     let size = 0;
@@ -355,7 +363,7 @@ function handleCreate(req, res, method) {
 }
 
 /* ---------------- 修改接口（Day 22） ---------------- */
-function handleUpdate(req, res, method) {
+function handleUpdate(req, res, method, pathId) {
   let query;
   try {
     query = new URL('http://x' + (req.url || '/')).searchParams;
@@ -363,7 +371,7 @@ function handleUpdate(req, res, method) {
     return fail(res, 400, 'BAD_REQUEST', '查询参数不合法', method);
   }
 
-  const id = query.get('id');
+  const id = pathId || query.get('id');
   if (!id || !/^[a-z0-9_-]{1,16}$/.test(id)) {
     return fail(res, 400, 'BAD_REQUEST', 'id 必填：只允许小写字母、数字、下划线、连字符（1–16 位）', method);
   }
@@ -419,7 +427,7 @@ function handleUpdate(req, res, method) {
 }
 
 /* ---------------- 删除接口（Day 22） ---------------- */
-function handleDelete(req, res, method) {
+function handleDelete(req, res, method, pathId) {
   let query;
   try {
     query = new URL('http://x' + (req.url || '/')).searchParams;
@@ -427,7 +435,7 @@ function handleDelete(req, res, method) {
     return fail(res, 400, 'BAD_REQUEST', '查询参数不合法', method);
   }
 
-  const id = query.get('id');
+  const id = pathId || query.get('id');
   if (!id || !/^[a-z0-9_-]{1,16}$/.test(id)) {
     return fail(res, 400, 'BAD_REQUEST', 'id 必填：只允许小写字母、数字、下划线、连字符（1–16 位）', method);
   }
@@ -465,25 +473,26 @@ const server = http.createServer(function (req, res) {
   }
 
   const path = normalizePath(req.url);
+  const pathId = pathPhotoId(path);
   if (String(req.url || '').indexOf('diag=1') >= 0 && method !== 'OPTIONS') {
     return handleDiag(req, res, method);
   }
-  if (path !== '/' && path !== '/api/photos') {
+  if (path !== '/' && path !== '/api/photos' && !pathId) {
     return fail(res, 404, 'NOT_FOUND', '接口不存在', method);
   }
 
   if (method === 'GET' || method === 'HEAD') {
     return handleList(req, res, method);
   }
-  /* 网关「路径透传」关闭时 POST 到达函数可能是 "/"，所以不要求精确路径 */
+  /* 网关「路径透传」关闭时到达函数可能是 "/"，因此 POST 不要求精确路径 */
   if (method === 'POST') {
     return handleCreate(req, res, method);
   }
   if (method === 'PATCH') {
-    return handleUpdate(req, res, method);
+    return handleUpdate(req, res, method, pathId);
   }
   if (method === 'DELETE') {
-    return handleDelete(req, res, method);
+    return handleDelete(req, res, method, pathId);
   }
   return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET、POST、PATCH、DELETE 请求', method);
 });
