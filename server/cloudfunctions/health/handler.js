@@ -15,7 +15,10 @@
  *
  * 返回契约（api-contract.md §1）：
  *   200 → {"ok":true,"service":"myself-block","data":{"service":"myself-block","status":"ok"}}
- *   405 → {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED","message":"Only GET is allowed"}}
+ *   405 → {"ok":false,"error":{"code":"METHOD_NOT_ALLOWED","message":"只支持 GET 请求"}}
+ *
+ * 2026-10-28 审计：本文件 405 的文案原为英文 "Only GET is allowed"，
+ *   与 index.js 及契约 §0「message 必须是中文」冲突，已统一为中文。
  */
 
 function respond(statusCode, body) {
@@ -39,7 +42,7 @@ exports.main = async function main(event) {
       405,
       JSON.stringify({
         ok: false,
-        error: { code: 'METHOD_NOT_ALLOWED', message: 'Only GET is allowed' }
+        error: { code: 'METHOD_NOT_ALLOWED', message: '只支持 GET 请求' }
       })
     );
   }

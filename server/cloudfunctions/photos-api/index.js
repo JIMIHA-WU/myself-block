@@ -85,13 +85,18 @@ function validatePhotoInput(input) {
   }
 
   const src = input.src;
+  /* 2026-10-28 审计：改前只查前缀和扩展名，`/public/assets/../../../x.webp`
+     这种带 .. 的写法能通过校验，存进库后会拼成站外地址。现在直接拒。 */
   if (
     typeof src !== 'string' ||
     src.length > 300 ||
     src.indexOf('/public/assets/') !== 0 ||
+    src.indexOf('..') >= 0 ||
+    src.indexOf('//') >= 0 ||
+    /[\\\u0000-\u001f]/.test(src) ||
     !/\.(webp|jpe?g|png)$/i.test(src)
   ) {
-    return { error: 'src 必填：需以 /public/assets/ 开头，并以 .webp/.jpg/.jpeg/.png 结尾（不超过 300 字符）' };
+    return { error: 'src 只能写 /public/assets/ 下的图片路径（.webp/.jpg/.jpeg/.png 结尾，不超过 300 字符），不能含 .. 或 //' };
   }
 
   const w = toInt(input.w);
@@ -269,20 +274,31 @@ function pathPhotoId(path) {
   return m[1];
 }
 
+/* 读取请求体，带 8 KB 上限。
+ *
+ * 2026-10-28 审计修复：改前这里超限就 `reject()` 紧接着 `req.destroy()`，
+ * 连接被立刻掐断，客户端拿到的是 ECONNRESET / socket hang up（浏览器里是
+ * "Failed to fetch"）—— 明明是一次普通的参数错误，用户却看到"网络坏了"。
+ * 现在改为：停止累积、把剩余数据读完（req.resume()），让上层把中文 400 写完。 */
 function readBody(req) {
   return new Promise(function (resolve, reject) {
     let size = 0;
+    let stopped = false;
     const chunks = [];
     req.on('data', function (chunk) {
+      if (stopped) return;
       size += chunk.length;
       if (size > BODY_LIMIT) {
-        reject(new Error('body too large'));
-        req.destroy();
+        stopped = true;
+        const err = new Error('body too large');
+        err.code = 'BODY_TOO_LARGE';
+        reject(err);
+        req.resume();          /* 丢弃剩余字节，但不掐断连接 */
         return;
       }
       chunks.push(chunk);
     });
-    req.on('end', function () { resolve(Buffer.concat(chunks).toString('utf8')); });
+    req.on('end', function () { if (!stopped) resolve(Buffer.concat(chunks).toString('utf8')); });
     req.on('error', reject);
   });
 }
@@ -403,8 +419,8 @@ function handleCreate(req, res, method) {
       });
     })
     .catch(function (err) {
-      if (err && err.message === 'body too large') {
-        return fail(res, 400, 'BAD_REQUEST', '请求体过大（最多 8 KB）', method);
+      if (err && err.code === 'BODY_TOO_LARGE') {
+        return fail(res, 400, 'BAD_REQUEST', '请求体太大：最多 8 KB，请把内容删短一些（比如 alt 少写几个字）', method);
       }
       if (err && err.code === 'CONFLICT') {
         const detail = String(err.detail || '');
@@ -470,8 +486,8 @@ function handleUpdate(req, res, method, pathId) {
         });
     })
     .catch(function (err) {
-      if (err && err.message === 'body too large') {
-        return fail(res, 400, 'BAD_REQUEST', '请求体过大（最多 8 KB）', method);
+      if (err && err.code === 'BODY_TOO_LARGE') {
+        return fail(res, 400, 'BAD_REQUEST', '请求体太大：最多 8 KB，请把内容删短一些（比如 alt 少写几个字）', method);
       }
       console.error('update failed:', err && err.message);
       if (!res.writableEnded) {
