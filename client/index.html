@@ -168,8 +168,10 @@
 <script src="lightfall.js?v=3"></script>
 <!-- TechText 文字动画层（React Bits TechText 原生移植，独立文件，仅首页引入） -->
 <script src="tech-text.js?v=2"></script>
-<!-- AeroShards（仅首页；WebGPU 不可用时由 onError 触发 .aero-fallback 静态回退） -->
-<script src="vendor/aero-shards.js?v=1" defer></script>
+<!-- AeroShards（仅首页；由 app.js 第 27 节动态注入 api/aero-shards.js，
+     WebGPU 不可用时由 onError 触发 .aero-fallback 静态回退。
+     2026-10-27 移除此处 vendor/aero-shards.js 引用：该路径不存在（404），
+     且与 app.js 的注入重复，会造成同一组件挂载两次）-->
 
 </body>
 </html>
