@@ -567,6 +567,13 @@ const server = http.createServer(function (req, res) {
   }
 
   if (method === 'GET' || method === 'HEAD') {
+    /* 2026-10-28 余力加练：GET 从来没有实现过「按 id 取单张」，
+       但 pathPhotoId 对所有方法生效，导致 GET /api/photos/p_xxx 会静默返回整份列表（200）。
+       语义上这条路径不存在，应当 404，而不是让调用方误以为拿到了单张。 */
+    if (pathId) {
+      return fail(res, 404, 'NOT_FOUND',
+        '接口不存在：' + path + '（查询列表请用 GET /api/photos；按 id 取单张尚未提供）', method);
+    }
     return handleList(req, res, method);
   }
   /* 网关「路径透传」关闭时到达函数可能是 "/"，因此 POST 不要求精确路径 */
