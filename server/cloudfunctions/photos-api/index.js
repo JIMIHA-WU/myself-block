@@ -208,8 +208,51 @@ function sendJson(res, status, body, method) {
   res.end(method === 'HEAD' ? undefined : text);
 }
 
-function fail(res, status, code, message, method) {
-  sendJson(res, status, { ok: false, error: { code: code, message: message } }, method);
+function fail(res, status, code, message, method, requestId) {
+  const error = { code: code, message: message };
+  if (requestId) error.requestId = requestId;
+  sendJson(res, status, { ok: false, error: error }, method);
+}
+
+/* ============================================================
+   Day 23：三类错误的中文文案表
+   ------------------------------------------------------------
+   类 1 参数不对  → 400 BAD_REQUEST      「你传的东西不对，应该这样传」
+   类 2 找不到    → 404 NOT_FOUND        「这个东西不存在，可能已经没了」
+   类 3 服务端故障 → 500 INTERNAL        「不是你的问题，我们这边出状况了」
+
+   原则：机器码（code）保持英文，供前端分支判断；message 一律中文，
+   说清"哪里不对 + 怎么办"。改前 5xx 一律叫「数据库查询失败」，
+   连"凭证没配"都算作查询失败 —— 用户照着这句去查是查不出来的。
+   ============================================================ */
+const ERROR_TEXT = {
+  NO_CREDENTIALS: '服务端未配置数据库凭证，请联系管理员',
+  UPSTREAM_TIMEOUT: '数据库响应太慢，已超时，请稍后重试',
+  UPSTREAM_UNREACHABLE: '连不上数据库，请稍后重试',
+  UPSTREAM_ERROR: '数据库暂时不可用，请稍后重试',
+  UPSTREAM_REJECTED: '数据库拒绝了这次请求，请稍后重试',
+  UNKNOWN: '服务器内部错误，请稍后重试'
+};
+
+/* 网关会把同一个 id 同时写进请求头和响应头；取前 8 位当「报错编号」，
+   够短能念出来，也够长能在平台日志里搜到 */
+function requestIdOf(req) {
+  const h = (req && req.headers) || {};
+  return String(h['x-request-id'] || h['x-cloudbase-request-id'] || '').trim().slice(0, 8);
+}
+
+/** 类 3 统一出口：中文口径 + 报错编号（原始英文只进 console） */
+function failServer(req, res, err, method, tag) {
+  const code = (err && err.code) || 'UNKNOWN';
+  const base = ERROR_TEXT[code] || ERROR_TEXT.UNKNOWN;
+  const rid = requestIdOf(req);
+  console.error(
+    '[' + (tag || 'server') + '] code=' + code +
+    ' status=' + (err && err.upstreamStatus ? err.upstreamStatus : '-') +
+    ' rid=' + (rid || '-') +
+    ' detail=' + String((err && (err.detail || err.message)) || '').slice(0, 300)
+  );
+  fail(res, 500, 'INTERNAL', rid ? base + '（编号 ' + rid + '）' : base, method, rid || undefined);
 }
 
 function normalizePath(url) {
@@ -247,7 +290,7 @@ function readBody(req) {
 /* ---------------- 诊断（只读，不泄露密钥） ---------------- */
 function handleDiag(req, res, method) {
   const info = {
-    version: '0.3.0',
+    version: '0.4.0',
     channel: 'rest',
     layer: 'index.js + db.js',
     method: String(req.method || ''),
@@ -260,15 +303,29 @@ function handleDiag(req, res, method) {
   db.restFetch('photo_groups?select=id&limit=1')
     .then(function (r) {
       info.restStatus = r.status;
+      info.restOk = r.status < 400;
       if (r.status >= 400) {
+        /* Day 23：改前这里回的是上游英文原文（relation "photo_groups" does not exist …），
+           等于把内部报错直接摆到公网。现在只回机器码 + 一句中文排查方向。 */
         const b = r.body || {};
-        info.restError = { code: b.code || null, message: String(b.message || r.text || '').slice(0, 160) };
+        info.restError = {
+          code: String(b.code || ('HTTP_' + r.status)).slice(0, 40),
+          hint: r.status === 401 || r.status === 403
+            ? '凭证被拒绝：检查 TCB_API_KEY 是否有效或已过期'
+            : r.status === 404
+              ? '表不存在：检查 db/schema.sql 是否已在该环境执行'
+              : '平台 REST 返回 ' + r.status + '，详细原因见云函数日志'
+        };
       }
       sendJson(res, 200, { ok: true, data: info }, method);
     })
     .catch(function (err) {
       info.restStatus = null;
-      info.restError = { code: err && err.code ? err.code : 'FETCH_ERROR', message: String(err && err.message || '').slice(0, 160) };
+      info.restOk = false;
+      info.restError = {
+        code: (err && err.code) || 'UNKNOWN',
+        hint: ERROR_TEXT[(err && err.code)] || ERROR_TEXT.UNKNOWN
+      };
       sendJson(res, 200, { ok: true, data: info }, method);
     });
 }
@@ -287,7 +344,8 @@ function handleList(req, res, method) {
     return handleDiag(req, res, method);
   }
   if (group !== null && !/^[a-z0-9_-]{1,32}$/.test(group)) {
-    return fail(res, 400, 'BAD_REQUEST', '分组参数不合法', method);
+    return fail(res, 400, 'BAD_REQUEST',
+      '分组参数 group 只能用 1–32 位小写字母、数字、下划线或连字符，你传的是「' + group + '」', method);
   }
 
   const limitRaw = query.get('limit');
@@ -295,7 +353,8 @@ function handleList(req, res, method) {
   if (limitRaw !== null) {
     limit = Number(limitRaw);
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-      return fail(res, 400, 'BAD_REQUEST', 'limit 必须是 1–100 的整数', method);
+      return fail(res, 400, 'BAD_REQUEST',
+        'limit 只能是 1–100 的整数，你传的是「' + limitRaw + '」', method);
     }
   }
 
@@ -304,9 +363,7 @@ function handleList(req, res, method) {
       sendJson(res, 200, { ok: true, data: buildPayload(rows, { limit: limit }) }, method);
     })
     .catch(function (err) {
-      console.error('list failed:', err && err.message);
-      const msg = err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败';
-      fail(res, 500, 'INTERNAL', msg, method);
+      failServer(req, res, err, method, 'list');
     });
 }
 
@@ -356,8 +413,7 @@ function handleCreate(req, res, method) {
       }
       console.error('create failed:', err && err.message);
       if (!res.writableEnded) {
-        const msg = err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败';
-        fail(res, 500, 'INTERNAL', msg, method);
+        failServer(req, res, err, method, 'create');
       }
     });
 }
@@ -407,7 +463,7 @@ function handleUpdate(req, res, method, pathId) {
           }
           return db.updatePhoto(id, fields).then(function (photo) {
             if (!photo) {
-              return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id, method);
+              return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id + '（可能已被删除，刷新列表后再试）', method);
             }
             sendJson(res, 200, { ok: true, data: { photo: photo } }, method);
           });
@@ -419,9 +475,10 @@ function handleUpdate(req, res, method, pathId) {
       }
       console.error('update failed:', err && err.message);
       if (!res.writableEnded) {
-        const msg = err && err.code === 'CONFLICT' ? '该分组下已有同一张图，无法移动' :
-          (err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败');
-        fail(res, err && err.code === 'CONFLICT' ? 409 : 500, err && err.code === 'CONFLICT' ? 'CONFLICT' : 'INTERNAL', msg, method);
+        if (err && err.code === 'CONFLICT') {
+          return fail(res, 409, 'CONFLICT', '该分组下已经有同一张图了，换一张或先删掉旧的', method);
+        }
+        failServer(req, res, err, method, 'update');
       }
     });
 }
@@ -443,14 +500,12 @@ function handleDelete(req, res, method, pathId) {
   db.deletePhoto(id)
     .then(function (row) {
       if (!row) {
-        return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id, method);
+        return fail(res, 404, 'NOT_FOUND', '照片不存在：' + id + '（可能已被删除，刷新列表后再试）', method);
       }
       sendJson(res, 200, { ok: true, data: { deleted: row } }, method);
     })
     .catch(function (err) {
-      console.error('delete failed:', err && err.message);
-      const msg = err && err.code === 'NO_CREDENTIALS' ? '服务端缺少 TCB_ENV_ID / TCB_API_KEY' : '数据库查询失败';
-      fail(res, 500, 'INTERNAL', msg, method);
+      failServer(req, res, err, method, 'delete');
     });
 }
 
@@ -460,6 +515,19 @@ const server = http.createServer(function (req, res) {
   res.corsOrigin = pickOrigin(req);
   res.setHeader('X-Debug-Method', method);
   res.setHeader('X-Debug-Url', String(req.url || '/').slice(0, 120));
+
+  /* Day 23 余力加练：请求日志（时间、方法、路径、结果码、耗时）。
+     只写一行进云函数日志，响应体不带任何日志字段；线上排障靠这行对时间点。 */
+  const t0 = Date.now();
+  res.on('finish', function () {
+    console.log(
+      '[req] ' + new Date().toISOString() +
+      ' ' + method +
+      ' ' + String(req.url || '/').slice(0, 80) +
+      ' → ' + res.statusCode +
+      ' ' + (Date.now() - t0) + 'ms'
+    );
+  });
 
   if (method === 'OPTIONS') {
     res.writeHead(204, {
@@ -478,7 +546,8 @@ const server = http.createServer(function (req, res) {
     return handleDiag(req, res, method);
   }
   if (path !== '/' && path !== '/api/photos' && !pathId) {
-    return fail(res, 404, 'NOT_FOUND', '接口不存在', method);
+    return fail(res, 404, 'NOT_FOUND',
+      '接口不存在：' + path + '（可用：GET/POST /api/photos，PATCH/DELETE /api/photos/:id，GET /api/health）', method);
   }
 
   if (method === 'GET' || method === 'HEAD') {
@@ -494,7 +563,8 @@ const server = http.createServer(function (req, res) {
   if (method === 'DELETE') {
     return handleDelete(req, res, method, pathId);
   }
-  return fail(res, 405, 'METHOD_NOT_ALLOWED', '只支持 GET、POST、PATCH、DELETE 请求', method);
+  return fail(res, 405, 'METHOD_NOT_ALLOWED',
+    '不支持 ' + method + ' 方法：这个地址只接受 GET、POST、PATCH、DELETE', method);
 });
 
 server.listen(PORT, function () {

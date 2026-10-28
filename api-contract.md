@@ -18,6 +18,7 @@
 | 失败响应 | HTTP 4xx/5xx + `{ "ok": false, "error": { "code": "...", "message": "..." } }` |
 | **错误文案（2026-10-21 定）** | `error.message` **必须是中文、人能看懂**（说明"哪里不对、怎么改"）；`error.code` 保留英文机器码供前端分支判断。前端**只认这一种形状**，所有接口不得例外。 |
 | 错误码 | `BAD_REQUEST`(400) · `NOT_FOUND`(404) · `METHOD_NOT_ALLOWED`(405) · `CONFLICT`(409) · `INTERNAL`(500) |
+| **错误编号（Day 23）** | 5xx 响应额外带 `error.requestId`（取网关 `x-request-id` 前 8 位），`message` 末尾也附「（编号 xxxxxxxx）」。用户报障时报这 8 位，就能在平台日志里定位到那一次请求。 |
 | 分页 | 查询参数 `limit`（默认 20，最大 50）+ `offset`（默认 0）；响应带 `total` |
 | 缓存 | 读接口 `Cache-Control: no-store`（阶段一从简） |
 | 方法限制 | 除 `GET`/`HEAD`（写接口另有 `POST`）外一律 `405` |
@@ -31,6 +32,28 @@
 { "ok": true, "service": "myself-block", "data": { "service": "myself-block", "status": "ok" } }
 ```
 
+### 0.2 三类错误对照（Day 23 统一）
+
+接口只允许出现这三类错误，每一类都必须是**中文、说清"哪里不对 + 怎么办"**：
+
+| 类 | 什么情况 | HTTP / code | 现在的文案（实测原文） |
+| --- | --- | --- | --- |
+| **1 参数不对** | 用户传来的值不合法 | `400` `BAD_REQUEST` | `limit 只能是 1–100 的整数，你传的是「999」`<br>`分组参数 group 只能用 1–32 位小写字母、数字、下划线或连字符，你传的是「ABC!!」` |
+| **2 找不到** | 资源没了 / 地址写错 | `404` `NOT_FOUND` | `照片不存在：p_nope（可能已被删除，刷新列表后再试）`<br>`接口不存在：/api/nope（可用：GET/POST /api/photos，PATCH/DELETE /api/photos/:id，GET /api/health）` |
+| **2′ 方法不对** | 用错 HTTP 方法 | `405` `METHOD_NOT_ALLOWED` | `不支持 PUT 方法：这个地址只接受 GET、POST、PATCH、DELETE` |
+| **3 服务端故障** | 凭证 / 超时 / 上游挂了 | `500` `INTERNAL` + `requestId` | `服务端未配置数据库凭证，请联系管理员（编号 abcdef12）`<br>`数据库响应太慢，已超时，请稍后重试（编号 abcdef12）`<br>`连不上数据库，请稍后重试（编号 abcdef12）`<br>`数据库暂时不可用，请稍后重试（编号 abcdef12）`<br>`数据库拒绝了这次请求，请稍后重试（编号 abcdef12）` |
+
+**改前长什么样**（Day 23 之前，两类问题）：
+
+- 5xx 一律 `数据库查询失败` —— 凭证没配、超时、表不存在全叫这个名字，用户照着这句查不出东西；
+- `db.js` 内部抛的 `rest groups query failed: {"code":"42P01","message":"relation \"photo_groups\" does not exist"}` 是英文原文，且会被 `?diag=1` 原样回给浏览器。
+
+**分工**：`db.js` 只负责"分类"（把故障归到 `NO_CREDENTIALS` / `UPSTREAM_TIMEOUT` / `UPSTREAM_UNREACHABLE` / `UPSTREAM_ERROR` / `UPSTREAM_REJECTED`），`index.js` 的 `ERROR_TEXT` 表负责"翻译成人话"。英文原文只进 `console.error` 日志，**永不进响应体**。
+
+**平台限制（改不了，如实标注）**：请求如果**没到函数**（比如地址写错成 `/api/nope` 且网关没配通配路由），网关会自己返回英文
+`{"code":"INVALID_PATH","message":"Invalid path. For more information, please refer to …"}`。
+这一条不受我们控制；前端 `api-client.js` 已做兜底翻译成 `接口地址不对或服务暂时不可用，请检查地址后重试（INVALID_PATH）`。
+
 ---
 
 ## 1. `GET /api/health` — ✅ 已实现（Day 15）
@@ -41,7 +64,7 @@
 | 方法 | `GET`（`HEAD` 同义） |
 | 请求参数 | 无 |
 | 成功响应 | `200` → `{ "ok": true, "service": "myself-block", "data": { "service": "myself-block", "status": "ok" } }`（`service` 为 Day 15 兼容字段，`data` 为统一信封） |
-| 错误返回 | `405` → `{ "ok": false, "error": { "code": "METHOD_NOT_ALLOWED", "message": "Only GET is allowed" } }`；平台层异常（崩溃/超时）由网关返 `500/502`，无应用层 JSON |
+| 错误返回 | `405` → `{ "ok": false, "error": { "code": "METHOD_NOT_ALLOWED", "message": "只支持 GET 请求" } }`（Day 23 核对：代码里本来就是这句中文；此前本文件写的 `Only GET is allowed` 是过期笔误，已按实际代码更正）；平台层异常（崩溃/超时）由网关返 `500/502`，无应用层 JSON |
 | 实现 | `server/cloudfunctions/health/index.js` |
 | 用途 | 证明「公网 → 云函数」链路；部署自检；后续可加版本号/环境 ID |
 
@@ -427,7 +450,7 @@
 | 状态 | code | 触发条件 |
 | --- | --- | --- |
 | 400 | `BAD_REQUEST` | 缺 `id` / `id` 格式错 / 请求体不是 JSON / 没提供可改字段 / 字段值非法 / `group_id` 不存在（message 写明字段） |
-| 404 | `NOT_FOUND` | 该 `id` 不存在 |
+| 404 | `NOT_FOUND` | 该 `id` 不存在 → `照片不存在：p_nope（可能已被删除，刷新列表后再试）` |
 | 409 | `CONFLICT` | 改 `group_id` 后与同组已有 `src` 冲突 |
 | 405 | `METHOD_NOT_ALLOWED` | 方法不在 GET/POST/PATCH/DELETE/HEAD/OPTIONS 内 |
 
@@ -454,7 +477,7 @@
 | 状态 | code | 触发条件 |
 | --- | --- | --- |
 | 400 | `BAD_REQUEST` | 缺 `id` / 格式错 |
-| 404 | `NOT_FOUND` | 该 `id` 不存在（删除已删的也返回 404） |
+| 404 | `NOT_FOUND` | 该 `id` 不存在（删除已删的也返回 404）→ `照片不存在：p_nope（可能已被删除，刷新列表后再试）` |
 | 405 | `METHOD_NOT_ALLOWED` | 方法不允许 |
 
 **为什么删除比新增更容易出事**（实现约定）：
@@ -503,5 +526,65 @@ select id, alt from photos where id = 'p_xxxxxx';
 | ⑥ `GET` 删除后 | `200`，`total:0`（该 id 不再出现） |
 | ⑦ 再 `DELETE` 同路径 | `404`，`"照片不存在：p_2127ac"` |
 | ⑧ `PATCH /api/photos/p_nope` | `404`，`"照片不存在：p_nope"` |
+
+> 注：⑦⑧ 是 2026-10-24 当时的原文。**Day 23 起**该文案统一追加后缀，变成
+> `照片不存在：p_nope（可能已被删除，刷新列表后再试）`，见 §0.2。
+
+---
+
+## 14. `GET /api/photos?diag=1` — 自检（Day 23 登记）
+
+> 状态：**✅ 已实现（Day 20 起就有，Day 22 验收时发现"契约里没登记"，Day 23 补登记并改造文案）**
+
+| 项 | 内容 |
+| --- | --- |
+| 路径 | `/api/photos?diag=1`（也接受任意路径带 `diag=1`，便于排查） |
+| 方法 | `GET` |
+| 用途 | 一次性看出「环境变量配了没 / REST 通不通」，不查业务数据 |
+| 安全 | **只回布尔值与机器码，不回任何密钥、不回上游英文原文**（Day 23 改） |
+
+**成功响应** `200`
+
+```json
+{
+  "ok": true,
+  "data": {
+    "version": "0.4.0",
+    "channel": "rest",
+    "layer": "index.js + db.js",
+    "envIdSet": true,
+    "apiKeySet": true,
+    "siteOriginSet": true,
+    "restStatus": 200,
+    "restOk": true
+  }
+}
+```
+
+**REST 不通时**（同样是 `200`，看 `restOk` 与 `restError.hint`）
+
+```json
+{
+  "ok": true,
+  "data": {
+    "restStatus": 401,
+    "restOk": false,
+    "restError": {
+      "code": "42501",
+      "hint": "凭证被拒绝：检查 TCB_API_KEY 是否有效或已过期"
+    }
+  }
+}
+```
+
+| 字段 | 含义 |
+| --- | --- |
+| `envIdSet` / `apiKeySet` / `siteOriginSet` | 三个环境变量是否读到（**只回 true/false，不回值**） |
+| `restStatus` | 平台 REST 返回的 HTTP 状态码；`null` = 压根没连上 |
+| `restError.code` | 上游机器码（如 `42501` / `XX000`）；`hint` 是中文排查方向 |
+| `restError.hint` | 401/403 → 凭证被拒；404 → 表不存在（schema 没执行）；其他 → 看云函数日志 |
+
+> 为什么公开这个接口不危险：它不含任何密钥值、不含业务数据、不含上游英文原文，只能告诉"通/不通"。
+
 
 > 兼容策略：路径参数优先，`?id=` 作为旧写法保留（两者等价，便于检查台与命令行调试）。

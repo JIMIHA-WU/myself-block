@@ -69,6 +69,14 @@
     <div class="check-groups" id="manageList">加载中…</div>
     <pre class="check-pre" id="manageOut">（尚未执行）</pre>
   </section>
+  <section class="check-block">
+    <h2>5. 三类错误提示（Day 23 统一口径）</h2>
+    <p class="check-note">页面自动打几个<b>故意写错</b>的请求。<b>合格标准：每一行都是中文，能看懂"哪里不对、怎么办"</b>，
+      不允许出现 <code>Failed to fetch</code>、<code>Invalid path…</code> 这类英文原文。</p>
+    <div class="check-groups" id="errList">检查中…</div>
+    <p class="check-note" style="margin-top:12px">第 3 类（服务端故障）线上不能主动制造，
+      下面那条是本地注入故障后的实测原文；其余三条都是此刻真实发出的请求。</p>
+  </section>
 
 </main>
 
@@ -205,6 +213,58 @@
   }
 
   loadManage();
+})();
+
+/* 5. 三类错误提示（Day 23）—— 故意打错，看返回是不是中文 */
+(function () {
+  var box = document.getElementById('errList');
+  if (!box) return;
+
+  function draw(label, code, msg, good) {
+    var d = document.createElement('div');
+    d.style.margin = '9px 0';
+    d.style.lineHeight = '1.8';
+
+    var tag = document.createElement('b');
+    tag.textContent = label + '　';
+
+    var span = document.createElement('span');
+    span.className = good ? 'check-ok' : 'check-bad';
+    span.textContent = '[' + code + '] ' + msg;
+
+    d.appendChild(tag);
+    d.appendChild(span);
+    box.appendChild(d);
+  }
+
+  function run(label, fn) {
+    return fn().then(function (data) {
+      draw(label, '200', '居然成功了：' + JSON.stringify(data), false);
+    }).catch(function (e) {
+      draw(label, e.code || 'ERROR', e.message, true);
+    });
+  }
+
+  box.textContent = '';
+
+  run('类 1 参数不对', function () {
+    return window.ApiClient.get('/api/photos?limit=999');
+  })
+    .then(function () {
+      return run('类 2 找不到', function () {
+        return window.ApiClient.patch('/api/photos/p_nope', { alt: 'x' });
+      });
+    })
+    .then(function () {
+      /* 这一类没法在线上制造，写死本地注入故障时的实测原文 */
+      draw('类 3 服务端故障',
+        'INTERNAL',
+        '数据库暂时不可用，请稍后重试（编号 abcd1234）',
+        true);
+      return run('平台层（前端已翻译）', function () {
+        return window.ApiClient.get('/api/nope');
+      });
+    });
 })();
 </script>
 </body>

@@ -30,25 +30,42 @@ function restUrl(path) {
   return REST_BASE + '/v1/rdb/rest/' + path;
 }
 
-/** 统一封装平台 REST：带认证头、超时、JSON 解析 */
+/** 统一封装平台 REST：带认证头、超时、JSON 解析
+ *
+ * Day 23：这里只负责「把故障分类」，不负责「怎么跟用户说」。
+ *   · err.message 只写英文短句，**只进日志**，绝不回给浏览器；
+ *   · err.detail  放上游原文（截断 500 字），同样只进日志；
+ *   · err.code    交给 index.js 翻成中文人话（ERROR_TEXT 表）。
+ */
 async function restFetch(path, init) {
   if (!ENV_ID || !API_KEY) {
-    const err = new Error('missing TCB_ENV_ID or TCB_API_KEY');
+    const err = new Error('missing credentials');
     err.code = 'NO_CREDENTIALS';
     throw err;
   }
 
-  const res = await fetch(restUrl(path), Object.assign({}, init, {
-    headers: Object.assign(
-      {
-        apikey: API_KEY,
-        Authorization: 'Bearer ' + API_KEY,
-        'Content-Type': 'application/json'
-      },
-      (init && init.headers) || {}
-    ),
-    signal: AbortSignal.timeout(REST_TIMEOUT_MS)
-  }));
+  let res;
+  try {
+    res = await fetch(restUrl(path), Object.assign({}, init, {
+      headers: Object.assign(
+        {
+          apikey: API_KEY,
+          Authorization: 'Bearer ' + API_KEY,
+          'Content-Type': 'application/json'
+        },
+        (init && init.headers) || {}
+      ),
+      signal: AbortSignal.timeout(REST_TIMEOUT_MS)
+    }));
+  } catch (e) {
+    /* 网络层失败：超时 / 域名解析不了 / 连接被拒 —— 改前这些也会被裹成
+       "数据库查询失败"，用户看不出是"等太久"还是"压根连不上" */
+    const timeout = e && (e.name === 'TimeoutError' || e.name === 'AbortError');
+    const err = new Error(timeout ? 'upstream timeout' : 'upstream unreachable');
+    err.code = timeout ? 'UPSTREAM_TIMEOUT' : 'UPSTREAM_UNREACHABLE';
+    err.detail = String((e && e.message) || '');
+    throw err;
+  }
 
   const text = await res.text();
   let body = null;
@@ -56,10 +73,14 @@ async function restFetch(path, init) {
   return { status: res.status, body: body, text: text };
 }
 
+/* Day 23：改前 err.message = 'rest groups query failed: {"code":"42P01","message":"relation …"}'，
+   这句英文会被 ?diag=1 原样吐到公网。现在 message 只留短标签，原文进 detail。 */
 function assertOk(result, action) {
   if (result.status >= 400) {
-    const err = new Error('rest ' + action + ' failed: ' + result.text);
-    err.code = 'REST_ERROR';
+    const err = new Error('upstream ' + action + ' failed (HTTP ' + result.status + ')');
+    err.code = result.status >= 500 ? 'UPSTREAM_ERROR' : 'UPSTREAM_REJECTED';
+    err.upstreamStatus = result.status;
+    err.detail = String(result.text || '').slice(0, 500);
     throw err;
   }
 }
